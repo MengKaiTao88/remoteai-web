@@ -1,5 +1,5 @@
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { usePagePreview } from '../../../../shared/navigation/PageSwipeContext';
 import { useAppDispatch } from '../hooks';
 import { chatDeviceSelected } from '../store';
@@ -25,13 +25,14 @@ import { RemoteGuiProject } from '../../../../shared/conversation/remote/RemoteG
 import './desktopTools.css';
 
 interface Props {
+  applicationMenu?: ReactNode;
   session: AuthSession; devices: RemoteDevice[]; active: boolean; openAccounts?: () => void;
   tokenSummary: boolean; closeTokenSummary: () => void;
   sshDiscovery?: boolean; closeSshDiscovery?: () => void;
 }
 
 export function ChatPage({ session, devices, active, openAccounts,
-  tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery }: Props) {
+  tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery, applicationMenu }: Props) {
   useLanguage();
   const preview = usePagePreview() === 'chat';
   const dispatch = useAppDispatch();
@@ -63,6 +64,7 @@ export function ChatPage({ session, devices, active, openAccounts,
           tokenSummary={tokenSummary && selected} closeTokenSummary={closeTokenSummary}
           sshDiscovery={sshDiscovery && selected} closeSshDiscovery={closeSshDiscovery}
           openAccounts={openAccounts}
+          applicationMenu={applicationMenu}
           active={active && selected} chooseDevice={chooseDevice} deviceRefresh={deviceRefresh} />
       </div>;
     })}
@@ -94,6 +96,7 @@ function WebChat({ session, device, selected, ...props }: Props & {
       deviceName={device?.name} onClose={props.closeTokenSummary} />}
     <div hidden={props.sshDiscovery} style={{ display: props.sshDiscovery ? 'none' : 'contents' }}>
     <ConnectedChat {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
+    headerEnd={props.applicationMenu}
     cliVersion={installer.version}
     composerHeader={desktop && <RemoteGuiProject state={chat.state} controller={chat.controller}
       active={props.active && chat.foreground} computers={{ ...props.deviceRefresh, allowLocal: false,
