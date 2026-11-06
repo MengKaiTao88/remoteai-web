@@ -439,12 +439,6 @@ function AppShell() {
       <main className="main-content">
         <PrimaryPagePager page={page} onChange={changePrimaryPage} pages={{
           chat: session && <ChatPage key={session.baseUrl + session.email} session={session} devices={devices}
-            applicationMenu={desktopLayout && <Dropdown trigger={['click']} menu={{ items: [
-              ...navItems.map(item => ({ key: item.key, label: item.label, icon: <item.icon size={16} />,
-                onClick: () => dispatch(pageChanged(item.key)) })),
-              { type: 'divider' as const }, ...userMenu,
-            ] }}><button type="button" className="chat-back" aria-label={t('client.app.expandMainMenu')}>
-              <Menu size={19} /></button></Dropdown>}
             openAccounts={openAccounts}
             active={page === 'chat' || page === 'ssh'} tokenSummary={page === 'token-summary'}
             sshDiscovery={page === 'ssh'} closeSshDiscovery={() => dispatch(pageChanged('discover'))}

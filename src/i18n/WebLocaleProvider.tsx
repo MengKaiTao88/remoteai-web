@@ -13,7 +13,6 @@ import ruRUMobile from 'antd-mobile/es/locales/ru-RU';
 import jaJPMobile from 'antd-mobile/es/locales/ja-JP';
 import { getLocale, useLanguage } from '../../../../shared/localization/browserLanguage';
 import { t } from '../../../../shared/localization/browserClient';
-import { codexThemeTokens } from '../../../../shared/appearance/codexTheme';
 
 export function WebLocaleProvider({ children }: { children: ReactNode }) {
   const language = useLanguage();
@@ -27,7 +26,8 @@ export function WebLocaleProvider({ children }: { children: ReactNode }) {
   useEffect(() => { setDefaultConfig({ locale: mobileLocale }); }, [mobileLocale]);
   return <AntConfigProvider locale={{ en: enUS, zh: zhCN, ru: ruRU, ja: jaJP }[language]}
     theme={{ algorithm: mode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
-      token: codexThemeTokens(mode === 'dark') }}>
+      token: { colorPrimary: '#0b9b7c', borderRadius: 12,
+      fontFamily: "Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif" } }}>
     <MobileConfigProvider locale={mobileLocale}>
       {children}
     </MobileConfigProvider>

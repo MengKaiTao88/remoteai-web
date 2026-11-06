@@ -1,5 +1,5 @@
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { usePagePreview } from '../../../../shared/navigation/PageSwipeContext';
 import { useAppDispatch } from '../hooks';
 import { chatDeviceSelected } from '../store';
@@ -23,16 +23,16 @@ import { GuiRemoteDesktop } from '../../../../shared/conversation/GuiRemoteDeskt
 import { RemoteGuiTools } from '../../../../shared/conversation/remote/RemoteGuiTools';
 import { RemoteGuiProject } from '../../../../shared/conversation/remote/RemoteGuiProject';
 import './desktopTools.css';
+import { CodexAppearance } from '../../../../shared/appearance/CodexAppearance';
 
 interface Props {
-  applicationMenu?: ReactNode;
   session: AuthSession; devices: RemoteDevice[]; active: boolean; openAccounts?: () => void;
   tokenSummary: boolean; closeTokenSummary: () => void;
   sshDiscovery?: boolean; closeSshDiscovery?: () => void;
 }
 
 export function ChatPage({ session, devices, active, openAccounts,
-  tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery, applicationMenu }: Props) {
+  tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery }: Props) {
   useLanguage();
   const preview = usePagePreview() === 'chat';
   const dispatch = useAppDispatch();
@@ -64,7 +64,6 @@ export function ChatPage({ session, devices, active, openAccounts,
           tokenSummary={tokenSummary && selected} closeTokenSummary={closeTokenSummary}
           sshDiscovery={sshDiscovery && selected} closeSshDiscovery={closeSshDiscovery}
           openAccounts={openAccounts}
-          applicationMenu={applicationMenu}
           active={active && selected} chooseDevice={chooseDevice} deviceRefresh={deviceRefresh} />
       </div>;
     })}
@@ -95,8 +94,7 @@ function WebChat({ session, device, selected, ...props }: Props & {
       scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])}
       deviceName={device?.name} onClose={props.closeTokenSummary} />}
     <div hidden={props.sshDiscovery} style={{ display: props.sshDiscovery ? 'none' : 'contents' }}>
-    <ConnectedChat {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
-    headerEnd={props.applicationMenu}
+    <CodexAppearance><ConnectedChat {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
     cliVersion={installer.version}
     composerHeader={desktop && <RemoteGuiProject state={chat.state} controller={chat.controller}
       active={props.active && chat.foreground} computers={{ ...props.deviceRefresh, allowLocal: false,
@@ -110,7 +108,7 @@ function WebChat({ session, device, selected, ...props }: Props & {
         connected={chat.state.ready} deviceName={device?.name}
         cwd={cwd} />
     </div>}
-    scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])} />
+    scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])} /></CodexAppearance>
     </div>
   </TerminalWorkspaceProvider>;
 }

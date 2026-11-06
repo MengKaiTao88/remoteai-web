@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { useEffect, useMemo, useState } from 'react';
 import { ApplicationTypography } from '../../../shared/appearance/ApplicationTypography';
+import { CodexAppearance } from '../../../shared/appearance/CodexAppearance';
 import { guiFontStyle, saveGlobalFontSize } from '../../../shared/appearance/fontSize';
 import { activityDisclosureThread } from '../../../shared/testing/activityDisclosureFixture';
 import { ChatMessages } from '../../../shared/remote-chat/views/ChatMessages';
@@ -21,10 +22,10 @@ function Harness() {
     window.addEventListener('activity-disclosure-complete', complete);
     return () => window.removeEventListener('activity-disclosure-complete', complete);
   }, []);
-  return <WebLocaleProvider><ApplicationTypography>
+  return <WebLocaleProvider><ApplicationTypography><CodexAppearance>
   <main className="chat-page" style={{ ...guiFontStyle(font), height: '100dvh' }}><section className="chat-conversation">
     <ChatMessages thread={thread} />
   </section></main>
-</ApplicationTypography></WebLocaleProvider>;
+</CodexAppearance></ApplicationTypography></WebLocaleProvider>;
 }
 createRoot(document.getElementById('root')!).render(<Harness />);

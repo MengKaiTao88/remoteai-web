@@ -3,7 +3,7 @@
   "revision": "14ad4a4b11150dc1f85234a5cfce74172ba61a74",
   "sharedSource": {
     "repository": "https://github.com/piperhex/remoteai-shared.git",
-    "revision": "b5542f71766d01a61e7f840a8ad8a7e19718f814"
+    "revision": "d0f9fc2ef1833a9e353fb686a1b65fd29d56547c"
   },
   "nativeSource": {
     "repository": "https://github.com/piperhex/remoteai-native.git",
@@ -23,7 +23,7 @@
     "apps/desktop/src-tauri/tauri.conf.json": "3bdc10d97db4b5b3bbe4760f675f5abc21a4a7e11b0f9c0fa8369832860bc18f",
     "shared/localization/testLocale.ts": "6ca4daa3a6a5d9442013a8b5861803edfafebf20d2bd875d6a2608158dc53e35",
     "apps/desktop/e2e/browser-chrome-checks.ts": "ffb5e29d72a5b938cdea6adbe30bead71f221aecc1ef3f49e8a1890d88fd231e",
-    "shared/appearance/ApplicationTypography.tsx": "8e1502f862c60a6ebee16809ce874239eefaad5a2f001dfc94db10447a51c847",
+    "shared/appearance/ApplicationTypography.tsx": "330285d301442e3bb33557bb54862ad36619b26d59a0e989f52865475f6ce86e",
     "shared/remote-chat/views/ChatDetailsWorkspace.tsx": "08db895574eb6ec681b7df6db50330cb37d5b97ff124fe04e32a49ff86eac3a6",
     "shared/remote-chat/views/ChatMarkdown.tsx": "0410e8473384d0362054f556d44bcddaed5dec73893cfb0cbbb97240107fb67f",
     "shared/localization/browserLanguage.ts": "890f9fc9442e132ff333e4321070b6071269dafed72c85c1641a2da01caa566b",
@@ -1626,10 +1626,11 @@
     "shared/testing/activityDisclosureFixture.ts": "2e628cd2d9257542aa528fec9627340da801eef41798f2c56859a1093f98c4ae",
     "shared/conversation/activitySummary.ts": "17b158eb815709a009c29bcea8ca1092083073859d8153e8e89d2c858e83b0d8",
     "shared/platform/conversationScope.ts": "91bc16178a84485376c3ba78012ad279fa954c82518fbecb5d7255730e2fff4b",
-    "shared/appearance/codexTheme.ts": "ae3cca6b3c6a56e320a8ce44499fc116bcb14c4759956fd37686846ececa4a5d",
-    "shared/appearance/useCodexAppearance.ts": "65f8300d335a6a7a62634480b7ff860c1e9cc0fc45f438f7dc8f4a5401bf8ad1",
+    "shared/appearance/codexTheme.ts": "27991c2894d40e1cb5832b969757f42a2f4a42a496864f8dadfa9ff05b30fcf0",
+    "shared/appearance/useCodexAppearance.ts": "3094a72f79046b18ce86cb151e062aaf8cb747e2c3076dea3ef8119a0be8026c",
     "shared/chat/MessageDeliveryMode.tsx": "e734325eb55f11f1cc4481b91c0977107af3d6be1dda6699fd25858e365ef8ed",
-    "shared/appearance/codexAppearance.css": "86dad1b848336333b558381799106d88e9d001649cfb1fea577df92b5ac4e330",
-    "shared/chat/messageDeliveryMode.css": "28c993835a35fc5034d2c795dc9a8763196f3a0da72db5a0709df4bb6dc4efa9"
+    "shared/appearance/codexAppearance.css": "ecfa8620c5d93d26c114016b10a7c657a5aad85249a0bcdcf79203760035aff7",
+    "shared/chat/messageDeliveryMode.css": "28c993835a35fc5034d2c795dc9a8763196f3a0da72db5a0709df4bb6dc4efa9",
+    "shared/appearance/CodexAppearance.tsx": "171c56f7919cd4140d9c2d26469f6b7250933f6681184a65349b91f57c5b2692"
   }
 }
