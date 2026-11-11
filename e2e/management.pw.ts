@@ -138,6 +138,50 @@ test('2FA search, sorting, eight digits, editing and failed clipboard', async ({
   await expect(page.getByRole('button', { name: '复制 AWS 验证码', exact: true })).toContainText(/\d{4} \d{4}/);
 });
 
+test('2FA cloud changes arrive while open and web edits are uploaded', async ({ page, request }, info) => {
+  const label = testText(info.project.name === 'desktop'
+    ? 'client.app.2faKeys' : 'client.settings.twoFactorKeyCloudSync');
+  await navigate(page, '设置');
+  await page.getByRole('button', { name: `${label} ${testText('client.settings.off')}`, exact: true }).click();
+  await page.getByRole('switch', { name: '云端同步' }).click();
+  await closeSheet(page);
+  await navigate(page, '2FA');
+  await expect(page.locator('.verification-card')).toHaveCount(3);
+
+  const id = '10000000-0000-4000-8000-000000000001';
+  const timestamp = new Date().toISOString();
+  const entry = { id, issuer: 'Cross-device fixture', accountName: 'sync@example.test',
+    secret: 'JBSWY3DPEHPK3PXP', algorithm: 'SHA1', digits: 6, period: 30,
+    createdAt: timestamp, updatedAt: timestamp };
+  await request.put('http://127.0.0.1:1491/sync/totp', {
+    data: { entries: [entry], tombstones: [], modifiedAt: timestamp },
+  });
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.locator('.verification-card')).toHaveCount(4);
+  await expect(page.locator('.verification-card h2')).toContainText(['Cross-device fixture']);
+
+  await page.getByRole('button', { name: '管理 Cross-device fixture 的 2FA 密钥' }).click();
+  await page.getByRole('menuitem', { name: '编辑密钥' }).click();
+  await page.getByRole('textbox', { name: '服务名称', exact: true }).fill('Web edited fixture');
+  await page.getByRole('button', { name: '保存密钥' }).click();
+  await expect.poll(async () => {
+    const response = await request.get('http://127.0.0.1:1491/sync/totp');
+    const vault = await response.json();
+    return vault.entries.find((item: { id: string }) => item.id === id)?.issuer;
+  }).toBe('Web edited fixture');
+  await page.screenshot({ path: info.outputPath('2fa-synced-add-and-edit.png'), animations: 'disabled' });
+
+  const deletedAt = new Date(Date.now() + 60_000).toISOString();
+  await request.put('http://127.0.0.1:1491/sync/totp', {
+    data: { entries: [], tombstones: [{ id, deletedAt }], modifiedAt: deletedAt },
+  });
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.locator('.verification-card')).toHaveCount(3);
+  await expect(page.getByText('Web edited fixture', { exact: true })).toHaveCount(0);
+  await noOverflow(page);
+  await page.screenshot({ path: info.outputPath('2fa-synced-delete.png'), animations: 'disabled' });
+});
+
 test('grouped settings, persisted interval, shared sync and about', async ({ page }, info) => {
   const totpLabel = testText(info.project.name === 'desktop'
     ? 'client.app.2faKeys' : 'client.settings.twoFactorKeyCloudSync');

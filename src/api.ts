@@ -166,8 +166,10 @@ export async function authorizedFetch(
   });
 }
 
-export async function apiJson<T>(path: string, init: DeadlineRequestInit = {}): Promise<T> {
-  const response = await authorizedFetch(path, init);
+export async function apiJson<T>(
+  path: string, init: DeadlineRequestInit = {}, guard?: (session: AuthSession | null) => void,
+): Promise<T> {
+  const response = await authorizedFetch(path, init, guard);
   if (!response.ok) throw new Error(await responseError(response));
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
@@ -292,15 +294,24 @@ export async function updateAccountDetails(accountId: string, details: {
     body: JSON.stringify(details),
   });
 }
-export async function fetchTotpVault() {
-  return apiJson<TotpVault & { modifiedAt: string | null }>('/sync/totp');
+function totpSessionGuard(expected?: AuthSession) {
+  return (session: AuthSession | null) => {
+    if (expected && (expected.baseUrl !== session?.baseUrl
+      || expected.email.toLowerCase() !== session?.email.toLowerCase())) {
+      throw new Error(t('client.app.pleaseSignInFirst'));
+    }
+  };
 }
 
-export async function putTotpVault(vault: TotpVault) {
+export async function fetchTotpVault(session?: AuthSession) {
+  return apiJson<TotpVault & { modifiedAt: string | null }>('/sync/totp', {}, totpSessionGuard(session));
+}
+
+export async function putTotpVault(vault: TotpVault, session?: AuthSession) {
   return apiJson<TotpVault>('/sync/totp', {
     method: 'PUT',
     body: JSON.stringify(vault),
-  });
+  }, totpSessionGuard(session));
 }
 export async function fetchResetCredits(accountId: string) {
   return apiJson<ResetCreditsSummary>(`/sync/accounts/${encodeURIComponent(accountId)}/reset-credits`);

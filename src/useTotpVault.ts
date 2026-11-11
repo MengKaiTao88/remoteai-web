@@ -1,8 +1,6 @@
-import { t } from '../../../shared/localization/browserClient';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Toast } from 'antd-mobile';
-import { fetchTotpVault, putTotpVault } from './api';
-import { emptyTotpVault, mergeTotpVaults } from './totp';
+import { emptyTotpVault, mergeTotpVaults, totpVaultsEqual } from './totp';
+import { useTotpCloudSync } from './useTotpCloudSync';
 import type { AuthSession, TotpEntry, TotpVault } from './types';
 
 const VAULT_PREFIX = 'codex-switch.web.totp-vault.v1';
@@ -41,12 +39,11 @@ export function saveTotpSyncEnabled(session: AuthSession, enabled: boolean) {
 export function useTotpVault(session: AuthSession | null) {
   const [vault, setVault] = useState<TotpVault>(emptyTotpVault);
   const [initialized, setInitialized] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [cloudSyncEnabled, setCloudSyncEnabled] = useState(false);
   const vaultRef = useRef(vault);
   const activeSessionRef = useRef(session);
-  vaultRef.current = vault;
   activeSessionRef.current = session;
+  const identity = session ? sessionKey(session, VAULT_PREFIX) : '';
 
   const persist = useCallback((activeSession: AuthSession, next: TotpVault) => {
     if (activeSessionRef.current?.email !== activeSession.email
@@ -56,60 +53,51 @@ export function useTotpVault(session: AuthSession | null) {
     saveVault(activeSession, next);
   }, []);
 
-  const synchronize = useCallback(async (activeSession: AuthSession, next: TotpVault) => {
-    setSyncing(true);
-    try {
-      const remote = await putTotpVault(next);
-      persist(activeSession, mergeTotpVaults(vaultRef.current, remote));
-    } catch {
-      Toast.show({ icon: 'fail', content: t("client.settings.cloudSyncFailedYourLocalKeysAreSafePleaseTry") });
-    } finally {
-      setSyncing(false);
-    }
-  }, [persist]);
-
   useEffect(() => {
-    activeSessionRef.current = session;
-    if (!session) {
+    const activeSession = activeSessionRef.current;
+    if (!activeSession) {
+      vaultRef.current = emptyTotpVault();
       setVault(emptyTotpVault());
+      setCloudSyncEnabled(false);
       setInitialized(true);
       return undefined;
     }
-    const local = loadVault(session);
-    const enabled = loadTotpSyncEnabled(session);
-    persist(session, local);
+    const local = loadVault(activeSession);
+    const enabled = loadTotpSyncEnabled(activeSession);
+    persist(activeSession, local);
     setCloudSyncEnabled(enabled);
     setInitialized(true);
-    if (enabled) void synchronize(session, local);
-    const onSyncChange = () => setCloudSyncEnabled(loadTotpSyncEnabled(session));
-    window.addEventListener(SYNC_EVENT, onSyncChange);
-    return () => {
-      activeSessionRef.current = null;
-      window.removeEventListener(SYNC_EVENT, onSyncChange);
+    const onSyncChange = (event: Event) => {
+      if (event instanceof StorageEvent && event.key !== null
+        && event.key !== sessionKey(activeSession, SYNC_PREFIX)
+        && event.key !== sessionKey(activeSession, VAULT_PREFIX)) return;
+      setCloudSyncEnabled(loadTotpSyncEnabled(activeSession));
+      const merged = mergeTotpVaults(vaultRef.current, loadVault(activeSession));
+      if (!totpVaultsEqual(merged, vaultRef.current)) persist(activeSession, merged);
     };
-  }, [persist, session, synchronize]);
+    window.addEventListener(SYNC_EVENT, onSyncChange);
+    window.addEventListener('storage', onSyncChange);
+    return () => {
+      window.removeEventListener(SYNC_EVENT, onSyncChange);
+      window.removeEventListener('storage', onSyncChange);
+    };
+  }, [persist, identity]);
+
+  const { syncing, syncCloud } = useTotpCloudSync({
+    session, enabled: Boolean(session && loadTotpSyncEnabled(session)), vaultRef, persist,
+  });
 
   const commit = useCallback((updater: (current: TotpVault, now: string) => TotpVault) => {
     if (!session) return;
     const next = updater(vaultRef.current, new Date().toISOString());
     persist(session, next);
-    if (loadTotpSyncEnabled(session)) void synchronize(session, next);
-  }, [persist, session, synchronize]);
+    if (loadTotpSyncEnabled(session)) void syncCloud();
+  }, [persist, session, syncCloud]);
 
   const refreshCloud = useCallback(async () => {
     if (!session) return 'empty' as const;
-    setSyncing(true);
-    try {
-      const remote = await fetchTotpVault();
-      if (!remote.modifiedAt) return 'empty' as const;
-      const merged = mergeTotpVaults(vaultRef.current, remote as TotpVault);
-      if (JSON.stringify(merged) === JSON.stringify(vaultRef.current)) return 'current' as const;
-      persist(session, merged);
-      return 'updated' as const;
-    } finally {
-      setSyncing(false);
-    }
-  }, [persist, session]);
+    return syncCloud(false);
+  }, [session, syncCloud]);
 
   const saveEntry = useCallback((draft: Omit<TotpEntry, 'id' | 'createdAt' | 'updatedAt'>, id?: string) => {
     commit((current, now) => {
@@ -142,7 +130,6 @@ export function useTotpVault(session: AuthSession | null) {
       if (!session) return;
       saveTotpSyncEnabled(session, enabled);
       setCloudSyncEnabled(enabled);
-      if (enabled) void synchronize(session, vaultRef.current);
     },
     syncing,
   };
