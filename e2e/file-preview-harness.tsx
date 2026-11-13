@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { WebLocaleProvider } from '../src/i18n/WebLocaleProvider';
+import { ApplicationTypography } from '../../../shared/appearance/ApplicationTypography';
 import { initializeTheme } from '../src/theme/preference';
 import { ChatFilePreview, type FilePreviewContext } from '../../../shared/remote-chat/views/ChatFilePreview';
 import { ChatFileContext } from '../../../shared/remote-chat/views/ChatFileLink';
@@ -28,6 +29,7 @@ const files: Record<string, string> = {
   'F:/remote/docs/next.md': '# 后续文档\n\n这是同一台远程电脑上的文件。',
   'verification.md': markdown, 'README.MARKDOWN': markdown, 'long.md': longMarkdown,
   'empty.md': ' \n', 'source.ts': sourceCode, [externalCodePath]: sourceCode,
+  [externalCodePath.replace(/\.ts$/, '.html')]: '<h1>页面预览</h1>',
   'page.HTML': '<h1>页面预览</h1><script>document.body.dataset.ready = "yes";'
     + 'try { parent.previewScriptRan = true } catch {}'
     + 'try { localStorage.setItem("unsafe", "yes") } catch {}'
@@ -67,12 +69,13 @@ const context: FilePreviewContext = {
 };
 const path = params.get('path') ?? 'verification.md';
 createRoot(document.getElementById('root')!).render(
-  <WebLocaleProvider>{params.has('pc') ? <PcFilePreviewFixture legacy={params.has('legacy')} />
+  <WebLocaleProvider><ApplicationTypography>{params.has('pc') ? <PcFilePreviewFixture legacy={params.has('legacy')} />
   : params.has('workspace') ? <div className="chat-page" style={{ height: '100dvh' }}>
     <ChatFileContext.Provider value={context}>
       <ChatDetailsWorkspace selected={context.threadId} active enabled>
         <ChatMarkdown text="[交接文档](F:/remote/docs/handoff.md)" />
       </ChatDetailsWorkspace>
     </ChatFileContext.Provider>
-  </div> : <ChatFilePreview path={path} line={3} context={context} onClose={() => {}} />}</WebLocaleProvider>,
+  </div> : <ChatFilePreview path={path} line={3} context={context} onClose={() => {}} />}
+  </ApplicationTypography></WebLocaleProvider>,
 );

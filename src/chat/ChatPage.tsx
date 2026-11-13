@@ -24,6 +24,7 @@ import { RemoteGuiTools } from '../../../../shared/conversation/remote/RemoteGui
 import { RemoteGuiProject } from '../../../../shared/conversation/remote/RemoteGuiProject';
 import './desktopTools.css';
 import { CodexAppearance } from '../../../../shared/appearance/CodexAppearance';
+import { ConversationSync } from './ConversationSync';
 
 interface Props {
   session: AuthSession; devices: RemoteDevice[]; active: boolean; openAccounts?: () => void;
@@ -76,7 +77,7 @@ function WebChat({ session, device, selected, ...props }: Props & {
 }) {
   const chat = useChat(session, device?.deviceId ?? '', props.active && Boolean(device));
   const desktop = useDesktopLayout();
-  const cwd = chat.state.selected?.cwd ?? chat.state.draftProject?.cwd ?? '';
+  const [cwd, setWorkspaceCwd] = useState('');
   const terminal = useRemoteTerminalLauncher({ client: chat.controller.guiTools.terminal,
     cwd, connected: chat.state.ready });
   const installer = useRemoteCliInstaller(chat.controller.guiTools,
@@ -96,11 +97,15 @@ function WebChat({ session, device, selected, ...props }: Props & {
     <div hidden={props.sshDiscovery} style={{ display: props.sshDiscovery ? 'none' : 'contents' }}>
     <CodexAppearance><ConnectedChat {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
     cliVersion={installer.version}
+    onWorkspaceChange={setWorkspaceCwd}
     composerHeader={desktop && <RemoteGuiProject state={chat.state} controller={chat.controller}
       active={props.active && chat.foreground} computers={{ ...props.deviceRefresh, allowLocal: false,
         current: device ?? null, devices: props.devices, authenticated: true, login: () => {},
         choose: selected => { if (selected) props.chooseDevice(selected.deviceId); } }} />}
     headerActions={<div className="chat-header-tools">
+      {desktop && device && <ConversationSync session={session} devices={props.devices} deviceId={device.deviceId}
+        active={props.active && chat.foreground}
+        onSynced={() => { void chat.controller.list(); }} />}
       <ChatTools client={chat.controller.guiTools} active={props.active} terminal={terminal}
         desktopActions={<><GuiRemoteDesktop client={chat.controller.guiTools.desktop} active={props.active}
           connected={chat.state.mode === 'direct' || chat.state.mode === 'relay'} />

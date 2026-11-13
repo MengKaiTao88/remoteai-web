@@ -1,6 +1,6 @@
 import { uiText } from "../../../../../shared/localization/uiText";
 import { guiApi } from "../../../../../shared/conversation/api";
-import { conversationSnapshot as conversation } from './conversationSnapshot';
+import { resumedConversationSnapshot as conversation } from './conversationSnapshot';
 import { withSentMessage } from "../../../../../shared/conversation/sentMessages";
 import { queueSendError } from "./queueSendError";
 import { modelSelectionError } from "../../../../../shared/conversation/modelSelection";
@@ -22,8 +22,25 @@ interface QueueHost {
 
 export class MessageQueue {
   private pending = new Set<string>();
+  private preparing = new Map<string, number>();
   private cancelledIds: string[] = [];
   constructor(private host: QueueHost) {}
+  /** Accept durable phone messages before slow history hydration without dispatching them early. */
+  defer = (threadId: string) => {
+    this.preparing.set(threadId, (this.preparing.get(threadId) ?? 0) + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const remaining = (this.preparing.get(threadId) ?? 1) - 1;
+      if (remaining > 0) this.preparing.set(threadId, remaining);
+      else this.preparing.delete(threadId);
+    };
+  };
+  preparationFailed = (threadId: string, id: string, error: unknown) => {
+    this.fail(threadId, new Set([id]), error, false);
+    this.update(threadId, this.list(threadId).map(item => item.id === id ? { ...item, needsReview: true } : item));
+  };
   /** Bounded receipts survive snapshot coalescing, without retaining message contents. */
   cancelledMessages = (): readonly string[] => this.cancelledIds;
   private list = (threadId: string) => this.host.getSnapshot().queued[threadId] ?? [];
@@ -114,9 +131,10 @@ export class MessageQueue {
       || state.connection !== "ready" || state.sending
       || state.compacting === threadId
       || this.pending.has(threadId)
+      || this.preparing.has(threadId)
       || state.conversations[threadId]?.activeTurn || !messages.length
       || modelSelectionError(state.models, messages[0])
-      || (!retry && messages.some(item => item.needsReview))) return;
+      || (!retry && messages.some(item => item.needsReview || item.error))) return;
     this.pending.add(threadId);
     const ids = new Set(messages.map((item) => item.id));
     this.markBusy(threadId, ids, true);

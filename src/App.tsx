@@ -37,6 +37,8 @@ import { useWebLounge } from './lounge/useWebLounge';
 import { LoungeAvatar } from '../../../shared/lounge/LoungeAvatar';
 import { accountLabel } from '../../../shared/lounge/accountLabel';
 import { downloadOwner } from '../../../shared/downloads/manager';
+import { useSyncDownloadAccount } from '../../../shared/conversation/sync/useSyncDownloadAccount';
+import { WebSyncDownloads } from './chat/useWebSyncHosts';
 import { loadRefreshMinutes, REFRESH_INTERVAL_EVENT } from "./settings/refreshInterval";
 import { useTotpVault } from "./useTotpVault";
 import { ChatPage } from "./chat/ChatPage";
@@ -275,7 +277,7 @@ function DevicesPage() {
 }
 
 const navItems: Array<{ key: AppPage; label: string; icon: typeof LayoutDashboard }> = [
-  { key: "chat", get label() { return t("client.app.chat"); }, icon: MessageSquare },
+  { key: "chat", get label() { return t("client.agentHub.title"); }, icon: MessageSquare },
   { key: "accounts", get label() { return t("client.app.accounts"); }, icon: LayoutDashboard },
   { key: "discover", get label() { return t("client.discovery.title"); }, icon: Compass },
   { key: "settings", get label() { return t("client.app.settings"); }, icon: Settings },
@@ -288,6 +290,7 @@ function AppShell() {
   const { session } = useAppSelector((state) => state.auth);
   const lounge = useWebLounge(session);
   const { page, profile, devices, refreshing, error } = useAppSelector((state) => state.data);
+  useSyncDownloadAccount(session ? downloadOwner(session) : '');
   const desktopLayout = useDesktopLayout();
   useChatViewport(page === 'lounge' && !desktopLayout);
   const lastRefreshRef = useRef(Date.now());
@@ -365,9 +368,9 @@ function AppShell() {
     lounge: <LoungePage controller={lounge.controller} mobile={!desktopLayout}
       onBack={() => dispatch(pageChanged('discover'))} />,
     discover: discoveryPage, 'token-summary': discoveryPage, ssh: null,
-    downloads: session && <DownloadManagerPage owner={downloadOwner(session)}
-      onBack={() => dispatch(pageChanged('discover'))} />,
-    accounts: <AccountsPage />, devices: <DevicesPage />,
+    downloads: session && <><WebSyncDownloads session={session} devices={devices} />
+      <DownloadManagerPage owner={downloadOwner(session)} onBack={() => dispatch(pageChanged('discover'))} /></>,
+    accounts: session && <AccountsPage session={session} />, devices: <DevicesPage />,
     totp: <TotpPage manager={totpManager} onBack={() => dispatch(pageChanged('discover'))} />,
     settings: <SettingsPage totpManager={totpManager} loungeController={lounge.controller} />,
   };

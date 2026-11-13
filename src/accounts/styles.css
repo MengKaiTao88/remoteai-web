@@ -173,3 +173,8 @@ button.account-info-row { cursor: pointer; }
 .reset-priority-accounts li > span { overflow-wrap: anywhere; }
 .reset-priority-accounts strong { margin-left: 16px; }
 .reset-priority-accounts small { display: block; color: var(--adm-color-weak); }
+.official-account-add { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent;
+  color: var(--app-accent); font: inherit; cursor: pointer; }
+.claude-accounts-section { margin-top: 24px; padding: 20px; border-radius: 16px;
+  background: var(--app-surface); min-width: 0; }
+.account-row-identity > small { color: var(--app-muted); font-weight: normal; }

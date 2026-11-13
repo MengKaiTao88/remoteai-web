@@ -18,7 +18,7 @@ import { GuiReadState } from "./threadReadState";
 import type { AttachmentReference } from "../../../../../shared/conversation/attachmentTypes";
 import { deleteGuiThread } from "./deleteThread";
 import { reduceEvent } from "../../../../../shared/conversation/events";
-import { conversationSnapshot as conversation } from './conversationSnapshot';
+import { resumedConversationSnapshot as conversation } from './conversationSnapshot';
 import { withSentMessage } from '../../../../../shared/conversation/sentMessages';
 import { acceptGuiTurn } from './acceptedTurn';
 import { MessageQueue } from "./messageQueue";
@@ -37,6 +37,7 @@ import { GuiThreadTitles } from "./threadTitles";
 import type { ApprovalReply, GuiEvent, GuiState, Model, Settings, Thread, Turn } from "../../../../../shared/conversation/types";
 import type { Item, MessageInput, SkillReference } from "../../../../../shared/conversation/types";
 import { isTextDelta, StreamFrame } from '../../../../../shared/chat/streamFrame';
+import { consumeBackendModelRefresh } from './backendScope';
 
 export class GuiController {
   readonly groups = createGuiGroups({ snapshot: () => this.state, patch: patch => this.patch(patch) });
@@ -156,8 +157,10 @@ export class GuiController {
   }
 
   /** Keep confirmed local and remote sends visible even if interruption precedes the user item. */
-  acceptSentTurn = (threadId: string, turn: Turn, input: MessageInput) => {
-    this.acceptTurn(threadId, withSentMessage(turn, [{ ...input, id: turn.id }], 0));
+  acceptSentTurn = (threadId: string, turn: Turn, input: MessageInput,
+    receipt: { userMessageIndex?: number; messageId?: string } = {}) => {
+    this.acceptTurn(threadId, withSentMessage(turn,
+      [{ ...input, id: receipt.messageId ?? turn.id }], receipt.userMessageIndex ?? 0));
   };
 
   private flushStream = () => {
@@ -243,7 +246,8 @@ export class GuiController {
       this.patch({ connection: "ready", approvals, error: "" });
       this.modelCatalog.activate();
       const results = await Promise.allSettled([
-        this.refresh(false, false), this.modelCatalog.restore().catch(() => {
+        this.refresh(false, false), (consumeBackendModelRefresh()
+          ? this.modelCatalog.refresh() : this.modelCatalog.restore()).catch(() => {
           // A missing local catalog waits for an explicit retry or source change.
         }), this.modelSettings.refresh(),
       ]);
@@ -266,6 +270,11 @@ export class GuiController {
   refresh = (more = false, force = !more) => this.lists.refresh(more, force);
   filter = (search: string, archived: boolean) => this.lists.filter(search, archived);
   settings = (settings: Partial<Settings>) => {
+    if (settings.access !== undefined && this.modelSettings.managesAccess(this.state.selected)) {
+      const { access, ...rest } = settings;
+      settings = rest;
+      void this.modelSettings.changeAccess(access).catch(this.report);
+    }
     const modelChanged = settings.model !== undefined || settings.effort !== undefined;
     // Publish combined permission/model changes only after the model choice has been resolved.
     this.patch({ settings: { ...this.state.settings, ...settings } }, !modelChanged);
@@ -315,9 +324,9 @@ export class GuiController {
     const generation = ++this.selectionGeneration;
     this.patch({ selected: id, error: "" });
     try {
-      await Promise.all([watchConversation(this, id), this.modelSettings.select(id)]);
-      if (generation !== this.selectionGeneration) return;
-      await this.history.select(id, () => generation === this.selectionGeneration);
+      // History remains readable while the execution owner's model settings are unavailable.
+      await Promise.all([watchConversation(this, id), this.modelSettings.select(id),
+        this.history.select(id, () => generation === this.selectionGeneration)]);
     }
     catch (error) { if (generation === this.selectionGeneration) this.report(error); }
   };
@@ -549,6 +558,7 @@ export class GuiController {
 
   activate = () => { this.disposed = false; this.modelCatalog.activate(); };
   suspend = () => {
+    ++this.selectionGeneration;
     void watchConversation(this, null).catch(this.report);
     this.threadList.invalidate();
     this.modelCatalog.suspend();
@@ -557,6 +567,7 @@ export class GuiController {
     this.patch({ ...reduceEvent(this.state, { method: "connection/closed", params: {} }), error: "" });
   };
   dispose = () => {
+    ++this.selectionGeneration;
     void watchConversation(this, null).catch(error => console.error('Could not release conversation subscription', error));
     this.flushStream();
     this.threadList.invalidate();

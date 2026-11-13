@@ -22,6 +22,7 @@ export interface CreditsSnapshot {
 }
 
 export interface Account {
+  accountSource?: string;
   id: string;
   email: string;
   group: string;
@@ -265,6 +266,7 @@ export interface LocalProxyLanApiKeyInput {
 export type ProxyServiceTier = "default" | "priority" | "ultrafast";
 
 export interface LocalProxyStatus {
+  managedExternally?: boolean;
   activeProviderGroup?: string | null;
   running: boolean;
   serviceTier?: ProxyServiceTier;
@@ -277,6 +279,7 @@ export interface LocalProxyStatus {
   concurrentAccountRoutingEnabled: boolean;
   concurrentAccountGroup?: string | null;
   customAutoSwitchPriorityEnabled: boolean;
+  autoSwitchPriorityByReset?: boolean;
   customAutoSwitchThresholdEnabled: boolean;
   globalAutoSwitchThreshold: number;
   autoDisableUnreachableAccounts: boolean;
