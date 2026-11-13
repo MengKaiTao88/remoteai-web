@@ -1,3 +1,5 @@
+import { ResetPrioritySettings } from './ResetPrioritySettings';
+import { Button } from 'antd-mobile';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { useCallback, useState } from 'react';
 import { Empty, PullToRefresh, SpinLoading, Toast } from 'antd-mobile';
@@ -24,6 +26,7 @@ export function AccountsPage() {
   const { consumingQuota, refreshingAccountId, selectedChatDeviceId } = useAppSelector(s => s.data);
   const usageBusy = refreshing || consumingQuota || Boolean(refreshingAccountId);
   const promptRestart = useRemoteModelRestartPrompt();
+  const [priorityOpen, setPriorityOpen] = useState(false);
   const [privateMode, setPrivateMode] = useState(true);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [switchId, setSwitchId] = useState<string | null>(null);
@@ -58,6 +61,7 @@ export function AccountsPage() {
           refreshing={refreshing} consuming={consumingQuota} busy={usageBusy} onConsume={openConsumption}
           updatedAt={lastRefreshAt} onPrivacy={() => setPrivateMode(value => !value)}
           onRefresh={() => void refresh()} onAdd={() => setAdding(true)} />
+        <Button size="small" onClick={() => setPriorityOpen(true)}>{t("client.resetPriority.title")}</Button>
         {loading ? <div className="page-loading"><SpinLoading /><span>{t("client.accounts.loadingAccounts")}</span></div>
           : !accounts.length ? <Empty description={t("client.accounts.noAccountsYetSelectAddAccountToGetStarted")} />
             : <div className="accounts-grid">{accounts.map(account => <AccountCard key={account.id}
@@ -66,6 +70,8 @@ export function AccountsPage() {
               onSwitch={() => setSwitchId(account.id)} />)}</div>}
       </div>
     </PullToRefresh>
+    {priorityOpen && <ResetPrioritySettings devices={devices} accounts={accounts}
+      privateMode={privateMode} onClose={() => setPriorityOpen(false)} />}
     {detail && <AccountDetails key={detail.id} account={detail} devices={devices} privateMode={privateMode}
       onClose={() => setDetailId(null)} onUpdated={refresh}
       onSwitch={() => { setDetailId(null); setSwitchId(detail.id); }} />}

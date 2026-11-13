@@ -160,3 +160,16 @@ button.account-info-row { cursor: pointer; }
   .accounts-toolbar > span { font-size: 10px; gap: 3px; }
   .accounts-toolbar .adm-button { font-size: 12px; }
 }
+
+.reset-priority-settings { display: grid; gap: 16px; padding: 16px; }
+.reset-priority-settings > label { display: grid; gap: 8px; }
+.reset-priority-settings select { width: 100%; font: inherit; padding: 8px; color: inherit;
+  background: var(--app-surface, white); border: 1px solid var(--app-border, #e4eeeb); border-radius: 8px; }
+.reset-priority-settings .reset-priority-setting { display: flex; align-items: center;
+  justify-content: space-between; gap: 16px; }
+.reset-priority-setting > span { min-width: 0; flex: 1; }
+.reset-priority-accounts { margin: 0; padding: 0; list-style: none; }
+.reset-priority-accounts li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 0; }
+.reset-priority-accounts li > span { overflow-wrap: anywhere; }
+.reset-priority-accounts strong { margin-left: 16px; }
+.reset-priority-accounts small { display: block; color: var(--adm-color-weak); }

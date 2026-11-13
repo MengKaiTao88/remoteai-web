@@ -9,7 +9,7 @@
     "repository": "https://github.com/piperhex/remoteai-native.git",
     "revision": "5c5974f643d1aa8a78f3716cb89bdc2216f45b19"
   },
-  "i18n": "https://github.com/piperhex/remoteai-i18n/releases/download/i18n-v0.1.5/remoteai-i18n-0.1.5.tgz",
+  "i18n": "https://github.com/MengKaiTao88/remoteai-i18n/releases/download/i18n-v0.1.6-custom.1/remoteai-i18n-0.1.6-custom.1.tgz",
   "files": {
     "scripts/test-browser.mjs": "456d5b867ac937a571630f4a01cd37ded9380d519bee3011e8807480c0739733",
     "scripts/test-browser.d.mts": "0f13ced709be8e097af7d4038400129b64e5d400f62e9bea2a0371125ec4f70f",
@@ -41,7 +41,7 @@
     "shared/remote-chat/views/ChatSidebar.tsx": "ead86694e72b345ecc7bed94cd8f091b57d691ba77f3f366cd68079ac5a1a1e5",
     "shared/layout/useDesktopLayout.ts": "b590f4904c79addcd34b6883b826ea59feae49571aa7511f608b09c4f76d87f2",
     "shared/remote-chat/guiAccounts.ts": "ff5f9494738fef5c2e82556ecd381b4a695fe47c1569677cdceb5ce19ada4052",
-    "shared/remote-chat/guiTools.ts": "fd8899b2dc381a4bd2ec838bc2645f5fc8317a9a47c1136ecc1bc83819f6b579",
+    "shared/remote-chat/guiTools.ts": "911c3378dfac34b917075c0bd4b896c88d1dfff7c67f0b7de9cb83ec1060cf48",
     "shared/remote-chat/views/types.ts": "85fca8c9b14d01b430c2449021140c149a733a291ab2af7047f77d83901971be",
     "shared/remote-chat/views/ChatMessages.tsx": "a3c05c57e19f31c0a99ab67d37ac1d65bf1223596882615e8e1740e1fb8a10b6",
     "shared/remote-chat/views/ChatProcessing.tsx": "11608c8edbb7dddbdefaa520ace75e855fbd82609c846e68c78c6206e412f682",
@@ -1631,6 +1631,17 @@
     "shared/chat/MessageDeliveryMode.tsx": "e734325eb55f11f1cc4481b91c0977107af3d6be1dda6699fd25858e365ef8ed",
     "shared/appearance/codexAppearance.css": "ecfa8620c5d93d26c114016b10a7c657a5aad85249a0bcdcf79203760035aff7",
     "shared/chat/messageDeliveryMode.css": "28c993835a35fc5034d2c795dc9a8763196f3a0da72db5a0709df4bb6dc4efa9",
-    "shared/appearance/CodexAppearance.tsx": "171c56f7919cd4140d9c2d26469f6b7250933f6681184a65349b91f57c5b2692"
+    "shared/appearance/CodexAppearance.tsx": "171c56f7919cd4140d9c2d26469f6b7250933f6681184a65349b91f57c5b2692",
+    "shared/remote-chat/resetPriority.ts": "a8efd0e89a204d4212ba537c17417ea6b6161349658e03406ef9fb6cc82434a7"
+  },
+  "sourceOverlays": {
+    "shared/remote-chat/guiTools.ts": {
+      "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
+      "revision": "368583bbaa11a61dab3e1beb401e5d5dfe11e735"
+    },
+    "shared/remote-chat/resetPriority.ts": {
+      "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
+      "revision": "368583bbaa11a61dab3e1beb401e5d5dfe11e735"
+    }
   }
 }
