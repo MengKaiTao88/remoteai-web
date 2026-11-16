@@ -10,11 +10,13 @@ import { createPreviewDownloads } from '../downloads/previews';
 import { downloadOwner } from '../../../../shared/downloads/manager';
 import { useActiveChatPolicy } from '../../../../shared/remote-chat/useActiveChatPolicy';
 import { createWebSshProfiles } from '../sshProfiles';
+import { boundedHistoryRequest } from './historyRequest';
 
 const HISTORY_REFRESH_MS = 15_000;
 
 function createController(session: AuthSession, deviceId: string) {
-  const controller = new ChatController((events) => new ChatConnection({ ...events, deviceId, managePolicyMode: false,
+  const controller = new ChatController((events) => {
+    const connection = new ChatConnection({ ...events, deviceId, managePolicyMode: false,
     createPacketCompression: createBrowserPacketCompression,
     verifyHostKey: trustedHost(browserTrustStore, trustScope(session.baseUrl, deviceId)),
     randomBytes: (length) => crypto.getRandomValues(new Uint8Array(length)),
@@ -34,7 +36,14 @@ function createController(session: AuthSession, deviceId: string) {
       return current;
     },
     createPeer: (options) => new RtcPeer(options, () => new RTCPeerConnection({ iceServers: options.iceServers })),
-  }), undefined, undefined, createWebSshProfiles(session));
+    });
+    const request = boundedHistoryRequest(connection.request.bind(connection));
+    return { request, start: () => connection.start(), stop: () => connection.stop(),
+      retryNow: () => connection.retryNow(),
+      confirmHostIdentity: fingerprint => connection.confirmHostIdentity(fingerprint),
+      reportDiagnostic: diagnostic => connection.reportDiagnostic(diagnostic),
+      downloadsBulk: connection.downloadsBulk, setBulkSupport: value => connection.setBulkSupport(value) };
+  }, undefined, undefined, createWebSshProfiles(session));
   controller.deferToolDetails = true;
   controller.deferProcessDetails = true;
   controller.previewDownloads = createPreviewDownloads({ owner: downloadOwner(session), deviceId });

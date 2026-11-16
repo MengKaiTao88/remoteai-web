@@ -1,13 +1,15 @@
 /* DSH source geometry: 36 px end keys, 6 px inset, one row at rest / two on focus. */
 .dsh-workspace { --dsh-sheet:#f6f7fc; --dsh-control:#1e232e0a; --dsh-selected:#4b67b412; }
 .dsh-workspace[data-theme=dark] { --dsh-sheet:#242932; --dsh-control:#ffffff0d; --dsh-selected:#aebfe926; }
-.dsh-workspace .dsh-codex-content { display:block; position:relative; }
+.dsh-workspace .dsh-codex-content {
+  display:grid; grid-template-rows:minmax(0,1fr) auto; position:relative; overflow:hidden;
+}
 .dsh-workspace .dsh-codex-content[hidden] { display:none; }
 .dsh-workspace .dsh-codex-content > .dsh-message-region {
-  position:absolute; inset:0 0 var(--dsh-composer-height,92px); min-width:0; overflow:hidden;
+  position:relative; min-height:0; min-width:0; overflow:hidden;
 }
 .dsh-workspace .dsh-composer-dock {
-  position:absolute; inset:auto 0 0; z-index:4; min-height:0; max-height:100%; padding:6px 12px 10px;
+  position:relative; z-index:4; min-height:0; padding:6px 12px 10px;
   background:var(--dsh-solid);
 }
 .dsh-workspace .dsh-composer-dock > .chat-processing-status {
@@ -16,6 +18,11 @@
 .dsh-workspace .dsh-composer-dock .chat-processing-label {
   overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
 }
+.dsh-history-status {
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px; max-width:100%; padding:8px 0;
+  color:var(--dsh-muted); font-size:.85em;
+}
+.dsh-history-status > span { max-width:400px; overflow-wrap:anywhere; }
 .dsh-input-host { position:relative; min-width:0; width:100%; }
 .dsh-input {
   position:relative; width:100%; margin:0; padding:6px; border:1px solid var(--dsh-line);
@@ -113,7 +120,7 @@
 .dsh-model-refresh { display:flex; align-items:center; gap:6px; justify-content:center; margin:20px auto 0; padding:8px 12px; border:0; border-radius:18px; background:transparent; color:var(--dsh-accent); cursor:pointer; }
 .dsh-model-search { width:100%; padding:10px 12px; border:1px solid var(--dsh-line); border-radius:16px; color:inherit; background:var(--dsh-control); margin-bottom:12px; }
 .dsh-model-error { font-size:.85em; color:var(--app-danger,#b95454); margin-top:12px; }
-@supports (corner-shape:superellipse(1.5)) { .dsh-input,.dsh-model-card { corner-shape:superellipse(1.5); } }
+@supports (corner-shape:superellipse(1.5)) { .dsh-model-card { corner-shape:superellipse(1.5); } }
 @media (prefers-reduced-motion:reduce) { .dsh-input,.dsh-input-key,.dsh-model-card { transition:none; } }
 /* Mobile WebKit must not allocate a filtered input layer over an arbitrarily tall history. */
 @media (pointer:coarse) {

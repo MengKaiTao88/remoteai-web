@@ -18,6 +18,7 @@ import { useMobileHistoryAnchor } from '../../../../shared/remote-chat/views/use
 import type { ChatController, ChatState, Item, Turn } from '../../../../shared/remote-chat/views/types';
 import type { DshChatViewModel, DshRow } from './dshViewModel';
 import { createDshGalleryProjector } from './dshGallery';
+import { DshHistoryStatus } from './DshHistoryStatus';
 import '../../../../shared/remote-chat/views/messages.css';
 import '../../../../shared/remote-chat/views/desktopMessages.css';
 
@@ -127,7 +128,7 @@ export function DshMessages({ state, controller, view, active }: Props) {
             <button type="button" className="chat-text-action" disabled={state.historyLoadingMore} onClick={scroll.more}>
               {t(state.historyLoadingMore ? 'client.mobile.loading' : 'client.chat.loadEarlierMessages')}</button>
           </div>}
-          {state.historyLoading && !rows.length && <p role="status">{t('client.chat.loadingChatHistory')}</p>}
+          <DshHistoryStatus state={state} controller={controller} />
           {rows.map(row => <HistoryRow key={row.key} ready={state.ready} controller={controller} active={active} row={row}
             editState={row.kind === 'user' && row.turn?.id === latestUser?.turnId
               && row.item?.id === latestUser?.item.id ? state : undefined}

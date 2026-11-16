@@ -76,7 +76,7 @@ export async function screenshot(page: Page, info: TestInfo, name: string) {
 }
 
 export async function login(page: Page) {
-  await page.goto('/web/', { waitUntil: 'domcontentloaded' });
+  await page.goto('/web/', { waitUntil: 'commit' });
   await page.getByPlaceholder('name@example.com').fill('mobile-test@example.test');
   await page.getByPlaceholder('输入登录密码').fill('local-test');
   await page.getByPlaceholder('输入登录密码').press('Enter');

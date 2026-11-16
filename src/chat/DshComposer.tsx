@@ -7,7 +7,6 @@ import { compactUnavailableReason } from '../../../../shared/remote-chat/client/
 import { useChatCatalog } from '../../../../shared/remote-chat/views/useChatCatalog';
 import { currentRunningTurn } from '../../../../shared/chat/runningTurn';
 import { t } from '../../../../shared/localization/browserClient';
-import { useLayoutEffect, useRef } from 'react';
 import type { DshChatWorkspaceProps } from './DshChatWorkspace';
 
 export function DshComposer({ chat, device, active, scope, chooseComputer, cliVersion }: DshChatWorkspaceProps & {
@@ -18,18 +17,7 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
   const catalog = useChatCatalog(controller, cwd, state.ready);
   const runningTurn = currentRunningTurn(state.selected?.turns);
   const enabled = active && chat.foreground;
-  const dock = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const node = dock.current;
-    const parent = node?.parentElement;
-    if (!node || !parent) return;
-    const measure = () => parent.style.setProperty('--dsh-composer-height', node.getBoundingClientRect().height + 'px');
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-  return <div ref={dock} className="dsh-composer-dock">
+  return <div className="dsh-composer-dock">
     {runningTurn && <ChatProcessing key={runningTurn.id} turn={runningTurn} processing={state.processing}
       active={enabled && state.ready} />}
     <ChatAsyncQuestions thread={state.selected} error={state.error} scope={scope}

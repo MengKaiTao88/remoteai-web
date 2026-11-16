@@ -3,6 +3,8 @@ import { fixtureUrl, login, screenshot } from './chat-helpers';
 
 test('keeps the writing capsule visible through long live history and short viewports', async ({ page, request }, info) => {
   const desktop = info.project.name.startsWith('desktop');
+  await page.route('https://fonts.googleapis.com/**', route => route.abort());
+  await page.route('https://fonts.gstatic.com/**', route => route.abort());
   await page.addInitScript(dark => localStorage.setItem('codex-switch.web.theme.v1', dark ? 'dark' : 'light'),
     info.project.name.includes('dark'));
   await request.post(fixtureUrl + '/test/reset');
@@ -20,6 +22,14 @@ test('keeps the writing capsule visible through long live history and short view
   await expect(page.getByRole('button', { name: '暂停生成' })).toBeVisible();
   const input = page.getByRole('textbox', { name: '聊天消息' });
   await expect(input).toBeInViewport();
+  await input.click();
+  await input.fill('draft before loading older history');
+  await expect(input).toBeInViewport();
+  await page.locator('.dsh-title-pill').click();
+  await page.locator('.dsh-details-heading button').click();
+  await expect(input).toBeInViewport();
+  await expect(input).toHaveValue('draft before loading older history');
+  await input.fill('');
   await page.locator('.dsh-header-model button').click();
   const sheet = page.getByRole('dialog', { name: '选择模型', exact: true });
   await sheet.getByRole('button', { name: '关闭', exact: true }).click();
@@ -27,6 +37,11 @@ test('keeps the writing capsule visible through long live history and short view
   await page.setViewportSize({ width: original.width, height: 480 });
   await input.fill('one\ntwo\nthree\nfour\nfive\nsix');
   await expect(input).toBeInViewport();
+  await expect.poll(async () => {
+    const form = (await page.locator('.dsh-input').boundingBox())!;
+    const nav = await page.locator('.mobile-tabbar').boundingBox();
+    return !nav || form.y + form.height <= nav.y + 1;
+  }).toBe(true);
   await expect.poll(async () => {
     const form = (await page.locator('.dsh-input').boundingBox())!;
     const bounds = (await shell.boundingBox())!;

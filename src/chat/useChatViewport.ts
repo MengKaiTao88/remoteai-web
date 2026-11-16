@@ -13,10 +13,14 @@ export function useChatViewport(active: boolean) {
     viewport?.addEventListener('resize', update);
     viewport?.addEventListener('scroll', update);
     window.addEventListener('resize', update);
+    window.addEventListener('pageshow', update);
+    document.addEventListener('visibilitychange', update);
     return () => {
       viewport?.removeEventListener('resize', update);
       viewport?.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
+      window.removeEventListener('pageshow', update);
+      document.removeEventListener('visibilitychange', update);
       root.style.removeProperty('--chat-height');
       root.style.removeProperty('--chat-top');
     };
