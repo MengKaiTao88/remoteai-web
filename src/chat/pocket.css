@@ -1,0 +1,196 @@
+/* Personal mobile Web presentation. Shared desktop/native components keep their own themes. */
+@media (max-width: 860px) {
+  html[data-pocket-web] [data-codex-appearance][data-codex-appearance] {
+    --codex-surface: #ffffff;
+    --codex-sidebar: #f4f4f5;
+    --codex-elevated: #eaeaec;
+    --codex-ink: #232326;
+    --codex-muted: #65656c;
+    --codex-line: #dedee2;
+    --codex-hover: #e7e7eb;
+    --pocket-glass: #ffffffed;
+    --pocket-shadow: 0 4px 18px #1919240a, 0 1px 3px #19192408;
+  }
+
+  html[data-pocket-web] [data-codex-appearance][data-codex-appearance][data-theme='dark'] {
+    --codex-surface: #252527;
+    --codex-sidebar: #19191b;
+    --codex-elevated: #343438;
+    --codex-ink: #eeeeef;
+    --codex-muted: #ababaf;
+    --codex-line: #424247;
+    --codex-hover: #36363b;
+    --pocket-glass: #252527ed;
+    --pocket-shadow: 0 4px 18px #00000020;
+  }
+
+  html[data-pocket-web] .chat-page { background: transparent; }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-conversation {
+    background: var(--codex-sidebar);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-header {
+    gap: 8px;
+    padding: 12px 12px 8px;
+    align-items: center;
+    background: var(--codex-sidebar);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-header > .chat-grow {
+    padding: 8px 14px;
+    border: 1px solid var(--codex-line);
+    border-radius: 24px;
+    background: var(--pocket-glass);
+    box-shadow: var(--pocket-shadow);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-header h2 {
+    margin: 0;
+    font-size: 1em;
+    line-height: 1.5;
+    font-weight: 600;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-header > button,
+  html[data-pocket-web] [data-codex-appearance] .chat-header-tools > button {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border: 1px solid var(--codex-line);
+    border-radius: 50%;
+    background: var(--pocket-glass);
+    box-shadow: var(--pocket-shadow);
+    color: var(--codex-ink);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-header .lounge-avatar {
+    border-radius: 50%;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-list-avatar {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: .8em;
+    background: var(--codex-elevated);
+    color: var(--codex-ink);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-messages {
+    padding: 20px 18px 12px;
+    scrollbar-gutter: auto;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-message-content { gap: 28px; }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-user-message {
+    max-width: 90%;
+    padding: 12px 16px;
+    border-radius: 22px 22px 7px 22px;
+    background: var(--codex-elevated);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-activity {
+    padding-block: 8px;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-files-summary {
+    border-radius: 22px;
+    background: var(--codex-surface);
+    box-shadow: var(--pocket-shadow);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-files-header { padding: 14px 16px; }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-composer-dock {
+    padding: 8px 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-composer {
+    padding: 8px;
+    border-radius: 28px;
+    background: var(--pocket-glass);
+    box-shadow: var(--pocket-shadow);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-composer.is-compact { border-radius: 32px; }
+
+  html[data-pocket-web] [data-codex-appearance] :is(.chat-composer-add, .chat-composer-submit) {
+    width: 44px;
+    height: 44px;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-composer-add {
+    background: var(--codex-elevated);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .is-compact .chat-composer-content {
+    padding-inline-start: 48px;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-composer-popover {
+    border-radius: 20px;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] :is(.chat-thread, .chat-project-toggle) {
+    min-height: 48px;
+    border-radius: 16px;
+    padding-inline: 12px;
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-search-trigger {
+    min-height: 44px;
+    border-radius: 24px;
+    background: var(--codex-surface);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-new-button {
+    min-height: 44px;
+    border-radius: 24px;
+    background: var(--codex-surface);
+    box-shadow: var(--pocket-shadow);
+  }
+
+  html[data-pocket-web] [data-codex-appearance] .chat-queue {
+    margin-bottom: 8px;
+    border: 1px solid var(--codex-line);
+    border-radius: 20px;
+    background: var(--codex-surface);
+  }
+
+  /* Mobile sheets are portaled outside the chat appearance provider. */
+  html[data-pocket-web] .mobile-popup:has(.chat-settings) {
+    --app-canvas: #f4f4f5;
+    --app-surface: #ffffff;
+    --app-ink: #232326;
+    --app-muted: #65656c;
+    --app-border: #dedee2;
+    --app-accent: #242424;
+    --app-accentSoft: #eaeaec;
+    background: var(--app-surface);
+    color: var(--app-ink);
+    border-radius: 28px 28px 0 0;
+  }
+
+  html[data-pocket-web][data-theme='dark'] .mobile-popup:has(.chat-settings) {
+    --app-canvas: #19191b;
+    --app-surface: #252527;
+    --app-ink: #eeeeef;
+    --app-muted: #ababaf;
+    --app-border: #424247;
+    --app-accent: #eeeeef;
+    --app-accentSoft: #343438;
+  }
+
+  html[data-pocket-web] .mobile-popup .chat-settings-mobile {
+    --chat-settings-surface: var(--app-canvas);
+    --chat-settings-divider: var(--app-border);
+  }
+
+  @media (max-width: 360px) {
+    html[data-pocket-web] [data-codex-appearance] .chat-header { gap: 6px; padding-inline: 8px; }
+    html[data-pocket-web] [data-codex-appearance] .chat-header > .chat-grow { padding-inline: 10px; }
+    html[data-pocket-web] [data-codex-appearance] .chat-messages { padding-inline: 12px; }
+  }
+}

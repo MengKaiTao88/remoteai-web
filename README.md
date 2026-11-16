@@ -1,5 +1,7 @@
 # Remote AI Web
 
+个人手机网页与 PWA 构建、安装及缓存说明见 [Personal mobile Web](docs/personal-mobile-web.md)。
+
 面向手机浏览器的 Remote AI Web 客户端，同时提供宽屏桌面布局。移动交互使用
 Ant Design Mobile，桌面增强使用 Ant Design，应用状态由 Redux Toolkit 管理。
 

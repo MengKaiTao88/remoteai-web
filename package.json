@@ -5,6 +5,10 @@
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
+    "build:personal": "node scripts/personal-web.mjs build",
+    "check:personal": "npm run check:dependencies && npm run check:i18n && node scripts/personal-web.mjs check",
+    "test:personal:e2e": "node scripts/run.mjs playwright --config scripts/playwright.personal.config.ts",
+    "test:personal:pwa": "node scripts/verify-personal-pwa.mjs",
     "test:dictation:e2e": "node scripts/run.mjs playwright --config scripts/playwright.dictation.config.ts",
     "test:message-edit:e2e": "node scripts/run.mjs playwright --config scripts/playwright.message-edit.config.ts",
     "dev": "node scripts/run.mjs dev",

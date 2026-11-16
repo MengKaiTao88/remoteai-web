@@ -13,8 +13,11 @@ import { store } from "./store";
 import "antd/dist/reset.css";
 import "antd-mobile/es/global";
 import "./styles.css";
+import './chat/pocket.css';
+import { registerPersonalPwa } from './pwa/register';
 
 initializeTheme();
+registerPersonalPwa();
 const desktopLayout = window.matchMedia(DESKTOP_QUERY);
 const stopBrowserDefaultsGuard = installBrowserDefaultsGuard(() => desktopLayout.matches);
 if (import.meta.hot) import.meta.hot.dispose(stopBrowserDefaultsGuard);
