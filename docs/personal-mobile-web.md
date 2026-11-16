@@ -1,9 +1,36 @@
 # Personal mobile Web / PWA
 
-This edition keeps Remote AI's existing application and transports. Its mobile chat presentation is
-inspired by DSH Go's floating controls, rounded composer and compact activity/file cards, implemented
-independently in CSS. It includes none of DSH Go's code, brands, mascot assets or Android runtime.
-Application navigation, accounts, 2FA, settings and wide-screen desktop layouts retain their host UI.
+This edition keeps Remote AI's existing application, authentication, transport and ChatController.
+Only the personal Web/PWA GUI chat workspace uses a dedicated DSH-style React presentation.
+Application navigation, accounts, 2FA, settings, devices and token summary retain their host UI.
+The normal Web build and desktop/native packages keep their existing conversation presentation.
+
+## Source basis and implementation
+
+The reference is DSH Go revision
+[`d46847ff2e0953d2035e0e6078be1e06dd7cbc40`](https://github.com/ccch1mneyyy/dsh-go/tree/d46847ff2e0953d2035e0e6078be1e06dd7cbc40).
+The researched Flutter sources include `adaptive_layout.dart`, `chat_header.dart`, `composer.dart`,
+`chat_rows.dart` and `chat_list.dart`. The React code implements their layout and interaction rules:
+
+- Compact layouts below 600 CSS px wide or 480 px high, medium layouts below 840 px, and expanded layouts.
+- A phone drawer, medium bottom details sheet, 68 px rail, 320 px conversation sidebar and 320-420 px
+  details panel. Navigation collapses when necessary to preserve the reading column.
+- Floating header controls and model chip, 44 px header hit targets, a 28 px composer radius, glass
+  surfaces and optional browser-supported superellipse corners.
+- Successful process folding, three-adjacent-tool groups, stable row keys, visible interrupted/failed
+  work, current approvals and original pending-message identities.
+- Retained chat/composer nodes across shell transitions and existing DOM reading-anchor/following hooks.
+
+`dshViewModel.ts` adapts Remote AI conversation entries and queue messages; it does not change the
+protocol or recreate history synchronization. `DshChatWorkspace`, `DshMessages`, `DshComposer` and
+`DshDetails` form the presentation. Original message, approval, editable-message, file/image, queue,
+settings, terminal and tool components remain connected through `DshChatProviders` and ChatController.
+Cached unchanged turns and memoized presentation rows limit unrelated streamed updates.
+
+This is an original TypeScript adaptation, with no copied Flutter source, DSH brands, mascot assets
+or Android runtime. It does not introduce DSH's independent agent engine, phone automation or native
+background services. The reference project's root license and file-specific notices are not treated
+as permission to import its excluded artwork. Unsupported CSS corner shapes use ordinary round corners.
 
 ## Build and hosting
 
@@ -46,6 +73,27 @@ does not provide offline AI execution or guaranteed offline history. First insta
 successful download of the shell. An update waits for existing application windows to close before
 activation, avoiding a forced reload during a running chat. Close all installed/browser windows and
 reopen to activate a waiting update. The ordinary online build continues checking `version.json`.
+
+The personal build removes the external Google Fonts import. A localized startup screen remains
+available before JavaScript renders, with a retry action for a failed script download or startup.
+Resource errors after a successful render do not cover the working app with that startup screen.
+
+## Verification
+
+Use `npm run check:personal`, `npm test`, `npm run test:personal:e2e`,
+`npm run test:personal:pwa` and `npm run test:personal:webkit` sequentially. The commands prepare a
+generated workspace; concurrent preparations would interfere with one another.
+Browser tests use a local fixture, bundled Chromium and bundled WebKit, without real cloud credentials.
+The matrix covers light/dark phones, a 320 px enlarged-font phone, a tablet sheet, WebKit and wide/narrow
+desktop layouts. Screenshots and reports are retained in `test-results/` and selected evidence is kept
+in the parent workspace's `.artifacts/personal-mobile-web/` delivery folder.
+Physical iPhone/Android installation, real paired-computer use and cellular-network behavior still
+require device acceptance; browser engine tests do not establish those outcomes.
+
+Local verification on 2026-11-16 passed the personal type/build/i18n/provenance checks, two Node
+workspace tests, 40 Vitest tests, 14 personal browser journeys and production PWA/WebKit smoke checks.
+The ordinary Web relay journey passed on desktop and mobile; its mobile dev-server cold start exceeded
+the existing 20-second navigation deadline and needed a warm retry. No application assertion was removed.
 
 To return to the author's interface, open `https://codex.onepiper.cloud/web/`. The two entry points
 are independent; this edition cannot replace the author's hosted files.

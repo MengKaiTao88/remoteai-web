@@ -1,9 +1,10 @@
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { usePagePreview } from '../../../../shared/navigation/PageSwipeContext';
 import { useAppDispatch } from '../hooks';
 import { chatDeviceSelected } from '../store';
 import type { AuthSession, RemoteDevice } from '../types';
+import { DshChatWorkspace } from './DshChatWorkspace';
 import { ConnectedChat } from '../../../../shared/remote-chat/views/ConnectedChat';
 import { ChatTokenSummary } from './ChatTokenSummary';
 import { SshPage } from '../discovery/SshPage';
@@ -87,6 +88,9 @@ function WebChat({ session, device, selected, ...props }: Props & {
   }, [selected, chat.state.ready, device?.deviceId, session.baseUrl, session.email]);
   useDownloadConnection({ session, deviceId: device?.deviceId ?? '', deviceName: device?.name ?? '',
     controller: chat.controller, enabled: selected });
+  const personal = import.meta.env.VITE_PERSONAL_WEB === 'true';
+  const Workspace = personal ? DshChatWorkspace : ConnectedChat;
+  const Appearance = personal ? Fragment : CodexAppearance;
   return <TerminalWorkspaceProvider panel={terminal}>
     {props.sshDiscovery && <SshPage client={chat.controller.guiTools.terminal} connected={chat.state.ready}
       deviceName={device?.name} devices={props.devices} chooseDevice={props.chooseDevice}
@@ -95,7 +99,7 @@ function WebChat({ session, device, selected, ...props }: Props & {
       scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])}
       deviceName={device?.name} onClose={props.closeTokenSummary} />}
     <div hidden={props.sshDiscovery} style={{ display: props.sshDiscovery ? 'none' : 'contents' }}>
-    <CodexAppearance><ConnectedChat {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
+    <Appearance><Workspace {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
     cliVersion={installer.version}
     onWorkspaceChange={setWorkspaceCwd}
     composerHeader={desktop && <RemoteGuiProject state={chat.state} controller={chat.controller}
@@ -113,7 +117,7 @@ function WebChat({ session, device, selected, ...props }: Props & {
         connected={chat.state.ready} deviceName={device?.name}
         cwd={cwd} />
     </div>}
-    scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])} /></CodexAppearance>
+    scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])} /></Appearance>
     </div>
   </TerminalWorkspaceProvider>;
 }

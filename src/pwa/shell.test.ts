@@ -9,7 +9,7 @@ function worker() {
   runInNewContext(serviceWorker({ base: '/personal/', files: ['index.html', 'assets/app-123.js'], hash: 'abc' }), {
     self: { location: { origin: 'https://web.example' },
       addEventListener: (name: string, listener: (event: unknown) => void) => listeners.set(name, listener) },
-    caches: { open: async () => ({ addAll: async (urls: string[]) => cached.push(...urls) }),
+    caches: { open: async () => ({ add: async (url: string) => cached.push(url) }),
       keys: async () => ['unrelated', 'remoteai-shell:/other/:old', 'remoteai-shell:/personal/:old'],
       delete: async (name: string) => removed.push(name), match: async () => 'cached-shell' },
     fetch: async () => { throw new Error('offline'); }, URL,

@@ -25,9 +25,10 @@ jobs:
       - run: npm ci
       - run: npm run check:personal
       - run: npm test
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:personal:e2e
       - run: npm run test:personal:pwa
+      - run: npm run test:personal:webkit
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

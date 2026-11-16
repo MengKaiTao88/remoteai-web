@@ -13,7 +13,6 @@ import { store } from "./store";
 import "antd/dist/reset.css";
 import "antd-mobile/es/global";
 import "./styles.css";
-import './chat/pocket.css';
 import { registerPersonalPwa } from './pwa/register';
 
 initializeTheme();
