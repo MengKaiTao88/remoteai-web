@@ -26,6 +26,14 @@ protocol or recreate history synchronization. `DshChatWorkspace`, `DshMessages`,
 `DshDetails` form the presentation. Original message, approval, editable-message, file/image, queue,
 settings, terminal and tool components remain connected through `DshChatProviders` and ChatController.
 Cached unchanged turns and memoized presentation rows limit unrelated streamed updates.
+Rows are memoized by their immutable item/group contents, rather than the changing live-turn wrapper.
+Only the last editable user row receives full editor state. Offscreen tools and messages keep measured
+slots; open disclosures and active editors retain their existing interaction state.
+`dshGallery.ts` discovers image-bearing items once and reuses an unchanged gallery during unrelated
+text streaming, preserving all selected-thread images without reparsing the full live history.
+The composer is an independently positioned bottom layer with a measured history inset. Mobile
+surfaces avoid large backdrop-filter layers over long histories. A 1602-row streaming harness checks
+interaction latency, bounded mounted rich content, input hit testing and typing in Chromium/WebKit.
 
 `DshModelPicker` follows the reference's `model_sheet.dart`: a bottom sheet with model cards and a
 segmented effort capsule. The header and focused-composer pill share this picker. Remote AI's real
@@ -103,7 +111,10 @@ Physical iPhone/Android installation, real paired-computer use and cellular-netw
 require device acceptance; browser engine tests do not establish those outcomes.
 
 Local verification on 2026-11-16 passed the personal type/build/i18n/provenance checks, two Node
-workspace tests, 41 Vitest tests, 21 personal browser journeys and production PWA/WebKit recovery checks.
+workspace tests, 43 Vitest tests, 23 personal browser journeys and production PWA/WebKit recovery checks.
+Five non-mobile projects intentionally skip the mobile-only streaming stress case; their normal chat,
+composer and process/approval journeys still run. The stress fixture contains 500 historical turns,
+600 live process items and updates at 10 Hz. It checks mounted rich-content limits and input hit testing.
 The ordinary Web relay journey passed on desktop and mobile; its mobile dev-server cold start exceeded
 the existing 20-second navigation deadline and needed a warm retry. No application assertion was removed.
 

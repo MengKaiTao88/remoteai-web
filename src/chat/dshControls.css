@@ -1,9 +1,15 @@
 /* DSH source geometry: 36 px end keys, 6 px inset, one row at rest / two on focus. */
 .dsh-workspace { --dsh-sheet:#f6f7fc; --dsh-control:#1e232e0a; --dsh-selected:#4b67b412; }
 .dsh-workspace[data-theme=dark] { --dsh-sheet:#242932; --dsh-control:#ffffff0d; --dsh-selected:#aebfe926; }
-.dsh-workspace .dsh-codex-content { display:grid; grid-template-rows:minmax(0,1fr) auto; }
-.dsh-workspace .dsh-message-region { min-width:0; overflow:hidden; }
-.dsh-workspace .dsh-composer-dock { min-height:0; padding:6px 12px 10px; position:relative; }
+.dsh-workspace .dsh-codex-content { display:block; position:relative; }
+.dsh-workspace .dsh-codex-content[hidden] { display:none; }
+.dsh-workspace .dsh-codex-content > .dsh-message-region {
+  position:absolute; inset:0 0 var(--dsh-composer-height,92px); min-width:0; overflow:hidden;
+}
+.dsh-workspace .dsh-composer-dock {
+  position:absolute; inset:auto 0 0; z-index:4; min-height:0; max-height:100%; padding:6px 12px 10px;
+  background:var(--dsh-solid);
+}
 .dsh-workspace .dsh-composer-dock > .chat-processing-status {
   min-height:20px; margin:0 auto 6px; line-height:20px; font-size:.8em;
 }
@@ -108,3 +114,12 @@
 .dsh-model-error { font-size:.85em; color:var(--app-danger,#b95454); margin-top:12px; }
 @supports (corner-shape:superellipse(1.5)) { .dsh-input,.dsh-model-card { corner-shape:superellipse(1.5); } }
 @media (prefers-reduced-motion:reduce) { .dsh-input,.dsh-input-key,.dsh-model-card { transition:none; } }
+/* Mobile WebKit must not allocate a filtered input layer over an arbitrarily tall history. */
+@media (pointer:coarse) {
+  .dsh-input,.dsh-icon-button,.dsh-title-pill,.dsh-model-chip,.dsh-sidebar {
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+  .dsh-input { background:var(--dsh-sheet); }
+  .dsh-sidebar { background:var(--dsh-solid); }
+  .dsh-model-sheet::backdrop { backdrop-filter:none; }
+}
