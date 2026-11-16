@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { apiJson, getActiveSession, refreshSession } from '../api';
 import type { AuthSession } from '../types';
 import { ChatConnection } from '../../../../shared/remote-chat/client/connection';
@@ -11,6 +11,7 @@ import { downloadOwner } from '../../../../shared/downloads/manager';
 import { useActiveChatPolicy } from '../../../../shared/remote-chat/useActiveChatPolicy';
 import { createWebSshProfiles } from '../sshProfiles';
 import { boundedHistoryRequest } from './historyRequest';
+import { useVisibleChatState } from './useVisibleChatState';
 
 const HISTORY_REFRESH_MS = 15_000;
 
@@ -53,9 +54,9 @@ function createController(session: AuthSession, deviceId: string) {
 export function useChat(session: AuthSession, deviceId: string, active: boolean) {
   // Token refresh keeps the same conversation; reconnect reads the renewed account credentials.
   const controller = useMemo(() => createController(session, deviceId), [session.baseUrl, session.email, deviceId]);
-  const state = useSyncExternalStore(controller.subscribe, controller.snapshot);
-  useActiveChatPolicy(active, state.mode);
   const [foreground, setForeground] = useState(document.visibilityState === 'visible');
+  const state = useVisibleChatState(controller, active && foreground);
+  useActiveChatPolicy(active, state.mode);
   useEffect(() => {
     const update = () => setForeground(document.visibilityState === 'visible');
     const hide = () => setForeground(false);

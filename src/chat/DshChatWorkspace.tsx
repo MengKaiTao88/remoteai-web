@@ -133,7 +133,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
             </button>
             <div className="dsh-header-model"><DshModelPicker models={state.models} selection={state.settings}
               scope={selected?.id ?? state.draftScope} settingsError={state.settingsError}
-              ready={state.ready} settingsBusy={state.settingsBusy} refreshModels={controller.refreshModels}
+              active={enabled} ready={state.ready} settingsBusy={state.settingsBusy} refreshModels={controller.refreshModels}
               updateSettings={patch => controller.setSettings(patch)} beforeOpen={() => setDrawer(false)} /></div>
             <button className="dsh-icon-button" aria-label={t('client.chat.newChat')} onClick={() => newChat()}>
               <Plus size={20} /></button>

@@ -72,6 +72,14 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     await expect(model).toContainText('第二模型');
     await modelSheet.getByRole('radio', { name: '高', exact: true }).click();
     await expect(modelSheet).toBeHidden();
+    // App navigation may occur outside the modal (history/swipe/host action); release its top layer.
+    await model.getByRole('button').click();
+    await expect(modelSheet).toBeVisible();
+    await nav.getByText('账号', { exact: true }).dispatchEvent('click');
+    await expect(page.locator('.dsh-model-sheet[open]')).toHaveCount(0);
+    await nav.getByText('设置', { exact: true }).click();
+    await nav.getByText('Agent Hub', { exact: true }).click();
+    await expect(modelSheet).toBeHidden();
     if (!desktop) {
       await openChatSettings(page);
       await chooseSetting(page, '模型', '测试模型');

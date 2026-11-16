@@ -5,6 +5,7 @@ import type { AccountSummary, AuthSession, RemoteDevice, UsageSummary } from '..
 
 const CONNECT_TIMEOUT_MS = 15_000;
 const OPERATION_TIMEOUT_MS = 185_000;
+const REFRESH_TIMEOUT_MS = 35_000;
 const CONCURRENCY = 4;
 
 export type UsageAction = 'refresh' | 'consume';
@@ -97,7 +98,7 @@ class UsageConnection {
       const timer = window.setTimeout(() => {
         this.pending.delete(requestId);
         reject(new Error(t("client.accountUsage.theComputerHasNotConfirmedTheResultRefreshUsageBefore")));
-      }, OPERATION_TIMEOUT_MS);
+      }, action === 'refresh' ? REFRESH_TIMEOUT_MS : OPERATION_TIMEOUT_MS);
       this.pending.set(requestId, { resolve, reject, timer });
       this.socket.send(JSON.stringify({ type: 'account-usage', requestId, deviceId, accountId, action }));
     });

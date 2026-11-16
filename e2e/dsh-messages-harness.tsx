@@ -21,7 +21,8 @@ import '../src/chat/dshControls.css';
 
 initializeTheme();
 const stress = new URLSearchParams(location.search).has('stress');
-const metrics = { updates: 0, commits: 0, renderTotal: 0, renderMax: 0, pulse: 0 };
+const metrics = { updates: 0, commits: 0, renderTotal: 0, renderMax: 0, pulse: 0,
+  mountDuration: 0, initialMarkdown: 0, initialActivities: 0 };
 Object.assign(window, { dshPerformance: metrics });
 const composer = {
   models: [{ id: 'model', model: 'model', displayName: 'Fixture model', isDefault: true,
@@ -96,7 +97,12 @@ function Harness() {
   } as unknown as ChatController), []);
   const view = deriveDshRows({ thread, approvals, queue: [] });
   const history = <Profiler id="history" onRender={(_id, _phase, duration) => {
-    if (!metrics.commits++) return;
+    if (!metrics.commits++) {
+      metrics.mountDuration = duration;
+      metrics.initialMarkdown = document.querySelectorAll('.chat-markdown').length;
+      metrics.initialActivities = document.querySelectorAll('.chat-activity').length;
+      return;
+    }
     metrics.renderTotal += duration; metrics.renderMax = Math.max(metrics.renderMax, duration);
   }}><DshMessages state={state} controller={controller} view={view} active /></Profiler>;
   return <ConfigProvider><AntApp><div className="dsh-workspace" data-theme={theme} style={{ height: '100dvh' }}>

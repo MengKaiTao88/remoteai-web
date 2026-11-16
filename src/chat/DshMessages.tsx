@@ -12,7 +12,7 @@ import { ChatTurnTiming } from '../../../../shared/remote-chat/views/ChatTurnTim
 import { ChatApproval } from '../../../../shared/remote-chat/views/ChatApproval';
 import { ConversationImageGallery } from '../../../../shared/chat/ImageGallery';
 import { ChatSelectionQuote } from '../../../../shared/remote-chat/views/ChatSelectionQuote';
-import { ViewportContent } from '../../../../shared/chat/ViewportContent';
+import { DshHistoryViewport } from './DshHistoryViewport';
 import { useHistoryScroll } from '../../../../shared/remote-chat/views/useHistoryScroll';
 import { useMobileHistoryAnchor } from '../../../../shared/remote-chat/views/useMobileHistoryAnchor';
 import type { ChatController, ChatState, Item, Turn } from '../../../../shared/remote-chat/views/types';
@@ -69,13 +69,14 @@ function sameContent(before: DshRow, after: DshRow) {
   return before.turn === after.turn;
 }
 
-const HistoryRow = memo(function HistoryRow(props: RowProps & { pause: () => void }) {
+const INITIAL_VISIBLE_ROWS = 16;
+const HistoryRow = memo(function HistoryRow(props: RowProps & { pause: () => void; initiallyVisible: boolean }) {
   const { row } = props;
   return <div data-message-id={row.item?.id ?? row.key} data-dsh-row={row.kind}
     className={'dsh-row dsh-row-' + row.kind} onClickCapture={props.pause}>
-    <ViewportContent enabled={row.kind !== 'approval'}>
+    <DshHistoryViewport enabled={row.kind !== 'approval'} initiallyVisible={props.initiallyVisible}>
       {() => <Row {...props} />}
-    </ViewportContent>
+    </DshHistoryViewport>
   </div>;
 }, (before, after) => sameContent(before.row, after.row) && before.controller === after.controller
   && before.openItem === after.openItem && before.openTurn === after.openTurn && before.pause === after.pause
@@ -129,7 +130,8 @@ export function DshMessages({ state, controller, view, active }: Props) {
               {t(state.historyLoadingMore ? 'client.mobile.loading' : 'client.chat.loadEarlierMessages')}</button>
           </div>}
           <DshHistoryStatus state={state} controller={controller} />
-          {rows.map(row => <HistoryRow key={row.key} ready={state.ready} controller={controller} active={active} row={row}
+          {rows.map((row, index) => <HistoryRow key={row.key} ready={state.ready} controller={controller} active={active} row={row}
+            initiallyVisible={index >= rows.length - INITIAL_VISIBLE_ROWS}
             editState={row.kind === 'user' && row.turn?.id === latestUser?.turnId
               && row.item?.id === latestUser?.item.id ? state : undefined}
             pause={pause} openItem={openItem} openTurn={openTurn} />)}

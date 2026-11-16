@@ -35,6 +35,8 @@ test('keeps long live conversations interactive during sustained updates', async
   expect(result.renderMax).toBeLessThan(250);
   expect(result.markdownNodes).toBeLessThan(40);
   expect(result.activityNodes).toBeLessThan(40);
+  expect(result.initialMarkdown).toBeLessThan(40);
+  expect(result.initialActivities).toBeLessThan(40);
   expect(Math.max(...latencies)).toBeLessThan(1500);
   await page.screenshot({ path: info.outputPath('sustained-conversation.png') });
   console.log(JSON.stringify({ project: info.project.name, ...result, latencies }));

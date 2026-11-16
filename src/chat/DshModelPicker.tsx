@@ -8,7 +8,7 @@ import type { Model } from '../../../../shared/conversation/types';
 
 interface Props {
   models: Model[]; selection: ComposerSettings; ready: boolean; settingsBusy: boolean;
-  settingsError?: string; scope?: string | null; variant?: 'header' | 'footer';
+  settingsError?: string; scope?: string | null; variant?: 'header' | 'footer'; active?: boolean;
   updateSettings: (patch: Partial<ComposerSettings>) => Promise<void>;
   refreshModels: () => Promise<void>; beforeOpen?: () => void;
 }
@@ -27,13 +27,18 @@ export function DshModelPicker(props: Props) {
   const effort = displayText(EFFORT_LABELS[current.effort] || current.effort);
   const unavailable = modelSelectionError(props.models, current);
   const disabled = !props.ready || props.settingsBusy;
-  const close = () => { setOpen(false); setSettle(undefined); };
+  const close = () => { sheet.current?.close(); setOpen(false); setSettle(undefined); };
   useEffect(() => { close(); }, [props.scope]);
+  useEffect(() => { if (props.active === false) close(); }, [props.active]);
   useEffect(() => {
-    if (!open) return;
-    sheet.current?.showModal();
-    return () => { sheet.current?.close(); trigger.current?.focus(); };
-  }, [open]);
+    if (!open || props.active === false) return;
+    const dialog = sheet.current;
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (trigger.current?.getClientRects().length && document.visibilityState === 'visible') trigger.current.focus();
+    };
+  }, [open, props.active]);
   useEffect(() => {
     if (!open || !settle || disabled || props.settingsError
       || settle.model !== current.model || settle.effort !== current.effort) return;
@@ -97,6 +102,7 @@ export function DshModelPicker(props: Props) {
     <button ref={trigger} type="button" className={'dsh-model-chip dsh-model-chip-' + (props.variant ?? 'header')}
       aria-label={t('client.chat.modelAndReasoningEffort.bae75e', { model: name, effort })}
       aria-haspopup="dialog" aria-expanded={open} onClick={() => {
+        if (props.active === false) return;
         props.beforeOpen?.(); setQuery(''); setOpen(true);
       }}><span className="dsh-model-chip-name">{name}</span>
       {!!effort && <span className="dsh-model-chip-effort"> · {effort}</span>}<ChevronDown size={16} /></button>

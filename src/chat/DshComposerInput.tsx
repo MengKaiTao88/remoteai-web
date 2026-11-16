@@ -217,7 +217,7 @@ export function DshComposerInput(props: ComposerProps) {
             onClick={() => { menu.close(); setAdding(value => !value); }}><Plus size={desktop ? 18 : 24} /></button>
         </div>
         <div className="dsh-input-footer" hidden={!focused}>
-            <DshModelPicker models={models} ready={ready} refreshModels={props.refreshModels}
+            <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
               scope={threadId ?? props.draftScope} selection={selection} variant="footer"
               updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
             <button type="button" className="dsh-input-key dsh-input-settings" onPointerDown={event => event.preventDefault()}
