@@ -31,6 +31,7 @@ test('keeps long live conversations interactive during sustained updates', async
   })).toBe(true);
   await input.fill('Draft remains usable during streaming');
   await expect(input).toHaveValue('Draft remains usable during streaming');
+  await expect(page.locator('.dsh-input .chat-composer-placeholder')).toBeHidden();
   expect(result.renderMax).toBeLessThan(250);
   expect(result.markdownNodes).toBeLessThan(40);
   expect(result.activityNodes).toBeLessThan(40);

@@ -37,6 +37,7 @@
   font:inherit; font-size:max(16px,var(--gui-font-size,1em)); line-height:1.45; overflow:hidden;
 }
 .dsh-input textarea::placeholder { color:transparent; }
+.dsh-input textarea:not(:placeholder-shown) + .chat-composer-placeholder { display:none; }
 .dsh-input textarea:focus-visible { outline:none; }
 .dsh-input .chat-composer-placeholder {
   top:7px; left:0; right:0; font:inherit; font-size:max(16px,var(--gui-font-size,1em)); line-height:1.45;
