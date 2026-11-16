@@ -10,7 +10,7 @@ The normal Web build and desktop/native packages keep their existing conversatio
 The reference is DSH Go revision
 [`d46847ff2e0953d2035e0e6078be1e06dd7cbc40`](https://github.com/ccch1mneyyy/dsh-go/tree/d46847ff2e0953d2035e0e6078be1e06dd7cbc40).
 The researched Flutter sources include `adaptive_layout.dart`, `chat_header.dart`, `composer.dart`,
-`chat_rows.dart` and `chat_list.dart`. The React code implements their layout and interaction rules:
+`chat_rows.dart`, `chat_list.dart` and `model_sheet.dart`. The React code implements their layout and interaction rules:
 
 - Compact layouts below 600 CSS px wide or 480 px high, medium layouts below 840 px, and expanded layouts.
 - A phone drawer, medium bottom details sheet, 68 px rail, 320 px conversation sidebar and 320-420 px
@@ -26,6 +26,13 @@ protocol or recreate history synchronization. `DshChatWorkspace`, `DshMessages`,
 `DshDetails` form the presentation. Original message, approval, editable-message, file/image, queue,
 settings, terminal and tool components remain connected through `DshChatProviders` and ChatController.
 Cached unchanged turns and memoized presentation rows limit unrelated streamed updates.
+
+`DshModelPicker` follows the reference's `model_sheet.dart`: a bottom sheet with model cards and a
+segmented effort capsule. The header and focused-composer pill share this picker. Remote AI's real
+catalog and acknowledged settings remain authoritative; model provider management is not fabricated.
+`DshComposerInput` uses the existing `useComposerState`, draft, attachment and menu hooks with a
+dedicated presentation: one 48 px capsule at rest and two rows while editing, with 36 px end keys.
+The history uses a bounded grid row above the composer, so live or long history cannot displace it.
 
 This is an original TypeScript adaptation, with no copied Flutter source, DSH brands, mascot assets
 or Android runtime. It does not introduce DSH's independent agent engine, phone automation or native
@@ -77,6 +84,11 @@ reopen to activate a waiting update. The ordinary online build continues checkin
 The personal build removes the external Google Fonts import. A localized startup screen remains
 available before JavaScript renders, with a retry action for a failed script download or startup.
 Resource errors after a successful render do not cover the working app with that startup screen.
+The retry handler is delegated before body markup arrives. Initialization waits for all fallback
+children, including when HTML is streamed in pieces. Retry gives immediate feedback, removes only
+this entry's public shell cache and worker registration, and navigates to a fresh entry URL. It leaves
+local storage, authentication and chat data intact. Production smoke tests exercise an installed
+manifest start URL with a failed entry script, then click Retry and verify recovery and saved preferences.
 
 ## Verification
 
@@ -91,7 +103,7 @@ Physical iPhone/Android installation, real paired-computer use and cellular-netw
 require device acceptance; browser engine tests do not establish those outcomes.
 
 Local verification on 2026-11-16 passed the personal type/build/i18n/provenance checks, two Node
-workspace tests, 40 Vitest tests, 14 personal browser journeys and production PWA/WebKit smoke checks.
+workspace tests, 41 Vitest tests, 21 personal browser journeys and production PWA/WebKit recovery checks.
 The ordinary Web relay journey passed on desktop and mobile; its mobile dev-server cold start exceeded
 the existing 20-second navigation deadline and needed a warm retry. No application assertion was removed.
 

@@ -4,7 +4,7 @@ import { t } from '../../../../shared/localization/browserClient';
 import { ChatProjectSwitch } from '../../../../shared/remote-chat/views/ChatProjectSwitch';
 import { ChatConnectionInfo } from '../../../../shared/remote-chat/views/ChatConnectionInfo';
 import { ChatProfileMenu } from '../../../../shared/remote-chat/views/ChatProfileMenu';
-import { ComposerModelPicker } from '../../../../shared/remote-chat/views/ComposerModelPicker';
+import { DshModelPicker } from './DshModelPicker';
 import { ComposerAccess } from '../../../../shared/remote-chat/views/ComposerDesktopControls';
 import { ChatUsage } from '../../../../shared/remote-chat/views/ChatUsage';
 import type { DshChatWorkspaceProps } from './DshChatWorkspace';
@@ -41,7 +41,8 @@ export function DshDetails({ chat, device, headerActions, open, presentation, cl
         cliLocked={!!state.selected} cliCwd={state.selected?.cwd} />
       <ChatProjectSwitch state={state} controller={controller} active={open} />
       <div className="dsh-details-options">
-        <ComposerModelPicker models={state.models} selection={state.settings} ready={state.ready}
+        <DshModelPicker models={state.models} selection={state.settings} ready={state.ready}
+          scope={state.selected?.id ?? state.draftScope} settingsError={state.settingsError}
           settingsBusy={state.settingsBusy} updateSettings={patch => controller.setSettings(patch)}
           refreshModels={controller.refreshModels} beforeOpen={() => {}} />
         <ComposerAccess selection={state.settings} settingsBusy={state.settingsBusy}

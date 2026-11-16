@@ -1,4 +1,4 @@
-import { ChatComposer } from '../../../../shared/remote-chat/views/ChatComposer';
+import { DshComposerInput } from './DshComposerInput';
 import { ChatAsyncQuestions } from '../../../../shared/remote-chat/views/ChatAsyncQuestions';
 import { ChatProcessing } from '../../../../shared/remote-chat/views/ChatProcessing';
 import { queueProps } from '../../../../shared/remote-chat/client/queueProps';
@@ -23,7 +23,7 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
     <ChatAsyncQuestions thread={state.selected} error={state.error} scope={scope}
       disabled={!state.ready || state.sending || state.settingsBusy || state.selectedArchived
         || state.queueBusy || state.compacting === state.selected?.id} answer={controller.answerAsyncQuestion} />
-    <ChatComposer suggestions={remotePromptSuggestion(state, controller.suggestNextPrompt, { scope })}
+    <DshComposerInput suggestions={remotePromptSuggestion(state, controller.suggestNextPrompt, { scope })}
       dictation={controller.dictation} cliVersion={cliVersion}
       recoveredEdit={controller.messageEditor.recoveredDrafts.get(state.selected?.id ?? '')}
       consumeRecoveredEdit={() => controller.messageEditor.recoveredDrafts.delete(state.selected?.id ?? '')}

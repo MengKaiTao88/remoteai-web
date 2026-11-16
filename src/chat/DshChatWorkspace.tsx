@@ -10,7 +10,7 @@ import { ChatDevices } from '../../../../shared/remote-chat/views/ChatDevices';
 import { ChatProfileMenu } from '../../../../shared/remote-chat/views/ChatProfileMenu';
 import { ChatThreadFilter } from '../../../../shared/remote-chat/views/ChatThreadFilter';
 import { ChatProjectSwitch } from '../../../../shared/remote-chat/views/ChatProjectSwitch';
-import { ComposerModelPicker } from '../../../../shared/remote-chat/views/ComposerModelPicker';
+import { DshModelPicker } from './DshModelPicker';
 import { CliGuiProvider, useCliGui } from '../../../../shared/cli-gui/context';
 import { CliConversationPane } from '../../../../shared/cli-gui/CliConversationPane';
 import { ChatTaskStatus } from '../../../../shared/remote-chat/views/ChatTaskStatus';
@@ -29,6 +29,7 @@ import { DshDetails } from './DshDetails';
 import { useThemeMode } from '../theme/preference';
 import '../../../../shared/remote-chat/views/chat.css';
 import './dshChatWorkspace.css';
+import './dshControls.css';
 
 export interface DshChatWorkspaceProps {
   chat: { state: ChatState; controller: ChatController; foreground: boolean };
@@ -130,7 +131,8 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
                 {t(!state.ready ? 'client.chat.offline' : view.running ? 'client.chat.inProgress' : 'client.chat.online')}
                 {device?.name && <small>{device.name}</small>}</span>
             </button>
-            <div className="dsh-header-model"><ComposerModelPicker models={state.models} selection={state.settings}
+            <div className="dsh-header-model"><DshModelPicker models={state.models} selection={state.settings}
+              scope={selected?.id ?? state.draftScope} settingsError={state.settingsError}
               ready={state.ready} settingsBusy={state.settingsBusy} refreshModels={controller.refreshModels}
               updateSettings={patch => controller.setSettings(patch)} beforeOpen={() => setDrawer(false)} /></div>
             <button className="dsh-icon-button" aria-label={t('client.chat.newChat')} onClick={() => newChat()}>

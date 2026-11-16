@@ -64,10 +64,14 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
 
     const model = page.locator('.dsh-header-model');
     await model.getByRole('button').click();
-    await page.getByRole('button', { name: '选择模型', exact: true }).click();
-    await page.getByRole('menuitemradio', { name: '第二模型', exact: true }).click();
+    const modelSheet = page.getByRole('dialog', { name: '选择模型', exact: true });
+    await expect(modelSheet).toBeVisible();
+    await expect(modelSheet.getByRole('slider')).toHaveCount(0);
+    await screenshot(page, info, 'dsh-model-sheet');
+    await modelSheet.getByRole('radio', { name: '第二模型', exact: true }).click();
     await expect(model).toContainText('第二模型');
-    await page.keyboard.press('Escape');
+    await modelSheet.getByRole('radio', { name: '高', exact: true }).click();
+    await expect(modelSheet).toBeHidden();
     if (!desktop) {
       await openChatSettings(page);
       await chooseSetting(page, '模型', '测试模型');
@@ -95,6 +99,9 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
 
     await send(page, 'slow task');
     await expect(page.getByRole('button', { name: '暂停生成' })).toBeVisible();
+    const liveInput = page.getByRole('textbox', { name: '聊天消息' });
+    await expect(liveInput).toBeInViewport();
+    await screenshot(page, info, 'dsh-running-composer');
     await send(page, 'personal queue check');
     await expect(page.locator('.chat-queue')).toContainText('personal queue check');
     await screenshot(page, info, 'queue');

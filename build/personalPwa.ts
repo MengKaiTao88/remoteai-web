@@ -18,7 +18,7 @@ export function personalPwa(enabled: boolean, publicUrl?: string): Plugin {
       const url = `${base}manifest.webmanifest`;
       const document = publicUrl ? html.replaceAll('https://codex.onepiper.cloud/web/', publicUrl)
         : html.replace(/<link rel="canonical"[^>]*>/, '').replace(/<meta property="og:url"[^>]*>/, '');
-      const fallback = startupFallback();
+      const fallback = startupFallback(base);
       return { html: document, tags: [
         { tag: 'style', children: fallback.css, injectTo: 'head-prepend' },
         { tag: 'script', children: fallback.script, injectTo: 'head-prepend' },

@@ -36,10 +36,35 @@ try {
   await page.reload({ waitUntil: 'load' });
   await page.getByPlaceholder('name@example.com').waitFor();
   await page.screenshot({ path: path.join(output, 'offline-shell.png') });
+  await context.setOffline(false);
+  const entryAsset = await page.evaluate(() => {
+    localStorage.setItem('personal-retry-sentinel', 'preserved');
+    return document.querySelector('script[type="module"][src]')?.src;
+  });
+  assert.ok(entryAsset);
+  server.setEntryFailure(true);
+  await page.evaluate(async asset => {
+    for (const name of await caches.keys()) {
+      if (!name.startsWith('remoteai-shell:/remoteai-web/:')) continue;
+      await (await caches.open(name)).delete(asset, { ignoreVary: true });
+    }
+  }, entryAsset);
+  const installedWindow = await context.newPage();
+  await page.close();
+  await installedWindow.goto(new URL(registration.manifest.start_url, server.url).href, { waitUntil: 'load' });
+  await installedWindow.locator('#personal-startup button:not([hidden])').waitFor({ timeout: 20000 });
+  assert.match(await installedWindow.locator('#personal-startup small').innerText(), /JS_RESOURCE/);
+  await installedWindow.screenshot({ path: path.join(output, 'installed-entry-failed.png') });
+  server.setEntryFailure(false);
+  await installedWindow.locator('#personal-startup button').click();
+  await installedWindow.getByPlaceholder('name@example.com').waitFor({ timeout: 30000 });
+  assert.equal(await installedWindow.evaluate(() => localStorage.getItem('personal-retry-sentinel')), 'preserved');
+  assert.equal(await installedWindow.locator('#personal-startup').isVisible(), false);
+  await installedWindow.screenshot({ path: path.join(output, 'installed-entry-recovered.png') });
   await writeFile(path.join(output, 'verification.json'), JSON.stringify({
-    ...registration, offlineShell: true, credentialsUsed: false,
+    ...registration, offlineShell: true, installedEntryRetryRecovered: true, localPreferencesPreserved: true, credentialsUsed: false,
   }, null, 2));
-  console.log('PWA manifest, scoped static cache and offline login shell verified. No cloud login performed.');
+  console.log('PWA manifest, offline shell and installed start URL verified; a failed entry script recovered by Retry without clearing local preferences.');
 } finally {
   await browser.close();
   await server.close();

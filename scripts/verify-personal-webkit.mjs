@@ -32,8 +32,14 @@ try {
   await page.locator('#personal-startup button:not([hidden])').waitFor({ timeout: 20000 });
   assert.ok(await page.locator('#personal-startup small').innerText());
   await page.screenshot({ path: path.join(output, 'iphone-startup-retry.png') });
+  await page.unroute('**/assets/index-*.js');
+  await page.locator('#personal-startup button').click();
+  await page.getByPlaceholder('name@example.com').waitFor({ timeout: 30000 });
+  assert.ok(new URL(page.url()).searchParams.has('_reload'));
+  assert.equal(await page.locator('#personal-startup').isVisible(), false);
+  await page.screenshot({ path: path.join(output, 'iphone-startup-recovered.png') });
   await context.close();
-  console.log('WebKit phone login passed in light/dark; a blocked startup script shows a retry instead of an empty screen.');
+  console.log('WebKit phone login passed in light/dark; a blocked startup script recovered to login after clicking Retry.');
 } finally {
   await browser.close();
   await server.close();
