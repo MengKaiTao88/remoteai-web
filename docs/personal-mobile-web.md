@@ -100,6 +100,23 @@ manifest start URL with a failed entry script, then click Retry and verify recov
 
 ## Verification
 
+The personal mobile drawer follows DSH Go 1.1.0 (`e9d3239bee18029d48618c7514303bc7fa7bbf8f`)
+for its rounded sheet, primary new-conversation pill, consistent chevrons, full-height scroll list
+and anchored navigation. The user-selected adaptation places Discover, Settings and Accounts in
+the drawer footer and removes the personal mobile bottom tab bar. Management pages retain a return
+to the mounted chat. Desktop Web and ordinary Web retain their existing application navigation.
+The list starts in project mode and toggles to a recent-activity list. It preserves custom groups,
+project/conversation menus, long-press actions, CLI entries and cursor pagination, displaying all
+loaded project members without a separate Show More preview. Flutter components and protected
+brand/pet artwork are not copied. This change does not build or package the desktop application.
+
+Verification on 2026-11-17 passed 52 Vitest cases and two workspace cases, the 30-case personal
+browser regression (12 platform-specific skips), and five final sidebar journeys (two desktop skips).
+The final sidebar journeys cover six loaded members in one project, collapse/reopen, recent/project
+switching, outside dismissal, new conversation, and all three management entry/return paths in light,
+dark, 320 px enlarged-font, tablet and WebKit phone viewports. Production PWA and WebKit startup/retry
+checks also passed. Screenshots were inspected; physical-phone acceptance remains with the user.
+
 Use `npm run check:personal`, `npm test`, `npm run test:personal:e2e`,
 `npm run test:personal:pwa` and `npm run test:personal:webkit` sequentially. The commands prepare a
 generated workspace; concurrent preparations would interfere with one another.

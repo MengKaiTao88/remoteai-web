@@ -29,11 +29,12 @@ import { ConversationSync } from './ConversationSync';
 
 interface Props {
   session: AuthSession; devices: RemoteDevice[]; active: boolean; openAccounts?: () => void;
+  openDiscover?: () => void; openSettings?: () => void;
   tokenSummary: boolean; closeTokenSummary: () => void;
   sshDiscovery?: boolean; closeSshDiscovery?: () => void;
 }
 
-export function ChatPage({ session, devices, active, openAccounts,
+export function ChatPage({ session, devices, active, openAccounts, openDiscover, openSettings,
   tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery }: Props) {
   useLanguage();
   const preview = usePagePreview() === 'chat';
@@ -65,7 +66,7 @@ export function ChatPage({ session, devices, active, openAccounts,
         <WebChat session={session} device={chatDevice} devices={devices} selected={selected}
           tokenSummary={tokenSummary && selected} closeTokenSummary={closeTokenSummary}
           sshDiscovery={sshDiscovery && selected} closeSshDiscovery={closeSshDiscovery}
-          openAccounts={openAccounts}
+          openAccounts={openAccounts} openDiscover={openDiscover} openSettings={openSettings}
           active={active && selected} chooseDevice={chooseDevice} deviceRefresh={deviceRefresh} />
       </div>;
     })}

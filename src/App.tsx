@@ -292,12 +292,15 @@ function AppShell() {
   const { page, profile, devices, refreshing, error } = useAppSelector((state) => state.data);
   useSyncDownloadAccount(session ? downloadOwner(session) : '');
   const desktopLayout = useDesktopLayout();
+  const personalMobile = import.meta.env.VITE_PERSONAL_WEB === 'true' && !desktopLayout;
   useChatViewport(page === 'lounge' && !desktopLayout);
   const lastRefreshRef = useRef(Date.now());
   const totpManager = useTotpVault(session);
   const activeNavigationPage = desktopLayout && page === 'lounge' ? page : primaryNavigationPage(page);
   const changePrimaryPage = useCallback((next: PrimaryPage) => { dispatch(pageChanged(next)); }, [dispatch]);
   const openAccounts = useCallback(() => changePrimaryPage('accounts'), [changePrimaryPage]);
+  const openDiscover = useCallback(() => changePrimaryPage('discover'), [changePrimaryPage]);
+  const openSettings = useCallback(() => changePrimaryPage('settings'), [changePrimaryPage]);
 
   useEffect(() => {
     if (!error) return;
@@ -379,6 +382,7 @@ function AppShell() {
   const shellClass = ['app-shell', (page === 'chat' || page === 'ssh') && 'chat-active',
     page === 'lounge' && 'lounge-active',
     (page === 'discover' || page === 'token-summary') && 'discovery-active',
+    personalMobile && 'personal-mobile-shell',
     !menuVisible && 'main-menu-collapsed'].filter(Boolean).join(' ');
   const MenuToggleIcon = menuVisible ? PanelLeftClose : PanelLeftOpen;
   return <div className={shellClass}>
@@ -428,6 +432,11 @@ function AppShell() {
       </Tooltip>
     </aside>
     <div className="content-shell">
+      {personalMobile && page !== 'chat' && page !== 'ssh' && <nav className="personal-mobile-navigation">
+        <button type="button" onClick={() => changePrimaryPage('chat')}>
+          <PanelLeftOpen size={20} />{t('client.mobile.backToChat')}</button>
+        <span>{pageTitle}</span>
+      </nav>}
       {page !== 'chat' && page !== 'downloads' && page !== 'lounge' && page !== 'token-summary' && page !== 'ssh'
         && <header className="desktop-topbar"><div>
         <span>{pageTitle}</span><strong>{pageDescriptions[page]}</strong></div>
@@ -442,7 +451,7 @@ function AppShell() {
       <main className="main-content">
         <PrimaryPagePager page={page} onChange={changePrimaryPage} pages={{
           chat: session && <ChatPage key={session.baseUrl + session.email} session={session} devices={devices}
-            openAccounts={openAccounts}
+            openAccounts={openAccounts} openDiscover={openDiscover} openSettings={openSettings}
             active={page === 'chat' || page === 'ssh'} tokenSummary={page === 'token-summary'}
             sshDiscovery={page === 'ssh'} closeSshDiscovery={() => dispatch(pageChanged('discover'))}
             closeTokenSummary={() => dispatch(pageChanged('discover'))} />,
@@ -455,7 +464,7 @@ function AppShell() {
         </PrimaryPagePager>
       </main>
     </div>
-    <div className="mobile-tabbar">
+    {!personalMobile && <div className="mobile-tabbar">
       <TabBar activeKey={activeNavigationPage}>
         {navItems.map(item => <TabBar.Item key={item.key} title={item.label}
           icon={item.key === 'discover'
@@ -463,7 +472,7 @@ function AppShell() {
             : <item.icon size={21} />}
           onClick={() => dispatch(pageChanged(item.key))} />)}
       </TabBar><SafeArea position="bottom" />
-    </div>
+    </div>}
   </div>;
 }
 

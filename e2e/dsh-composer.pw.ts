@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { fixtureUrl, login, screenshot } from './chat-helpers';
+import { fixtureUrl, login, screenshot, navigate } from './chat-helpers';
 
 test('keeps the writing capsule visible through long live history and short viewports', async ({ page, request }, info) => {
-  const desktop = info.project.name.startsWith('desktop');
   await page.route('https://fonts.googleapis.com/**', route => route.abort());
   await page.route('https://fonts.gstatic.com/**', route => route.abort());
   await page.addInitScript(dark => localStorage.setItem('codex-switch.web.theme.v1', dark ? 'dark' : 'light'),
@@ -10,7 +9,7 @@ test('keeps the writing capsule visible through long live history and short view
   await request.post(fixtureUrl + '/test/reset');
   await request.post(fixtureUrl + '/test/sidebar', { data: { action: 'history-pages' } });
   await login(page);
-  await page.locator(desktop ? '.desktop-sidebar nav' : '.mobile-tabbar').getByText('Agent Hub', { exact: true }).click();
+  await navigate(page, 'Agent Hub');
   const shell = page.locator('.dsh-chat-shell');
   await expect(shell).toBeVisible();
   if (!await page.locator('.dsh-sidebar').isVisible()) {
@@ -39,7 +38,7 @@ test('keeps the writing capsule visible through long live history and short view
   await expect(input).toBeInViewport();
   await expect.poll(async () => {
     const form = (await page.locator('.dsh-input').boundingBox())!;
-    const nav = await page.locator('.mobile-tabbar').boundingBox();
+    const nav = await page.locator('.mobile-tabbar').count() ? await page.locator('.mobile-tabbar').boundingBox() : null;
     return !nav || form.y + form.height <= nav.y + 1;
   }).toBe(true);
   await expect.poll(async () => {

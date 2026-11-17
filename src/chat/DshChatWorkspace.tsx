@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { PanelLeft, Plus, Search, X } from 'lucide-react';
+import { PanelLeft, Plus, Search, SquarePen, X } from 'lucide-react';
 import { t, displayText, displayError, useLanguage } from '../../../../shared/localization/browserClient';
 import type { ChatComputer } from '../../../../shared/remote-chat/devices';
 import type { ComputerListRefresh } from '../../../../shared/remote-chat/ComputerSearchBar';
@@ -26,6 +26,8 @@ import { DshChatProviders } from './DshChatProviders';
 import { DshComposer } from './DshComposer';
 import { DshMessages } from './DshMessages';
 import { DshDetails } from './DshDetails';
+import { DshMobileSidebar } from './DshMobileSidebar';
+import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { useThemeMode } from '../theme/preference';
 import '../../../../shared/remote-chat/views/chat.css';
 import './dshChatWorkspace.css';
@@ -36,7 +38,8 @@ export interface DshChatWorkspaceProps {
   device?: ChatComputer; devices: ChatComputer[]; active: boolean; scope: string; email: string;
   chooseDevice: (id: string) => void; deviceRefresh?: ComputerListRefresh;
   headerActions?: ReactNode; composerHeader?: ReactNode; cliVersion?: string | null;
-  openAccounts?: () => void; onWorkspaceChange?: (cwd: string) => void;
+  openAccounts?: () => void; openDiscover?: () => void; openSettings?: () => void;
+  onWorkspaceChange?: (cwd: string) => void;
 }
 
 export function DshChatWorkspace(props: DshChatWorkspaceProps) {
@@ -51,6 +54,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   const { chat, device, active, scope, devices, chooseDevice, deviceRefresh } = props;
   const { state, controller, foreground } = chat;
   const cli = useCliGui();
+  const desktop = useDesktopLayout();
   const external = Boolean(cli && cli.state.engine !== 'codex');
   const [sidebar, setSidebar] = useState(true);
   const [drawer, setDrawer] = useState(false);
@@ -114,11 +118,16 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
         </nav>}
         <aside className="dsh-sidebar" hidden={!listOpen} aria-label={t('client.chat.chatList')}>
           <header className="dsh-sidebar-heading"><strong>Remote AI</strong>
-            <button className="dsh-icon-button" aria-label={t('client.chat.collapseChatList')} onClick={closeList}>
-              <X size={20} /></button></header>
-          <ChatThreadFilter state={state} controller={controller} />
+            <button className={desktop ? 'dsh-icon-button' : 'dsh-sidebar-new'}
+              aria-label={t(desktop ? 'client.chat.collapseChatList' : 'client.workspaceSettings.newConversation')}
+              disabled={!desktop && (state.sending || cli?.state.busy)} onClick={desktop ? closeList : () => newChat()}>
+              {desktop ? <X size={20} /> : <><SquarePen size={20} />{t('client.workspaceSettings.newConversation')}</>}</button></header>
+          {desktop ? <><ChatThreadFilter state={state} controller={controller} />
           <ChatThreads state={state} controller={controller} newChat={newChat}
-            onClose={() => setDrawer(false)} openSearch={() => setSearching(true)} profile={profile} />
+            onClose={() => setDrawer(false)} openSearch={() => setSearching(true)} profile={profile} /></>
+            : <DshMobileSidebar state={state} controller={controller} newChat={newChat} close={() => setDrawer(false)}
+                search={() => setSearching(true)} openAccounts={props.openAccounts}
+                openDiscover={props.openDiscover} openSettings={props.openSettings} />}
         </aside>
         {overlay && <button className="dsh-sidebar-scrim" aria-label={t('client.chat.collapseChatList')} onClick={closeList} />}
         <main className="dsh-chat-main">

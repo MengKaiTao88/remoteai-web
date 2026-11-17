@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { fixtureUrl, login, screenshot } from './chat-helpers';
+import { fixtureUrl, login, screenshot, navigate } from './chat-helpers';
 
 test('hidden streaming does not repaint chat or block navigation and resumes with the latest text', async ({ page, request }, info) => {
   test.skip(!['phone-dark', 'iphone-webkit'].includes(info.project.name), 'Exercise both mobile engines.');
@@ -7,8 +7,7 @@ test('hidden streaming does not repaint chat or block navigation and resumes wit
   await page.route('https://fonts.gstatic.com/**', route => route.abort());
   await request.post(fixtureUrl + '/test/reset');
   await login(page);
-  const nav = page.locator('.mobile-tabbar');
-  await nav.getByText('Agent Hub', { exact: true }).click();
+  await navigate(page, 'Agent Hub');
   await page.locator('.dsh-chat-shell').getByRole('button', { name: '打开聊天列表', exact: true }).click();
   await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
   const emit = (method: string, params: unknown) => request.post(fixtureUrl + '/test/chat-event', { data: { method, params } });
@@ -19,7 +18,7 @@ test('hidden streaming does not repaint chat or block navigation and resumes wit
   await expect(page.locator('.chat-markdown')).toContainText(['BEFORE_BACKGROUND']);
   const input = page.getByRole('textbox', { name: '聊天消息' });
   await input.fill('retained navigation draft');
-  await nav.getByText('账号', { exact: true }).click();
+  await navigate(page, '账号');
   await expect(page.locator('.chat-page')).toBeHidden();
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await page.evaluate(() => {
@@ -35,9 +34,9 @@ test('hidden streaming does not repaint chat or block navigation and resumes wit
   });
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => (window as unknown as { hiddenChatMutations: number }).hiddenChatMutations)).toBe(0);
-  await nav.getByText('设置', { exact: true }).click();
+  await navigate(page, '设置');
   await screenshot(page, info, 'navigation-during-background-stream');
-  await nav.getByText('Agent Hub', { exact: true }).click();
+  await navigate(page, 'Agent Hub');
   await expect(page.locator('.chat-markdown')).toContainText(['BACKGROUND_UPDATE']);
   await expect(input).toHaveValue('retained navigation draft');
   await expect(input).toBeInViewport();

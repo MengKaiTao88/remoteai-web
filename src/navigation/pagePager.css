@@ -7,6 +7,14 @@
 .chat-active .primary-page-viewport, .chat-active .primary-page-track { display: flex; }
 
 @media (max-width: 860px) {
+  .personal-mobile-shell .content-shell { padding-bottom:0; }
+  .personal-mobile-navigation { display:flex; flex-shrink:0; align-items:center; justify-content:space-between;
+    gap:12px; padding:max(8px,env(safe-area-inset-top)) 16px 8px; background:var(--app-canvas);
+    border-bottom:1px solid var(--app-border); }
+  .personal-mobile-navigation button { display:flex; align-items:center; gap:8px; min-height:44px;
+    padding:8px; border:0; background:transparent; color:var(--app-ink); font:inherit; cursor:pointer; }
+  .personal-mobile-navigation span { color:var(--app-muted); }
+  .personal-mobile-shell .main-content { min-height:0; }
   .app-shell:has(.primary-page-viewport.is-primary) {
     position: fixed; inset: var(--chat-top, 0) 0 auto;
     height: var(--chat-height, 100dvh); min-height: 0;

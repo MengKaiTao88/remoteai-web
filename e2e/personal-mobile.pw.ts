@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { fixtureUrl, screenshot, send, settled, state, openChatSettings } from './chat-helpers';
+import { fixtureUrl, screenshot, send, settled, state, openChatSettings, navigate } from './chat-helpers';
 import { chooseSetting } from './chat-settings';
 
 async function list(page: Page) {
@@ -26,8 +26,8 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     await page.getByPlaceholder('输入登录密码').fill('local-test');
     await page.getByRole('button', { name: '登录并查看' }).click();
     await page.getByRole('button', { name: '同意并登录' }).click();
-    const nav = page.locator(desktop ? '.desktop-sidebar nav' : '.mobile-tabbar');
-    await nav.getByText('Agent Hub', { exact: true }).click();
+    const nav = page.locator(desktop ? '.desktop-sidebar nav' : '.dsh-mobile-links');
+    await navigate(page, 'Agent Hub');
     await expect(page.locator('.dsh-chat-shell')).toBeVisible();
     await list(page);
     await screenshot(page, info, 'conversation-list');
@@ -77,8 +77,8 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     await expect(modelSheet).toBeVisible();
     await nav.getByText('账号', { exact: true }).dispatchEvent('click');
     await expect(page.locator('.dsh-model-sheet[open]')).toHaveCount(0);
-    await nav.getByText('设置', { exact: true }).click();
-    await nav.getByText('Agent Hub', { exact: true }).click();
+    await navigate(page, '设置');
+    await navigate(page, 'Agent Hub');
     await expect(modelSheet).toBeHidden();
     if (!desktop) {
       await openChatSettings(page);
@@ -125,12 +125,12 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     await input.fill('');
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 
-    await nav.getByText('账号', { exact: true }).click();
+    await navigate(page, '账号');
     await expect(page.locator('.chat-page')).toBeHidden();
     await screenshot(page, info, 'accounts-original');
-    await nav.getByText('设置', { exact: true }).click();
+    await navigate(page, '设置');
     await screenshot(page, info, 'settings-original');
-    await nav.getByText('Agent Hub', { exact: true }).click();
+    await navigate(page, 'Agent Hub');
     await expect(page.locator('.dsh-title-pill')).toContainText('移动端聊天体验');
     expect(JSON.stringify((await state(request)).threads)).toContain('H5 regression message');
     expect(errors).toEqual([]);

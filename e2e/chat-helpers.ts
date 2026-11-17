@@ -27,6 +27,20 @@ export async function navigate(page: Page, label: string) {
   const language = (await page.locator('html').getAttribute('lang'))?.split('-')[0] ?? 'zh';
   if (label === testText('client.app.chat', {}, language)) label = testText('client.agentHub.title', {}, language);
   const discoveryChild = label === testText('client.app.devices', {}, language) || label === '2FA';
+  if (mobile && await page.locator('.personal-mobile-shell').count()) {
+    const back = page.locator('.personal-mobile-navigation button');
+    if (await back.isVisible()) await click(back);
+    if (label === testText('client.agentHub.title', {}, language)) return;
+    const drawer = page.locator('.dsh-sidebar');
+    if (!await drawer.isVisible()) {
+      await click(page.locator('.dsh-chat-header').getByRole('button', {
+        name: testText('client.chat.openChatList', {}, language), exact: true }));
+    }
+    await click(page.locator('.dsh-mobile-links').getByText(
+      discoveryChild ? testText('client.discovery.title', {}, language) : label, { exact: true }));
+    if (discoveryChild) await click(page.locator('.discovery-list').getByRole('button', { name: label, exact: true }));
+    return;
+  }
   await click(page.locator(mobile ? '.mobile-tabbar' : '.desktop-sidebar nav')
     .getByText(discoveryChild ? testText('client.discovery.title', {}, language) : label, { exact: true }));
   if (discoveryChild) await click(page.locator('.discovery-list').getByRole('button', { name: label, exact: true }));
