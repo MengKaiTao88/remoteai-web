@@ -110,6 +110,8 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     }
     await settled(page);
     await expect(page.locator('.chat-markdown pre')).toHaveText('const connected = true;');
+    await expect.poll(async () => (await state(request)).threads.find(thread => thread.id === 'demo-chat')
+      ?.turns?.at(-1)?.status).toBe('completed');
     await screenshot(page, info, 'reply');
 
     await page.locator('.dsh-title-pill').click();
@@ -121,6 +123,10 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     await page.locator('.dsh-details-heading button').click();
 
     await send(page, 'slow task');
+    await expect.poll(async () => (await state(request)).threads.find(thread => thread.id === 'demo-chat')
+      ?.turns?.at(-1)?.items.some(item => item.type === 'userMessage'
+        && JSON.stringify(item).includes('slow task'))).toBe(true);
+    await expect(page.getByRole('textbox', { name: '聊天消息' })).toHaveValue('');
     await expect(page.getByRole('button', { name: '暂停生成' })).toBeVisible();
     const liveInput = page.getByRole('textbox', { name: '聊天消息' });
     await expect(liveInput).toBeInViewport();
@@ -130,6 +136,7 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     else await page.locator('.remodex-queue-toggle').tap();
     await expect(page.locator('.remodex-queue-toggle')).toHaveAttribute('aria-expanded', 'true');
     await expect(page.locator('.chat-queue')).toBeVisible();
+    await expect(page.locator('.chat-queue li')).toHaveCount(1);
     await expect(page.locator('.chat-queue')).toContainText('personal queue check');
     await screenshot(page, info, 'queue');
     const queueToggle = page.locator('.remodex-queue-toggle');
@@ -139,7 +146,8 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     if (desktop) await queueToggle.click(); else await queueToggle.tap();
     await expect(queueToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(page.locator('.chat-queue')).toBeVisible();
-    const removeQueued = page.getByRole('button', { name: '删除待发送消息', exact: true });
+    const removeQueued = page.locator('.chat-queue li').filter({ hasText: 'personal queue check' })
+      .getByRole('button', { name: '删除待发送消息', exact: true });
     if (desktop) await removeQueued.click(); else await removeQueued.tap();
     await expect(page.locator('.remodex-queue')).toHaveCount(0);
     if (desktop) await page.getByRole('button', { name: '暂停生成' }).click();
