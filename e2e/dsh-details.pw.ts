@@ -1,14 +1,24 @@
 import { expect, test } from '@playwright/test';
 import { screenshot } from './chat-helpers';
 
+test.beforeEach(async ({ page }, info) => {
+  await page.addInitScript(dark => localStorage.setItem('codex-switch.web.theme.v1', dark ? 'dark' : 'light'),
+    info.project.name.includes('dark'));
+});
+
 test('thinking and commentary retain their chronological position around grouped tools', async ({ page }) => {
   await page.goto('e2e/dsh-messages-harness.html?sequence=1');
-  const sequence = page.locator('.remodex-process-sequence').first();
+  const process = page.locator('.dsh-process-trigger').first();
+  await expect(page.locator('.remodex-process-records')).toHaveCount(0);
+  await process.click();
+  const sequence = page.locator('.remodex-process-records').first();
   await expect(sequence.locator('.remodex-reasoning summary')).toHaveText(['Before tools', 'After tools']);
   await expect(sequence.locator('.remodex-reasoning-detail')).toHaveCount(0);
-  await expect(sequence.locator('.dsh-process-trigger')).toHaveCount(1);
+  await expect(sequence.locator('.dsh-process-trigger')).toHaveCount(0);
+  await expect(sequence.locator('.chat-activity')).toHaveCount(3);
   expect(await sequence.evaluate(node => [...node.children].map(child => child.className)))
-    .toEqual(['remodex-reasoning', 'dsh-process remodex-process', 'remodex-reasoning', 'remodex-commentary']);
+    .toEqual(['remodex-reasoning', 'chat-inline-activity', 'chat-inline-activity', 'chat-inline-activity',
+      'remodex-reasoning', 'chat-assistant-message']);
   await sequence.locator('.remodex-reasoning summary').last().click();
   await expect(sequence.getByText('Subsequent check.', { exact: true })).toBeVisible();
   await expect(sequence.getByText('Initial check.', { exact: true })).toHaveCount(0);
@@ -41,8 +51,11 @@ test('process cards remain inspectable, failed tools stay visible and approvals 
   await expect(process).toHaveAttribute('aria-expanded', 'false');
   await process.click();
   await expect(process).toHaveAttribute('aria-expanded', 'true');
-  await page.locator('.chat-activity').filter({ hasText: '运行命令（3）' }).click();
-  await expect(page.getByRole('button', { name: /echo one/ }).first()).toBeVisible();
+  const firstCommand = page.getByRole('button', { name: /echo one/ }).first();
+  await expect(firstCommand).toBeVisible();
+  await firstCommand.click();
+  await expect(page.locator('.chat-shell-card')).toContainText('OUTPUT_one');
+  await expect(page.locator('.chat-shell-card .cs-command-output')).toHaveCount(1);
   await screenshot(page, info, 'process-expanded');
   await process.click();
   await expect(page.getByText('echo one', { exact: true })).toHaveCount(0);

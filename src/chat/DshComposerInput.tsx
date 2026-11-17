@@ -134,6 +134,11 @@ export function DshComposerInput(props: ComposerProps) {
         <ChatQueue {...queue} {...state.queueEditor} editDisabled={state.queueEditor.editDisabled || busy} />
       </div>
     </div>}
+    <div className="assistant-composer-meta">
+      <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
+        scope={threadId ?? props.draftScope} selection={selection} variant="footer"
+        updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
+    </div>
     <form className="dsh-input" data-open={expanded || undefined}
       data-tray={!!(draft.images.length || attachments.items.length || state.hasQuotes || goalMode.enabled || goal) || undefined}
       onFocusCapture={event => { if (event.target instanceof HTMLTextAreaElement) setFocused(true); }}
@@ -148,7 +153,7 @@ export function DshComposerInput(props: ComposerProps) {
         event.target.value = '';
       }} />
       {state.error && <p role="alert" className="chat-error">{displayError(state.error)}</p>}
-      {desktop && settingsError && <p role="alert" className="chat-error">{displayError(settingsError)}
+      {settingsError && <p role="alert" className="chat-error">{displayError(settingsError)}
         <ModelRefreshButton ready={ready} refreshModels={props.refreshModels} />
         <button type="button" className="chat-button" disabled={!ready || !models.length}
           onClick={() => { void updateSettings(selection); }}>{t("client.chat.saveAgain")}</button></p>}
@@ -159,9 +164,12 @@ export function DshComposerInput(props: ComposerProps) {
         if (event.defaultPrevented || event.nativeEvent.isComposing || event.keyCode === 229) return;
         if (event.key === 'Escape') { setAdding(false); menu.close(); menu.input.current?.focus(); }
       }}>{adding && <><div className="dsh-input-extra-action"><MessageDeliveryMode disabled={busy} />
-        <button type="button" aria-pressed={selection.speed === 'fast'} disabled={busy || settingsBusy || !ready}
-          onClick={() => { void updateSettings({ speed: selection.speed === 'fast' ? 'normal' : 'fast' }); }}>
-          {t('client.chat.fastMode.6e02d1')}<Zap size={18} /></button></div>
+        {selection.speed !== undefined && <button type="button" aria-pressed={selection.speed !== 'normal'}
+          disabled={busy || (settingsBusy && !settingsError) || !ready}
+          onClick={() => { void updateSettings({ speed: selection.speed === 'normal' ? 'fast'
+            : selection.speed === 'fast' ? 'ultrafast' : 'normal' }); }}>
+          {t(selection.speed === 'ultrafast' ? 'client.chat.ultrafastMode' : 'client.chat.fastMode.6e02d1')}
+          <Zap size={18} fill={selection.speed === 'ultrafast' ? 'currentColor' : 'none'} /></button>}</div>
         <ComposerAddMenu busy={busy} choose={chooseAdd} /></>}
         {!adding && menu.conversations && props.loadConversations && <ComposerConversationMenu
           key={threadId} input={menu.input} query={menu.query} threadId={threadId} ready={ready && !busy}
@@ -230,13 +238,8 @@ export function DshComposerInput(props: ComposerProps) {
             disabled={busy} onClick={() => { menu.close(); setAdding(value => !value); }}>
             <Plus size={desktop ? 18 : 24} /></FocusPreservingButton>
         </div>
-        <div className="dsh-input-footer" hidden={!expanded}>
-          <RemodexUsage props={props} settings={showSettings} />
-          <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
-            scope={threadId ?? props.draftScope} selection={selection} variant="footer"
-            updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
-        </div>
         <div className="dsh-input-trailing">
+            <RemodexUsage props={props} settings={showSettings} />
             {props.dictation && <ComposerDictation key={`dictation:${threadId}:${cwd}`} client={props.dictation}
               buttonClassName="dsh-input-key dsh-input-voice"
               active={active && ready && !sending && !props.compacting && !settings && !settingsBusy && !goalBusy}

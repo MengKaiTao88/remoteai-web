@@ -1,0 +1,10 @@
+assistant-ui source adaptations
+https://github.com/assistant-ui/assistant-ui
+Revision 8f30cfc76b6e1483cc390a293eafc4d8fffb2bcd
+Copyright (c) 2026 AgentbaseAI Inc.
+MIT License: see docs/licenses/assistant-ui-LICENSE.txt.
+
+The personal chat layout adapts the ChatGPT demo composer geometry, message width,
+action placement, responsive shell and surface hierarchy into scoped React/CSS.
+Remote AI retains all state, transport, authentication and execution controllers.
+The demo runtime, cloud services, branding and decorative voice actions are not bundled.

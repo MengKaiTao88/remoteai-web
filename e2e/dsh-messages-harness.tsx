@@ -11,16 +11,37 @@ import { deriveDshRows } from '../src/chat/dshViewModel';
 import { initialChatState } from '../../../shared/remote-chat/client/types';
 import type { ChatController } from '../../../shared/remote-chat/client/controller';
 import type { Item, Thread } from '../../../shared/conversation/types';
+import { ChatPresentation } from '../../../shared/remote-chat/views/ChatPresentation';
+import { ChatImageContext } from '../../../shared/remote-chat/views/ChatImage';
+import { ImageCache } from '../../../shared/remote-chat/client/imageCache';
 import { ProcessDetailsContext } from '../../../shared/chat/DeferredProcessDetails';
 
 import 'antd/dist/reset.css';
 import '../../../shared/remote-chat/views/chat.css';
-import '../src/chat/dshChatWorkspace.css';
-import '../src/chat/dshControls.css';
-import '../src/chat/remodexWorkspace.css';
+import '../src/chat/assistantChat.css';
 
 
 initializeTheme();
+const imageRetry = new URLSearchParams(location.search).has('image-retry');
+const imageCanvas = document.createElement('canvas');
+imageCanvas.width = 480; imageCanvas.height = 260;
+const imageContext = imageCanvas.getContext('2d')!;
+imageContext.fillStyle = '#ddd'; imageContext.fillRect(0, 0, 480, 260);
+imageContext.fillStyle = '#222'; imageContext.font = '24px sans-serif'; imageContext.fillText('Chat image fixture', 120, 140);
+const fixtureImage = imageCanvas.toDataURL();
+let imageReads = 0;
+const imageCache = new ImageCache(async <T,>() => {
+  document.body.dataset.imageReads = String(++imageReads);
+  return { url: imageReads === 1 ? 'data:image/png;base64,YmFk' : fixtureImage } as T;
+});
+const imageThread: Thread = { id: 'fixture', cwd: '/workspace', preview: '', updatedAt: 0, turns: [
+  { id: 'image-turn', status: 'completed', items: [
+    { id: 'sent-image', type: 'userMessage', content: [{ type: 'text', text: 'Check the sent image.' },
+      { type: 'localImage', path: '/workspace/screenshot.png' }] },
+    { id: 'answer-image', type: 'agentMessage', phase: 'final_answer', text: 'Here is the answer image.',
+      content: [{ type: 'image', url: fixtureImage }] },
+  ] },
+] };
 const stress = new URLSearchParams(location.search).has('stress');
 const deferred = new URLSearchParams(location.search).has('deferred');
 const sequence = new URLSearchParams(location.search).has('sequence');
@@ -75,9 +96,9 @@ const stressThread: Thread = { ...base, turns: [
 ] };
 function Harness() {
   const theme = useThemeMode();
-  const [thread, setThread] = useState(stress ? stressThread : base);
+  const [thread, setThread] = useState(imageRetry ? imageThread : stress ? stressThread : base);
   const [hasMore, setHasMore] = useState(false);
-  const [approvals, setApprovals] = useState([{ id: 1, method: 'item/commandExecution/requestApproval',
+  const [approvals, setApprovals] = useState(imageRetry ? [] : [{ id: 1, method: 'item/commandExecution/requestApproval',
     params: { threadId: 'fixture', reason: '运行本地检查', command: 'npm test' } }]);
   const state = { ...initialChatState(), ready: true, selected: thread, approvals, historyHasMore: hasMore };
   useEffect(() => {
@@ -116,15 +137,18 @@ function Harness() {
   return <ConfigProvider><AntApp><div className="dsh-workspace remodex-workspace" data-theme={theme} style={{ height: '100dvh' }}>
     {stress && <button data-testid="performance-pulse" style={{ position: 'fixed', left: 4, top: 4, zIndex: 30 }}
       onClick={() => { metrics.pulse++; document.body.dataset.pulse = String(metrics.pulse); }}>Pulse</button>}
-    <button data-testid="enable-history" style={{ position: 'fixed', right: 4, top: 4, zIndex: 20 }}
-      onClick={() => setHasMore(true)}>Enable fixture history</button>
+    {!imageRetry && <button data-testid="enable-history" style={{ position: 'fixed', right: 4, top: 4, zIndex: 20 }}
+      onClick={() => setHasMore(true)}>Enable fixture history</button>}
+    <ChatPresentation.Provider value={{ taskCards: true }}>
+    <ChatImageContext.Provider value={{ threadId: 'fixture', ready: true, load: (thread, source, original, options) =>
+      imageCache.load(thread, source, original, options?.refresh) }}>
     <ProcessDetailsContext.Provider value={{ active: true, load: async () => { document.body.dataset.processReads = String(Number(document.body.dataset.processReads ?? 0) + 1);
         return { items: deferred ? [{ id: 'deferred-thinking', type: 'reasoning', summary: ['**Inspect source**\nRead real details.\n\n**Verify behavior**\nCheck the result.'] }, ...tools] : tools }; } }}>
       {stress ? <div className="dsh-chat-main"><header className="dsh-chat-header">Long conversation fixture</header>
         <div className="dsh-codex-content">{history}<div className="dsh-composer-dock">
           <p className="chat-processing-status">Streaming task</p><DshComposerInput {...composer} />
         </div></div></div> : history}
-    </ProcessDetailsContext.Provider>
+    </ProcessDetailsContext.Provider></ChatImageContext.Provider></ChatPresentation.Provider>
   </div></AntApp></ConfigProvider>;
 }
 createRoot(document.getElementById('root')!).render(<WebLocaleProvider><Harness /></WebLocaleProvider>);

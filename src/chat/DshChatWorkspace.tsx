@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Ellipsis, PanelLeft, Plus, Search, SquarePen, X } from 'lucide-react';
+import { ConfigProvider } from 'antd';
+import { ChevronLeft, Ellipsis, PanelLeft, Plus, Search, SquarePen, X } from 'lucide-react';
 import { t, displayText, displayError, useLanguage } from '../../../../shared/localization/browserClient';
 import type { ChatComputer } from '../../../../shared/remote-chat/devices';
 import type { ComputerListRefresh } from '../../../../shared/remote-chat/ComputerSearchBar';
@@ -21,6 +22,7 @@ import { ChatTerminalLayout } from '../../../../shared/remote-chat/views/ChatTer
 import { deriveDshRows } from './dshViewModel';
 import { useDshLayout } from './useDshLayout';
 import { useDshDrawerGesture } from './useDshDrawerGesture';
+import { useSidebarModal } from './useSidebarModal';
 import { DshChatProviders } from './DshChatProviders';
 import { DshComposer } from './DshComposer';
 import { DshMessages } from './DshMessages';
@@ -29,9 +31,7 @@ import { DshMobileSidebar } from './DshMobileSidebar';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { useThemeMode } from '../theme/preference';
 import '../../../../shared/remote-chat/views/chat.css';
-import './dshChatWorkspace.css';
-import './dshControls.css';
-import './remodexWorkspace.css';
+import './assistantChat.css';
 
 export interface DshChatWorkspaceProps {
   chat: { state: ChatState; controller: ChatController; foreground: boolean };
@@ -43,10 +43,13 @@ export interface DshChatWorkspaceProps {
 }
 
 export function DshChatWorkspace(props: DshChatWorkspaceProps) {
-  return <CliGuiProvider key={props.scope} transport={props.chat.controller.cliGui}
+  const dark = useThemeMode() === 'dark';
+  return <ConfigProvider theme={{ token: { colorPrimary: dark ? '#ececec' : '#0d0d0d',
+    colorLink: dark ? '#ececec' : '#0d0d0d', colorTextLightSolid: dark ? '#0d0d0d' : '#fff' } }}>
+    <CliGuiProvider key={props.scope} transport={props.chat.controller.cliGui}
     enabled={props.active && props.chat.foreground && props.chat.state.ready}>
     <DshWorkspaceContent {...props} />
-  </CliGuiProvider>;
+  </CliGuiProvider></ConfigProvider>;
 }
 
 function DshWorkspaceContent(props: DshChatWorkspaceProps) {
@@ -75,6 +78,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   const error = visibleChatError(state.error, state);
   const listOpen = layout.left === 'sidebar' || drawer;
   const overlay = listOpen && layout.left !== 'sidebar';
+  useSidebarModal(host, overlay);
   useDshDrawerGesture({ host, enabled: active && layout.left !== 'sidebar' && !details && !searching
     && !pickingDevice, open: drawer, onChange: setDrawer });
   const closeList = () => { setDrawer(false); if (layout.left === 'sidebar') setSidebar(false); };
@@ -133,12 +137,13 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
         <main className="dsh-chat-main">
           <header className="dsh-chat-header">
             {layout.left !== 'rail' && <button className="dsh-icon-button" aria-label={t('client.chat.openChatList')}
-              onClick={toggleList}><PanelLeft size={20} /></button>}
+              onClick={toggleList}>{layout.sizeClass === 'compact' ? <ChevronLeft size={22} /> : <PanelLeft size={20} />}</button>}
             <button className="dsh-title-pill" onClick={() => setDetails(value => !value)} aria-expanded={details}>
               <strong>{external ? cli?.state.selected?.title ?? cli?.state.engine : title}</strong>
               <span><i className={'dsh-status-dot' + (view.running ? ' is-running' : '')} />
-                {t(!state.ready ? 'client.chat.offline' : view.running ? 'client.chat.inProgress' : 'client.chat.online')}
-                {device?.name && <small>{device.name}</small>}</span>
+                <span className="dsh-device-label">{!state.ready ? t('client.chat.offline')
+                  : device?.name || t(view.running ? 'client.chat.inProgress' : 'client.chat.online')}</span>
+                {cwd && <small>· {cwd.split(/[\\/]/).filter(Boolean).at(-1)}</small>}</span>
             </button>
             <div className="remodex-header-actions">
               <button className="dsh-icon-button" aria-label={t('client.chat.newChat')} onClick={() => newChat()}>

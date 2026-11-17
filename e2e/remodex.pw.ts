@@ -46,6 +46,13 @@ test('runtime slider commits the final drag position and fast mode to the host',
   await fast.tap();
   await expect(fast).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(async () => (await state(request)).composer.settings.speed).toBe('fast');
+  await fast.tap();
+  const ultrafast = page.locator('.remodex-runtime-heading').getByRole('button', { name: 'Ultrafast 模式', exact: true });
+  await expect(ultrafast).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(async () => (await state(request)).composer.settings.speed).toBe('ultrafast');
+  await ultrafast.tap();
+  await expect(fast).toHaveAttribute('aria-pressed', 'false');
+  await expect.poll(async () => (await state(request)).composer.settings.speed).toBe('normal');
   await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '关闭', exact: true }).click();
   await expect(page.getByRole('textbox', { name: '聊天消息' })).toHaveValue('保留草稿');
   await page.locator('.dsh-title-pill').click();

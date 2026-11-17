@@ -1,80 +1,72 @@
-import { memo, useMemo, useState } from 'react';
-import { ChevronRight, Terminal } from 'lucide-react';
+import { memo, useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { ChatMessage } from '../../../../shared/remote-chat/views/ChatMessage';
 import { ChatMarkdown } from '../../../../shared/remote-chat/views/ChatMarkdown';
+import { ChatTurnTiming } from '../../../../shared/remote-chat/views/ChatTurnTiming';
 import { DeferredProcessDetails } from '../../../../shared/chat/DeferredProcessDetails';
 import { DeferredDetails } from '../../../../shared/chat/DeferredDetails';
-import { ChatActivity } from '../../../../shared/remote-chat/views/ChatActivity';
-import { ChatToolDetails } from '../../../../shared/remote-chat/views/ChatToolDetails';
-import { groupConsecutiveActivities, latestActivity } from '../../../../shared/conversation/activityGroups';
 import type { Item, Turn } from '../../../../shared/conversation/types';
 import type { DshRow } from './dshViewModel';
-import { processCounts, reasoningSections, reasoningText } from './remodexPresentation';
+import { itemReasoningSections, processCounts, reasoningText } from './remodexPresentation';
 
 export const RemodexReasoning = memo(function RemodexReasoning({ item }: { item: Item }) {
   const text = reasoningText(item);
-  const sections = useMemo(() => reasoningSections(text), [text]);
+  const sections = useMemo(() => itemReasoningSections(item), [item]);
   if (!sections.length) return <div className="remodex-reasoning"><ChatMarkdown text={text} process desktop /></div>;
   return <div className="remodex-reasoning">{sections.map(section => section.detail
-    ? <DeferredDetails key={section.id} summary={<summary><ChevronRight size={11} /><span>{section.title}</span></summary>}>
+    ? <DeferredDetails key={section.id} summary={<summary><span>{section.title}</span><ChevronRight size={13} /></summary>}>
       {() => <div className="remodex-reasoning-detail"><ChatMarkdown text={section.detail} process desktop /></div>}
     </DeferredDetails> : <p key={section.id}>{section.title}</p>)}</div>;
 });
 
-function LoadedProcess({ items, turn }: { items: Item[]; turn: Turn }) {
-  const [selected, setSelected] = useState<string>();
-  const selectedItem = items.find(item => item.id === selected);
-  const message = (item: Item) => item.type === 'reasoning'
+function LoadedProcess({ items, turn, resolved }: {
+  items: Item[]; turn: Turn; resolved: (items: Item[]) => void;
+}) {
+  useEffect(() => { resolved(items); }, [items, resolved]);
+  // The disclosure already groups this process. Render chronological records directly, not another group.
+  return <div className="remodex-process-records">{items.map(item => item.type === 'reasoning'
     ? <RemodexReasoning key={item.id} item={item} />
     : <ChatMessage key={item.id} item={item} process desktop
-        running={turn.status === 'inProgress' && item.status !== 'completed'} onOpen={setSelected} />;
-  return <>
-    {groupConsecutiveActivities(items).map(group => {
-      const latest = latestActivity(group.items);
-      return group.activity && group.items.length > 1 && latest
-        ? <ChatActivity key={group.key} item={latest} items={group.items} inline running={false}
-            onOpen={() => setSelected(latest.id)} content={() => group.items.map(message)} />
-        : message(group.items[0]);
-    })}
-    {selectedItem && <ChatToolDetails item={selectedItem} onClose={() => setSelected(undefined)} />}
-  </>;
+      running={turn.status === 'inProgress' && item.status === 'inProgress'} onOpen={() => undefined} />)}</div>;
 }
 
-function ToolDisclosure({ items, turn }: { items: Item[]; turn: Turn }) {
-  useLanguage();
-  const [open, setOpen] = useState(false);
+function processLabel(items: Item[]) {
   const counts = processCounts(items);
-  const tools = items;
-  const count = counts.commands + counts.tools;
-  // Deferred process references must keep using the existing authenticated details loader.
-  const deferred = tools.some(item => item.processRef);
-  return <section className="dsh-process remodex-process">
-    {(!!count || deferred) && <>
-      <button type="button" className="dsh-process-trigger" aria-expanded={open}
-        onClick={() => setOpen(value => !value)}><Terminal size={16} />
-        <span>{t(counts.commands && !counts.tools && !deferred ? 'client.chat.activityGroupCommands' : 'client.chat.viewActivityActions',
-          { value1: count })}</span><ChevronRight size={12} className={open ? 'is-open' : ''} />
-      </button>
-      {!!(counts.failed || counts.stopped) && <p className="remodex-process-outcomes">
-        {!!counts.failed && <span>{t('client.taskReview.failed')} · {counts.failed}</span>}
-        {!!counts.stopped && <span>{t('client.chat.stopped')} · {counts.stopped}</span>}
-      </p>}
-      {open && <DeferredProcessDetails items={tools}>
-        {loaded => <LoadedProcess items={loaded} turn={turn} />}
-      </DeferredProcessDetails>}
-    </>}
-  </section>;
+  const labels = [
+    counts.commands ? t('client.chat.activityGroupCommands', { value1: counts.commands }) : '',
+    counts.tools ? t('client.chat.activityGroupOperations', { value1: counts.tools }) : '',
+  ].filter(Boolean);
+  return labels.join(' · ') || t('client.chat.viewActivityActions', {
+    value1: items.reduce((sum, item) => sum + (item.activityCount ?? 1), 0),
+  });
 }
 
 export const RemodexProcess = memo(function RemodexProcess({ row }: { row: DshRow }) {
-  const items = row.items ?? (row.item ? [row.item] : []);
-  return <div className="remodex-process-sequence">{groupConsecutiveActivities(items).map(group => {
-    const item = group.items[0];
-    if (item.type === 'reasoning') return <RemodexReasoning key={group.key} item={item} />;
-    if (item.type === 'agentMessage') return <div className="remodex-commentary" key={group.key}>
-      <ChatMessage item={item} process desktop running={row.turn?.status === 'inProgress'} onOpen={() => undefined} />
-    </div>;
-    return row.turn ? <ToolDisclosure key={group.key} items={group.items} turn={row.turn} /> : null;
-  })}</div>;
+  useLanguage();
+  const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState<{ source: Item[]; details: Item[] }>();
+  const id = useId();
+  const items = useMemo(() => row.items ?? (row.item ? [row.item] : []), [row.items, row.item]);
+  const resolved = useCallback((details: Item[]) => setLoaded(previous =>
+    previous?.source === items && previous.details === details ? previous : { source: items, details }), [items]);
+  const current = loaded?.source === items ? loaded.details : items;
+  const counts = processCounts(current);
+  const label = processLabel(current);
+  if (!row.turn) return null;
+  return <section className="dsh-process remodex-process"
+    data-status={counts.failed ? 'failed' : counts.stopped ? 'interrupted' : undefined}>
+    <button type="button" className="dsh-process-trigger" aria-expanded={open} aria-controls={open ? id : undefined}
+      onClick={() => setOpen(value => !value)}>
+      <span>{row.timed ? <ChatTurnTiming turn={row.turn} fallback={label} /> : label}</span>
+      <ChevronRight size={14} className={open ? 'is-open' : ''} />
+    </button>
+    {!!(counts.failed || counts.stopped) && <p className="remodex-process-outcomes">
+      {!!counts.failed && <span>{t('client.taskReview.failed')} · {counts.failed}</span>}
+      {!!counts.stopped && <span>{t('client.chat.stopped')} · {counts.stopped}</span>}
+    </p>}
+    {open && <div id={id}><DeferredProcessDetails items={items}>
+      {details => <LoadedProcess items={details} turn={row.turn!} resolved={resolved} />}
+    </DeferredProcessDetails></div>}
+  </section>;
 });

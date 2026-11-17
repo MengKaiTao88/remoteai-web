@@ -3,10 +3,11 @@ import type { QueueMessage } from '../../../../shared/remote-chat/queue';
 import { conversationEntries } from '../../../../shared/chat/turnPresentation';
 
 export type DshRowKind = 'user' | 'assistant' | 'tool' | 'tool-group' | 'process' | 'approval'
-  | 'question' | 'change' | 'artifact' | 'pending' | 'summary' | 'duration' | 'error';
+  | 'question' | 'commentary' | 'change' | 'artifact' | 'pending' | 'summary' | 'duration' | 'error';
 export interface DshRow {
   key: string; kind: DshRowKind; turn?: Turn; item?: Item; items?: Item[];
   event?: GuiEvent; pending?: QueueMessage;
+  timed?: boolean;
 }
 export interface DshChatViewModel { rows: DshRow[]; approvals: GuiEvent[]; running: boolean }
 const turnCache = new WeakMap<Turn, Map<boolean, DshRow[]>>();
@@ -14,7 +15,10 @@ const offlineCache = new WeakMap<Turn, Turn>();
 
 function itemKind(item: Item): DshRowKind {
   if (item.type === 'userMessage') return 'user';
-  if (item.type === 'agentMessage') return item.questions?.length ? 'question' : 'assistant';
+  if (item.type === 'agentMessage') {
+    if (item.questions?.length) return 'question';
+    return item.phase === 'commentary' ? 'commentary' : 'assistant';
+  }
   if (item.failure || item.type === 'error' || item.status === 'failed'
     || item.type === 'commandExecution' && item.exitCode != null && item.exitCode !== 0) return 'error';
   if (item.type === 'fileChange') return 'change';
@@ -28,7 +32,8 @@ function groupTools(rows: DshRow[]): DshRow[] {
     let end = index;
     while (end < rows.length && rows[end].kind === 'tool') end++;
     if (end - index >= 3) grouped.push({
-      key: 'tools:' + rows[index].key, kind: 'tool-group', turn: rows[index].turn,
+      key: 'tools:' + rows[index].turn?.id + ':' + (rows[end]?.key ?? 'tail'),
+      kind: 'tool-group', turn: rows[index].turn,
       items: rows.slice(index, end).map(row => row.item!),
     });
     else grouped.push(...rows.slice(index, Math.max(index + 1, end)));
@@ -43,13 +48,17 @@ function turnRows(turn: Turn, previous?: Turn): DshRow[] {
   if (cached) return cached;
   const entries = conversationEntries(previous ? [previous, turn] : [turn]).filter(entry => entry.turn === turn);
   const rows: DshRow[] = [];
-  for (const entry of entries) {
+  for (const [position, entry] of entries.entries()) {
     if (entry.kind === 'work') {
       if (!entry.inline) {
         let pending: Item[] = [];
+        let timed = entry.timed;
+        let segment = 0;
+        const boundary = entries.slice(position + 1).find(next => next.kind === 'message')?.id ?? 'tail';
         const flush = () => {
-          if (pending.length) rows.push({ key: entry.id + ':' + pending[0].id,
-            kind: 'process', turn, items: pending });
+          if (pending.length) rows.push({ key: `${turn.id}:process:${boundary}:${segment++}`,
+            kind: 'process', turn, items: pending, timed });
+          timed = false;
           pending = [];
         };
         for (const item of entry.items) {

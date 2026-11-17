@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { RemodexDialog } from './RemodexDialog';
+import { ChatContextSettings } from '../../../../shared/remote-chat/views/ChatContextSettings';
 import { X } from 'lucide-react';
 import { t } from '../../../../shared/localization/browserClient';
 import { ChatProjectSwitch } from '../../../../shared/remote-chat/views/ChatProjectSwitch';
@@ -14,24 +16,12 @@ export function DshDetails({ chat, device, headerActions, open, presentation, cl
   open: boolean; presentation: DshLayout['detail']; close: () => void; chooseComputer: () => void;
 }) {
   const { controller, state } = chat;
-  const panel = useRef<HTMLElement>(null);
-  const lastFocus = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    if (!open) return;
-    lastFocus.current = document.activeElement as HTMLElement;
-    panel.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    return () => lastFocus.current?.focus();
-  }, [open]);
+  const [contextOpen, setContextOpen] = useState(false);
+  useEffect(() => { if (!open) setContextOpen(false); }, [open]);
+  useEffect(() => { setContextOpen(false); }, [state.selected?.id]);
   const connection = { client: controller.guiAccounts, deviceName: device?.name ?? t('client.settings.chooseAComputer'),
     chooseDevice: chooseComputer };
-  return <>
-    {open && presentation !== 'panel' && <button className="dsh-detail-scrim"
-      aria-label={t('client.chat.closeDetailsPanel')} onClick={close} />}
-    <aside ref={panel} className="dsh-details-panel" data-presentation={presentation} hidden={!open}
-      role={presentation === 'panel' ? 'complementary' : 'dialog'} aria-modal={presentation !== 'panel' || undefined}
-      aria-label={t('client.chat.accountAndComputer')} onKeyDown={event => {
-        if (event.key === 'Escape') { event.stopPropagation(); close(); }
-      }}>
+  const content = <>
       <header className="dsh-details-heading"><strong>{t('client.chat.accountAndComputer')}</strong>
         <button className="dsh-icon-button" aria-label={t('client.chat.closeDetailsPanel')} onClick={close}>
           <X size={20} /></button></header>
@@ -52,8 +42,17 @@ export function DshDetails({ chat, device, headerActions, open, presentation, cl
       </div>
       <ChatUsage read={controller.readUsage} active={open && chat.foreground} ready={state.ready}
         tokenUsage={state.selected?.tokenUsage} card readConversationMetrics={controller.readConversationMetrics}
-        threadId={state.selected?.id ?? null} />
+        threadId={state.selected?.id ?? null}
+        onContextSettings={state.selected ? () => setContextOpen(true) : undefined} />
       <div className="dsh-detail-tools">{headerActions}</div>
-    </aside>
+      {contextOpen && state.selected && <ChatContextSettings threadId={state.selected.id}
+        api={controller.contextSettings} onClose={() => setContextOpen(false)} />}
+  </>;
+  if (!open) return null;
+  return <>
+    {presentation === 'panel' ? <aside className="dsh-details-panel" data-presentation="panel"
+      aria-label={t('client.chat.accountAndComputer')}>{content}</aside>
+      : <RemodexDialog label={t('client.chat.accountAndComputer')} close={close}
+        className="dsh-details-panel" presentation={presentation}>{content}</RemodexDialog>}
   </>;
 }

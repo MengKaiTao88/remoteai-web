@@ -30,7 +30,7 @@ export function DshModelPicker(props: Props) {
   const effortLabel = (value: string) => displayText(EFFORT_LABELS[value] || value);
   const effort = effortLabel(current.effort);
   const unavailable = modelSelectionError(props.models, current);
-  const disabled = !props.ready || props.settingsBusy;
+  const disabled = !props.ready || (props.settingsBusy && !props.settingsError);
   const efforts = [...model?.supportedReasoningEfforts ?? []].sort((a, b) =>
     EFFORT_ORDER.indexOf(a.reasoningEffort) - EFFORT_ORDER.indexOf(b.reasoningEffort));
   const selectedIndex = Math.max(0, efforts.findIndex(value => value.reasoningEffort === current.effort));
@@ -62,7 +62,10 @@ export function DshModelPicker(props: Props) {
         props.beforeOpen?.(); setQuery(''); setOpen(true);
         if (!props.models.length && props.ready) void props.refreshModels();
       }}><span className="dsh-model-chip-name">{name}</span>
-      {!!effort && <span className="dsh-model-chip-effort">{effort}</span>}<ChevronRight size={12} /></FocusPreservingButton>
+      {!!effort && <span className="dsh-model-chip-effort">{effort}</span>}
+      {props.selection.speed && props.selection.speed !== 'normal' && <Zap size={13}
+        aria-label={t(props.selection.speed === 'ultrafast' ? 'client.chat.ultrafastMode' : 'client.chat.fastMode.6e02d1')}
+        fill={props.selection.speed === 'ultrafast' ? 'currentColor' : 'none'} />}<ChevronRight size={12} /></FocusPreservingButton>
     {open && <RemodexDialog label={t('client.shared.chooseModel')} close={close} anchor={trigger.current}
       className={'dsh-model-sheet remodex-runtime ' + (listing ? 'is-listing' : '')}>
       {listing ? <>
@@ -80,14 +83,16 @@ export function DshModelPicker(props: Props) {
         {!shown.length && <p>{t('client.chat.noModelsFound')}</p>}
       </> : <div className="remodex-runtime-controls">
         <div className="remodex-runtime-heading">
-          <button type="button" aria-label={t('client.chat.fastMode.6e02d1')}
-            aria-pressed={props.selection.speed === 'fast'} disabled={disabled}
-            onClick={() => { void props.updateSettings({ speed: props.selection.speed === 'fast' ? 'normal' : 'fast' }); }}>
-            <Zap size={23} fill={props.selection.speed === 'fast' ? 'currentColor' : 'none'} /></button>
+          {props.selection.speed !== undefined && <button type="button"
+            aria-label={t(props.selection.speed === 'ultrafast' ? 'client.chat.ultrafastMode' : 'client.chat.fastMode.6e02d1')}
+            aria-pressed={props.selection.speed !== 'normal'} disabled={disabled}
+            onClick={() => { void props.updateSettings({ speed: props.selection.speed === 'normal' ? 'fast'
+              : props.selection.speed === 'fast' ? 'ultrafast' : 'normal' }); }}>
+            <Zap size={23} fill={props.selection.speed === 'ultrafast' ? 'currentColor' : 'none'} /></button>}
           <button type="button" className="remodex-model-list-trigger" onClick={() => setListing(true)}>
             <strong>{name}</strong><span>{effort}</span><ChevronRight size={16} /></button>
         </div>
-        {props.settingsBusy && <p role="status" className="chat-muted">{t('client.projectBrowser.saving')}</p>}
+        {props.settingsBusy && !props.settingsError && <p role="status" className="chat-muted">{t('client.projectBrowser.saving')}</p>}
         {efforts.length > 1 && <div className="remodex-effort-control">
           <div className="remodex-effort-track" style={{ '--effort-factor':
             shownIndex / (efforts.length - 1) } as React.CSSProperties}>
@@ -120,6 +125,8 @@ export function DshModelPicker(props: Props) {
       </div>}
       {(props.settingsError || unavailable) && <p className="dsh-model-error" role="alert">
         {props.settingsError ? displayError(props.settingsError) : displayText(unavailable!)}</p>}
+      {props.settingsError && <button type="button" className="dsh-model-refresh" disabled={!props.ready}
+        onClick={() => { void props.updateSettings(props.selection); }}>{t('client.chat.saveAgain')}</button>}
       {(!model || listing) && <button className="dsh-model-refresh" type="button" disabled={disabled}
         onClick={() => { void props.refreshModels(); }}>
         <RotateCcw size={16} />{t('client.mobile.refreshModels')}</button>}

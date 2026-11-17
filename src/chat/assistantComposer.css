@@ -1,0 +1,72 @@
+.dsh-workspace .dsh-composer-dock { position:relative; z-index:4; min-height:0;
+  padding:4px 12px max(12px,env(safe-area-inset-bottom)); background:var(--dsh-solid); }
+.dsh-composer-dock > * { max-width:768px; margin-inline:auto; }
+.dsh-input-host { position:relative; min-width:0; width:100%; }
+.assistant-composer-meta { display:flex; justify-content:flex-start; min-height:36px; padding-inline:6px; }
+.dsh-workspace .dsh-input { position:relative; width:100%; margin:0; padding:6px; border:1px solid var(--dsh-line);
+  border-radius:28px; color:var(--dsh-ink); background:var(--dsh-glass); box-shadow:0 2px 12px #00000005; }
+.dsh-input:focus-within { border-color:var(--dsh-muted); }
+.dsh-workspace .dsh-input-layout { display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:0 2px; align-items:end; }
+.dsh-input-layout[data-file-dragging] { outline:2px solid var(--dsh-accent); border-radius:20px; }
+.dsh-workspace .dsh-input .chat-composer-content { grid-column:2; grid-row:1; min-width:0; min-height:44px; padding:0;
+  max-height:min(12em,35dvh,max(44px,calc(var(--dsh-available-height,100dvh) - 180px)));
+  overflow-y:auto; overscroll-behavior:contain; }
+.dsh-workspace .dsh-input textarea { display:block; width:100%; min-height:44px; padding:10px 2px; margin:0;
+  box-sizing:border-box; border:0; outline:0; border-radius:0; color:inherit; background:transparent; resize:none;
+  font:inherit; font-size:max(16px,var(--gui-font-size,1em)); line-height:1.5; overflow:hidden; }
+/* WebKit measures the native (transparent) placeholder in scrollHeight. */
+.dsh-workspace .dsh-input textarea:placeholder-shown { white-space:nowrap; }
+.dsh-input textarea::placeholder { color:transparent; }
+.dsh-input textarea:not(:placeholder-shown) + .chat-composer-placeholder { display:none; }
+.dsh-workspace .dsh-input .chat-composer-placeholder { top:10px; left:2px; right:2px; font:inherit;
+  font-size:max(16px,var(--gui-font-size,1em)); line-height:1.5; color:var(--dsh-muted); }
+.dsh-input-leading { grid-column:1; grid-row:1; }
+.dsh-input-trailing { grid-column:3; grid-row:1; display:flex; align-items:center; gap:0; min-height:44px; }
+.dsh-workspace .dsh-input-key { display:inline-grid; place-items:center; flex:0 0 44px; width:44px; height:44px;
+  min-height:44px; padding:4px; border:0; border-radius:50%; color:var(--dsh-ink); background:none;
+  cursor:pointer; touch-action:manipulation; }
+.dsh-input-key svg { width:21px; height:21px; }
+.dsh-input-key:hover { background:var(--dsh-control); }
+.dsh-input-key:disabled { opacity:.4; cursor:default; }
+.dsh-workspace .dsh-input-send { background:var(--dsh-ink); color:var(--dsh-solid); width:36px; height:36px;
+  min-height:36px; flex-basis:36px; margin:4px; }
+.dsh-input-tray { grid-column:1/-1; grid-row:1; min-width:0; padding:4px 6px 8px; max-height:150px; overflow:auto; }
+.dsh-input-tray[hidden] { display:none; }
+.dsh-input[data-tray] .chat-composer-content,.dsh-input[data-tray] .dsh-input-leading,
+.dsh-input[data-tray] .dsh-input-trailing { grid-row:2; }
+.dsh-model-chip { display:inline-flex; align-items:center; gap:6px; min-width:0; max-width:100%; min-height:44px;
+  padding:8px 10px; border:0; border-radius:18px; background:transparent; color:var(--dsh-ink); cursor:pointer; }
+.dsh-model-chip-footer { min-height:36px; padding:4px 6px; font-size:.85em!important; }
+.dsh-model-chip-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dsh-model-chip-effort { color:var(--dsh-muted); white-space:nowrap; }
+.dsh-model-chip > svg { flex-shrink:0; }
+.remodex-context-ring { display:grid; place-items:center; flex:0 0 36px; min-width:36px; height:44px;
+  border:0; background:none; color:var(--dsh-muted); padding:0; cursor:pointer; touch-action:manipulation; }
+.dsh-workspace .chat-composer-popover { position:absolute; bottom:calc(100% + 8px); left:0;
+  width:min(280px,calc(100vw - 32px)); max-height:min(400px,55dvh); overflow:auto; overscroll-behavior:contain;
+  background:var(--dsh-solid); color:var(--dsh-ink); border:1px solid var(--dsh-line); border-radius:18px;
+  padding:5px; box-shadow:0 8px 32px #0002; }
+.dsh-workspace .chat-add-menu { display:flex; flex-direction:column; gap:0; padding:0; }
+.dsh-workspace .chat-add-menu button,.dsh-workspace .dsh-input-extra-action button {
+  display:flex; flex-direction:row-reverse; justify-content:space-between; align-items:center; gap:12px;
+  min-height:44px; width:100%; padding:10px 12px; border:0; border-radius:12px; background:none; color:inherit;
+  cursor:pointer; text-align:left; }
+.dsh-workspace .chat-add-menu button:hover,.dsh-input-extra-action button:hover { background:var(--dsh-control); }
+.dsh-workspace .chat-add-menu svg { background:none; width:19px; height:19px; padding:0; }
+.dsh-input-extra-action { border-bottom:1px solid var(--dsh-line); padding-bottom:4px; margin-bottom:4px; }
+.dsh-workspace .dsh-input-extra-action button { flex-direction:row; }
+.dsh-workspace .dsh-input-extra-action .chat-delivery-mode { display:flex; }
+.dsh-input .chat-error { max-width:400px; margin:4px 8px 8px; font-size:.85em; }
+.dsh-composer-dock > .chat-processing-status { margin:0 auto 4px; min-height:20px; font-size:.8em; color:var(--dsh-muted); }
+.dsh-composer-dock .chat-processing-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.remodex-plan-capsule,.remodex-queue-toggle { display:flex; align-items:center; gap:8px; width:fit-content; max-width:100%;
+  min-height:36px; padding:6px 10px; margin-bottom:6px; font-size:.85em!important; border:1px solid var(--dsh-line);
+  border-radius:18px; color:var(--dsh-muted); background:var(--dsh-solid); cursor:pointer; }
+.remodex-plan-capsule span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.remodex-queue[data-open] > button > svg:last-child { transform:rotate(90deg); }
+.dsh-workspace .remodex-queue { margin:0 0 6px; max-height:none; overflow:visible; }
+.remodex-queue .chat-queue { max-height:25dvh; overflow:auto; background:var(--dsh-sheet); border:1px solid var(--dsh-line);
+  border-radius:16px; margin-bottom:8px; }
+.remodex-new-context { margin:0 auto 4px; }
+.remodex-new-context .chat-project-switch { justify-content:center; }
+.dsh-workspace .chat-footer { font-size:.75em; }

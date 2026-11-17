@@ -16,6 +16,7 @@ import { prepareImageEdit } from '../../../../shared/remote-chat/views/prepareIm
 import { useVisibleChatUsage } from '../../../../shared/remote-chat/views/useVisibleChatUsage';
 import { TaskReviewProvider } from '../../../../shared/remote-chat/TaskReviewContext';
 import { ChatRetryProvider } from '../../../../shared/remote-chat/ChatRetryProvider';
+import { ChatPresentation } from '../../../../shared/remote-chat/views/ChatPresentation';
 import type { ChatController, ChatState } from '../../../../shared/remote-chat/views/types';
 
 export function DshChatProviders({ controller, state, active, children }: {
@@ -24,7 +25,8 @@ export function DshChatProviders({ controller, state, active, children }: {
   const enabled = active && state.ready;
   const usage = useVisibleChatUsage(controller.readUsage, enabled);
   const threadId = state.selected?.id ?? null;
-  return <ToolDetailsContext.Provider value={{ load: controller.toolDetails, active: enabled }}>
+  return <ChatPresentation.Provider value={{ taskCards: true }}>
+    <ToolDetailsContext.Provider value={{ load: controller.toolDetails, active: enabled }}>
     <ProcessDetailsContext.Provider value={{ load: controller.processDetails, active: enabled }}>
     <DesktopUsageContext.Provider value={usage}>
     <ImageAiContext.Provider value={{ enabled: enabled && !state.selectedArchived
@@ -47,5 +49,5 @@ export function DshChatProviders({ controller, state, active, children }: {
     </ChatBrowserProvider></ChatAttachmentMetadata>
     </ChatFileContext.Provider></ChatImageContext.Provider></ImageAiContext.Provider>
     </DesktopUsageContext.Provider></ProcessDetailsContext.Provider>
-  </ToolDetailsContext.Provider>;
+  </ToolDetailsContext.Provider></ChatPresentation.Provider>;
 }

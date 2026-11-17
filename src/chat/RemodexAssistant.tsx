@@ -1,5 +1,7 @@
 import { memo, useMemo } from 'react';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
+import { itemImageSources } from '../../../../shared/chat/imageSources';
+import { ChatImage } from '../../../../shared/remote-chat/views/ChatImage';
 import { ChatMarkdown } from '../../../../shared/remote-chat/views/ChatMarkdown';
 import { ChatCopyButton } from '../../../../shared/remote-chat/views/ChatCopyButton';
 import { ChatQuoteButton } from '../../../../shared/remote-chat/views/ChatQuotes';
@@ -11,9 +13,13 @@ import { markdownBlocks } from './remodexMarkdown';
 export const RemodexAssistant = memo(function RemodexAssistant({ item, running }: { item: Item; running: boolean }) {
   useLanguage();
   const text = questionMessageText(item);
+  const images = useMemo(() => itemImageSources(item), [item]);
   const blocks = useMemo(() => markdownBlocks(text), [text]);
   return <article className="chat-assistant-message remodex-assistant" data-quote-source={item.id}>
     {blocks.map((block, index) => <ChatMarkdown key={index} text={block} desktop />)}
+    {!!images.length && <div className="chat-sent-images">
+      {images.map((source, index) => <ChatImage key={source + index} source={source} />)}
+    </div>}
     {!!text.trim() && !running && <div className="chat-message-actions" data-quote-exclude>
       <ChatCopyButton text={text} label={t('client.chat.copyReply')} iconOnly />
       <ChatQuoteButton messageId={item.id} text={text} role="assistant" />

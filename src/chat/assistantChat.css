@@ -1,0 +1,5 @@
+/* assistant-ui ChatGPT demo 8f30cfc; MIT attribution in NOTICE-ASSISTANT-UI.txt. */
+@import './assistantShell.css';
+@import './assistantComposer.css';
+@import './assistantMessages.css';
+@import './assistantDialogs.css';

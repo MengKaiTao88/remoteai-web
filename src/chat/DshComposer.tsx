@@ -37,7 +37,7 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
     {!state.selected && <div className="remodex-new-context"><ChatProjectSwitch state={state} controller={controller} active={enabled} /></div>}
     {runningTurn && <ChatProcessing key={runningTurn.id} turn={runningTurn} processing={state.processing}
       active={enabled && state.ready} />}
-    <ChatAsyncQuestions thread={state.selected} error={state.error} scope={scope}
+    <ChatAsyncQuestions thread={state.selected} error={state.error} scope={scope} stepByStep
       disabled={!state.ready || state.sending || state.settingsBusy || state.selectedArchived
         || state.queueBusy || state.compacting === state.selected?.id} answer={controller.answerAsyncQuestion} />
     <DshComposerInput suggestions={remotePromptSuggestion(state, controller.suggestNextPrompt, { scope })}

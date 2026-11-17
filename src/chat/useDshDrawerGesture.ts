@@ -18,7 +18,7 @@ export function useDshDrawerGesture(input: {
     const start = (event: TouchEvent) => {
       const target = event.target instanceof Element ? event.target : null;
       if (event.touches.length !== 1 || !target?.closest('.dsh-message-region, .dsh-sidebar')
-        || target.closest('textarea,input,pre,code,video,[data-no-swipe]')) return;
+        || target.closest('textarea,input,pre,code,video,table,.chat-table-viewport,[data-no-swipe]')) return;
       const point = event.touches[0];
       gesture = { x: point.clientX, y: point.clientY, dx: 0, open: current.current.open, locked: false };
     };

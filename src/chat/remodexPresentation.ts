@@ -1,5 +1,6 @@
 import type { Item } from '../../../../shared/conversation/types';
 import { messageContent } from '../../../../shared/chat/messageDetails';
+import { activityStatus } from '../../../../shared/conversation/itemStatus';
 
 export interface ReasoningSection { id: string; title: string; detail: string }
 
@@ -42,14 +43,30 @@ export function reasoningText(item: Item) {
   return [...item.summary ?? [], messageContent(item)].filter(Boolean).join('\n\n');
 }
 
+/** Preserve protocol summary/detail fields before falling back to Markdown heading hints. */
+export function itemReasoningSections(item: Item): ReasoningSection[] {
+  const summary = (item.summary ?? []).filter(value => value.trim());
+  const detail = messageContent(item).trim();
+  const parsed = reasoningSections(reasoningText(item));
+  if (parsed.length) return parsed;
+  if (!summary.length || !detail || detail === summary.join('\n\n').trim()) return [];
+  return summary.map((title, index) => ({ id: String(index), title,
+    detail: index === summary.length - 1 ? detail : '' }));
+}
+
 export function processCounts(items: Item[]) {
   return items.reduce((counts, item) => {
+    if (item.processActivityMetrics) {
+      for (const key of ['commands', 'tools', 'failed', 'stopped'] as const) counts[key] += item.processActivityMetrics[key];
+      return counts;
+    }
+    if (item.type === 'processSummary') return counts;
     if (item.type === 'reasoning' || item.type === 'agentMessage') return counts;
     const count = item.activityCount ?? 1;
     if (item.type === 'commandExecution') counts.commands += count;
     else counts.tools += count;
-    if (item.status === 'failed' || item.failure || item.exitCode != null && item.exitCode !== 0) counts.failed++;
-    if (item.status === 'interrupted' || item.status === 'cancelled') counts.stopped++;
+    if (activityStatus(item) === 'failed') counts.failed++;
+    if (activityStatus(item) === 'interrupted') counts.stopped++;
     return counts;
   }, { commands: 0, tools: 0, failed: 0, stopped: 0 });
 }
