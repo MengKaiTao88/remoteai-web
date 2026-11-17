@@ -29,6 +29,13 @@ jobs:
       - run: npm run test:personal:e2e
       - run: npm run test:personal:pwa
       - run: npm run test:personal:webkit
+      - name: Preserve browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: personal-web-failure-evidence
+          path: test-results/
+          retention-days: 7
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -96,8 +96,14 @@ export async function login(page: Page) {
   await page.goto('/web/', { waitUntil: 'commit' });
   await page.getByPlaceholder('name@example.com').fill('mobile-test@example.test');
   await page.getByPlaceholder('输入登录密码').fill('local-test');
-  await page.getByPlaceholder('输入登录密码').press('Enter');
-  await page.getByRole('button', { name: '同意并登录' }).click();
+  await page.getByRole('button', { name: '登录并查看', exact: true }).click();
+  const consent = page.getByRole('dialog').filter({ has: page.getByRole('button', { name: '同意并登录', exact: true }) });
+  await expect(consent).toBeVisible();
+  // Observe the actual sign-in response before beginning fixture-dependent journeys.
+  const authenticated = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/auth/login')
+    && response.request().method() === 'POST');
+  await consent.getByRole('button', { name: '同意并登录', exact: true }).click();
+  expect((await authenticated).ok()).toBe(true);
   await expect(page.locator('.app-shell')).toBeVisible();
 }
 
