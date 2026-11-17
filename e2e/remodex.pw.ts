@@ -11,8 +11,10 @@ test('file summaries and real diffs remain accessible in the personal chat surfa
   if (!await page.locator('.dsh-sidebar').isVisible()) {
     await page.locator('.dsh-chat-shell').getByRole('button', { name: '打开聊天列表', exact: true }).click();
   }
+  await expect(page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true })).toBeVisible();
+  // Seed before selecting: the fixture updates host storage, not an already-open history snapshot.
+  expect((await request.post(fixtureUrl + '/test/sidebar', { data: { action: 'message-details' } })).ok()).toBe(true);
   await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
-  await request.post(fixtureUrl + '/test/sidebar', { data: { action: 'message-details' } });
   const summary = page.getByRole('region', { name: '本轮修改', exact: true });
   await expect(summary).toContainText('src/note.ts');
   await screenshot(page, info, 'file-summary');

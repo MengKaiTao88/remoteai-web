@@ -27,7 +27,9 @@ export async function navigate(page: Page, label: string) {
   const language = (await page.locator('html').getAttribute('lang'))?.split('-')[0] ?? 'zh';
   if (label === testText('client.app.chat', {}, language)) label = testText('client.agentHub.title', {}, language);
   const discoveryChild = label === testText('client.app.devices', {}, language) || label === '2FA';
-  if (mobile && await page.locator('.personal-mobile-shell').count()) {
+  const personal = await page.locator('html[data-pocket-web]').count() > 0;
+  if (mobile && personal) await expect(page.locator('.personal-mobile-shell')).toBeVisible();
+  if (mobile && personal) {
     const back = page.locator('.personal-mobile-navigation button');
     if (await back.isVisible()) await click(back);
     if (label === testText('client.agentHub.title', {}, language)) return;
