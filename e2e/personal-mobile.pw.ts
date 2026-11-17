@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { fixtureUrl, screenshot, send, settled, state, openChatSettings, navigate } from './chat-helpers';
+import { fixtureUrl, screenshot, send, settled, state, openChatSettings, navigate, login } from './chat-helpers';
 import { chooseSetting } from './chat-settings';
 
 async function list(page: Page) {
@@ -21,11 +21,7 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
       if (large) localStorage.setItem('codex-switch:global-font-size', '20');
     }, { dark: info.project.name.includes('dark'), large: info.project.name.includes('large') });
     await request.post(fixtureUrl + '/test/reset');
-    await page.goto('./', { waitUntil: 'commit' });
-    await page.getByPlaceholder('name@example.com').fill('mobile-test@example.test');
-    await page.getByPlaceholder('输入登录密码').fill('local-test');
-    await page.getByRole('button', { name: '登录并查看' }).click();
-    await page.getByRole('button', { name: '同意并登录' }).click();
+    await login(page);
     const nav = page.locator(desktop ? '.desktop-sidebar nav' : '.dsh-mobile-links');
     await navigate(page, 'Agent Hub');
     await expect(page.locator('.dsh-chat-shell')).toBeVisible();
@@ -136,12 +132,14 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     else await page.locator('.remodex-queue-toggle').tap();
     await expect(page.locator('.remodex-queue-toggle')).toHaveAttribute('aria-expanded', 'true');
     await expect(page.locator('.chat-queue')).toBeVisible();
+    await expect(page.getByRole('button', { name: '移除引用', exact: true })).toHaveCount(0);
     await expect(page.locator('.chat-queue li')).toHaveCount(1);
     await expect(page.locator('.chat-queue')).toContainText('personal queue check');
     await screenshot(page, info, 'queue');
     const queueToggle = page.locator('.remodex-queue-toggle');
     if (desktop) await queueToggle.click(); else await queueToggle.tap();
     await page.getByRole('textbox', { name: '聊天消息' }).blur();
+    await expect(page.getByRole('button', { name: '移除引用', exact: true })).toHaveCount(0);
     await expect(page.locator('.dsh-input')).not.toHaveAttribute('data-open');
     if (desktop) await queueToggle.click(); else await queueToggle.tap();
     await expect(queueToggle).toHaveAttribute('aria-expanded', 'true');

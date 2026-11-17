@@ -3,7 +3,7 @@
   "revision": "ea8d26cae4d5fa100085fb5b3227be535ebb3a6f",
   "sharedSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-shared",
-    "revision": "195ba22ab8ee516c49f485bf7ae29599540d08ec"
+    "revision": "60ad92711f92050d21bc52c2db89ee12a4ba3d1b"
   },
   "nativeSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-native",
@@ -1878,6 +1878,6 @@
     "shared/project-browser/blameGutter.css": "0da942ee987941ca369dab48a072054475a3c7f6027fcc2ea56e62e130d094ae",
     "LICENSE": "84a63ace819715986d7c254172c3030f5d94ecaefebab778a84c2843e0068b87",
     "shared/chat/observeComposerWidth.ts": "756d84fe33278794eaaed6bc6dcffcad1e6d077c3c5c1944214896eb5722b17a",
-    "shared/chat/FocusPreservingButton.tsx": "abfe9204199154a8497e20d469c99d7fd6b993e1279e203a5f3cab2b34694ff3"
+    "shared/chat/FocusPreservingButton.tsx": "4e1e1b2a9e12b366bd986ee9b6f8d99f1f95f26e7353131082e12e5a283708bd"
   }
 }

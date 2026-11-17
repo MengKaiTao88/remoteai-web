@@ -104,7 +104,7 @@ Run npm run check:personal, npm test, npm run test:personal:e2e, npm run test:pe
 npm run test:personal:webkit sequentially. The build/test commands prepare a generated workspace;
 concurrent preparations would interfere with each other. The ordinary npm run check remains supported.
 
-The Web suite contains 66 Vitest cases plus two Node workspace cases. The shared helpers have five additional unit cases covering deferred/coalesced measurement, cancellation, touch/mouse/keyboard activation and duplicate-click suppression. The browser
+The Web suite contains 66 Vitest cases plus two Node workspace cases. The shared helpers have six additional unit cases covering deferred/coalesced measurement, cancellation, touch/mouse/keyboard activation and duplicate-click suppression, including clicks retargeted to a different control after a layout change. The browser
 matrix covers light/dark phones, a 320 px enlarged-font phone, a tablet sheet, WebKit and wide/narrow
 Web desktop layouts. Mobile queue tests use real touch taps and require visible contents. Runtime
 slider tests verify final drag/fast-mode values in the host fixture, not only the displayed label.
