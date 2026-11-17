@@ -10,6 +10,7 @@ import { ChatBrowserProvider } from '../../../../shared/remote-chat/views/ChatBr
 import { ChatFileReferencesProvider } from '../../../../shared/chat/ChatFileReferences';
 import { ImageAnnotationsProvider } from '../../../../shared/chat/ImageAnnotations';
 import { ChatQuotesProvider } from '../../../../shared/remote-chat/views/ChatQuotes';
+import { useDraftCacheScope } from '../../../../shared/remote-chat/client/useDraftCacheScope';
 import { ChatDetailsWorkspace } from '../../../../shared/remote-chat/views/ChatDetailsWorkspace';
 import { imageAiSender } from '../../../../shared/remote-chat/client/imageAiSender';
 import { prepareImageEdit } from '../../../../shared/remote-chat/views/prepareImageEdit';
@@ -25,6 +26,7 @@ export function DshChatProviders({ controller, state, active, children }: {
   const enabled = active && state.ready;
   const usage = useVisibleChatUsage(controller.readUsage, enabled);
   const threadId = state.selected?.id ?? null;
+  const cacheScope = useDraftCacheScope({ threadId, draftScope: state.draftScope });
   return <ChatPresentation.Provider value={{ taskCards: true }}>
     <ToolDetailsContext.Provider value={{ load: controller.toolDetails, active: enabled }}>
     <ProcessDetailsContext.Provider value={{ load: controller.processDetails, active: enabled }}>
@@ -39,7 +41,7 @@ export function DshChatProviders({ controller, state, active, children }: {
     <ChatAttachmentMetadata controller={controller} ready={state.ready} threadId={threadId}>
     <ChatBrowserProvider controller={controller}>
     <ChatFileReferencesProvider><ImageAnnotationsProvider>
-    <ChatQuotesProvider scope={state.draftScope ?? threadId} sending={state.sending}
+    <ChatQuotesProvider scope={cacheScope} sending={state.sending}
       enabled={enabled && !state.selectedArchived}>
     <ChatDetailsWorkspace selected={threadId} active={active} enabled>
     <TaskReviewProvider controller={controller} state={state} active={active}>

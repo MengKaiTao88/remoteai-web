@@ -27,6 +27,7 @@ Shared task-card presentation and step-by-step questions are opt-in for this sur
 - Nonzero exits and cancelled work retain failure/stopped semantics in lightweight history.
 - Context/settings sheets and pickers opened inside native dialogs share the same modal container.
 - Per-chat drafts retain text, skill mentions, images, files and quotes while this workspace is mounted.
+  New drafts retain their cache identity after thread creation; acknowledged sends clear only their source draft.
   This change does not introduce persistence across reloads or app restarts.
 
 ## Image handling
