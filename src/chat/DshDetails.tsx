@@ -42,6 +42,7 @@ export function DshDetails({ chat, device, headerActions, open, presentation, cl
       <ChatProjectSwitch state={state} controller={controller} active={open} />
       <div className="dsh-details-options">
         <DshModelPicker models={state.models} selection={state.settings} ready={state.ready}
+          active={open && chat.foreground}
           scope={state.selected?.id ?? state.draftScope} settingsError={state.settingsError}
           settingsBusy={state.settingsBusy} updateSettings={patch => controller.setSettings(patch)}
           refreshModels={controller.refreshModels} beforeOpen={() => {}} />

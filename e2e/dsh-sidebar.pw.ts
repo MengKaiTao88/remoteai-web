@@ -43,6 +43,8 @@ test('personal phone sidebar groups chats, dismisses outside and owns management
   await drawer.getByRole('button', { name: '新对话', exact: true }).click();
   await expect(drawer).toBeHidden();
   await expect(page.getByRole('textbox', { name: '聊天消息' })).toBeVisible();
+  await expect(page.locator('.remodex-new-context')).toBeVisible();
+  await screenshot(page, info, 'new-chat-context');
   for (const label of ['发现', '设置', '账号']) {
     await navigate(page, label);
     await expect(page.locator('.personal-mobile-navigation button')).toHaveText('返回聊天');

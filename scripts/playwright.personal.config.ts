@@ -7,7 +7,7 @@ export default defineConfig({
   ...chat,
   use: { ...chat.use, actionTimeout: 45_000 },
   testMatch: ['**/personal-mobile.pw.ts', '**/dsh-details.pw.ts', '**/dsh-composer.pw.ts', '**/dsh-performance.pw.ts',
-    '**/dsh-background.pw.ts', '**/dsh-sidebar.pw.ts'],
+    '**/dsh-background.pw.ts', '**/dsh-sidebar.pw.ts', '**/remodex.pw.ts'],
   expect: { timeout: 15_000 },
   outputDir: '../../../.codex-tmp/personal-mobile-playwright',
   reporter: [['list'], ['html', { outputFolder: '../../../.codex-tmp/personal-mobile-report', open: 'never' }]],

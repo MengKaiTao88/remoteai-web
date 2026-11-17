@@ -3,7 +3,7 @@
   "revision": "ea8d26cae4d5fa100085fb5b3227be535ebb3a6f",
   "sharedSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-shared",
-    "revision": "b91281ff9f7b6485c6d5e67ca426cd3d91ef51c0"
+    "revision": "195ba22ab8ee516c49f485bf7ae29599540d08ec"
   },
   "nativeSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-native",
@@ -435,13 +435,13 @@
     "shared/remote-chat/views/ChatAttachments.tsx": "e64ba3d05adae5cc8276d5bc1177d0f04fd7e74d6e2634bac244c1694fa1c959",
     "shared/remote-chat/views/pickChatImages.ts": "bf190dbd0423a171aa32fb28267d7fccc7455bba38349cad21c2808a0e19763a",
     "shared/remote-chat/views/ComposerAttachments.tsx": "30d4b89a91d06336f9345df014cffd4a3d8b35424edb3fdb1d5a0e26ca79df6d",
-    "shared/remote-chat/views/ChatQueue.tsx": "826f417e7abd538d11e67c541fc2ab349771ad008795bf3ead49657c7c9ea223",
+    "shared/remote-chat/views/ChatQueue.tsx": "133f9966ac4a7073183b303b7d356a2055a3ab000fe8be74005d4296597d0a45",
     "shared/remote-chat/views/ComposerMenus.tsx": "7e0a9d8160592c76c042dd5437bb8a30c94dc53560b780fbe3f4e09cd01a136e",
     "shared/remote-chat/views/ComposerProjectFiles.tsx": "5b8855e70a27a7182b4ae91a8d29bdea019a1d8f5dd62f27621757199b895849",
     "shared/remote-chat/views/ComposerConversationMenu.tsx": "5652999f87b918bb5a3e3c2f0657c2bdcc590c327ec80a86daae19bb662cae27",
     "shared/remote-chat/views/ComposerFileMenu.tsx": "e9dd8b72eaf61c131f1600d69e3fd947613e1d1c80edf1a2c02424ca10583053",
     "shared/remote-chat/views/ComposerSshMenu.tsx": "93f006cd21a9829c9a0e2da9acc2e69e323d5f816358c8b3f034960db129af00",
-    "shared/remote-chat/views/useComposerState.ts": "1bc3559397dfab85f45667d0edf19a8c977efea83e739cfc92c276851281dc03",
+    "shared/remote-chat/views/useComposerState.ts": "a8f1d9f7113910e48ac80e30ee0c5c3c06fd39f40acd99236bf3e14f9836c8d4",
     "shared/remote-chat/views/composerReading.css": "a4731114fa899bfd0a0a62d395ad840b46f6cb62a91d24ff1adcbc40197363cb",
     "shared/chat/nextPromptSuggestion.ts": "ee1c040d3b9b2d3adc52e348a396153085232ffbb0154ecd713fd2aec1fb8146",
     "shared/remote-chat/client/queueProps.ts": "10f796eda5c855c79c55b8f13a2e167584c90b5faa2ad55cabbef7b2c5b3b051",
@@ -1876,6 +1876,8 @@
     "shared/project-browser/npmScriptButtons.css": "bf63072d76510b5c92e1c626ad45f71210b64391886e5c97af3d2120f38023cd",
     "shared/project-browser/blameTooltip.ts": "39be71108dd39f7fafb3291b7c33107df2fe6b06621623c724c69604cde42627",
     "shared/project-browser/blameGutter.css": "0da942ee987941ca369dab48a072054475a3c7f6027fcc2ea56e62e130d094ae",
-    "LICENSE": "84a63ace819715986d7c254172c3030f5d94ecaefebab778a84c2843e0068b87"
+    "LICENSE": "84a63ace819715986d7c254172c3030f5d94ecaefebab778a84c2843e0068b87",
+    "shared/chat/observeComposerWidth.ts": "756d84fe33278794eaaed6bc6dcffcad1e6d077c3c5c1944214896eb5722b17a",
+    "shared/chat/FocusPreservingButton.tsx": "abfe9204199154a8497e20d469c99d7fd6b993e1279e203a5f3cab2b34694ff3"
   }
 }

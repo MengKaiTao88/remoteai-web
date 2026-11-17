@@ -7,13 +7,13 @@ import { useComposerSuggestion } from '../../../../shared/chat/useComposerSugges
 import { ComposerSuggestion } from '../../../../shared/remote-chat/views/ComposerSuggestion';
 import { ComposerInput } from '../../../../shared/remote-chat/views/ComposerInput';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { ArrowUp, Play, Plus, SlidersHorizontal, Square } from 'lucide-react';
+import { useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
+import { ArrowUp, ChevronRight, ListOrdered, Play, Plus, Square, Zap } from 'lucide-react';
 import { COMPOSER_ACTION_LABELS } from '../../../../shared/remote-chat/composerAction';
-import { composerLabel } from '../../../../shared/remote-chat/composer';
-import { requestSpeedSuffix } from '../../../../shared/remote-chat/requestSpeed';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { DshModelPicker } from './DshModelPicker';
+import { RemodexUsage } from './RemodexUsage';
+import { FocusPreservingButton } from '../../../../shared/chat/FocusPreservingButton';
 import { ChatSettings } from '../../../../shared/remote-chat/views/ChatSettings';
 import { ModelRefreshButton } from '../../../../shared/remote-chat/views/ModelRefreshButton';
 import { ComposerFooter } from '../../../../shared/remote-chat/views/ComposerFooter';
@@ -48,8 +48,8 @@ export function DshComposerInput(props: ComposerProps) {
   const state = useComposerState(props);
   const { draft, attachments, menu, busy, action, actionDisabled, goalMode } = state;
   const [focused, setFocused] = useState(false);
-  const voiceAction = !!props.dictation && action === 'send'
-    && !draft.hasContent && !attachments.items.length && !state.hasQuotes;
+  const [queueOpen, setQueueOpen] = useState(false);
+  const queuePanelId = useId();
   const [settings, setSettings] = useState(false);
   const [adding, setAdding] = useState(false);
   const [projectFiles, setProjectFiles] = useState<'files' | 'photos' | null>(null);
@@ -71,7 +71,10 @@ export function DshComposerInput(props: ComposerProps) {
   useEffect(() => { if (!active) { setSettings(false); setAdding(false); setProjectFiles(null); } }, [active]);
   useEffect(() => { setSettings(false); setAdding(false); setProjectFiles(null); }, [threadId]);
   useEffect(() => { setProjectFiles(null); }, [cwd]);
-  useEffect(() => { setFocused(false); }, [threadId]);
+  useEffect(() => { setFocused(false); setQueueOpen(false); }, [threadId]);
+  useEffect(() => {
+    if (!queue?.messages.length) setQueueOpen(false);
+  }, [queue?.messages.length]);
   useEffect(() => {
     const viewport = window.visualViewport;
     if (!viewport) return;
@@ -112,18 +115,26 @@ export function DshComposerInput(props: ComposerProps) {
     if (pickerThread.current === threadId) void draft.addImages(remaining => pickChatImages(files, remaining));
   };
   const ActionIcon = { send: ArrowUp, pause: Square, continue: Play }[action];
-  const label = composerLabel(models, selection, displayText);
   const closeMenus = () => { menu.close(); setAdding(false); };
   const showSettings = () => { closeMenus(); setSettings(true); };
   const placeholder = t('client.workspaceActions.typeAMessageOrToChooseASkill');
+  const expanded = focused || draft.hasContent || attachments.items.length > 0
+    || state.hasQuotes || state.dictationBusy || !!goal || goalMode.enabled || queueOpen;
   return <div className="dsh-input-host" ref={dock} onKeyDown={event => {
     if (event.defaultPrevented || event.nativeEvent.isComposing || event.keyCode === 229) return;
     if (event.key === 'Escape') { setAdding(false); menu.close(); }
   }}>
     {props.projectPicker}
-    {queue && <div className="dsh-input-queue"><ChatQueue {...queue} {...state.queueEditor}
-      editDisabled={state.queueEditor.editDisabled || busy} /></div>}
-    <form className="dsh-input" data-open={focused || undefined}
+    {queue && queue.messages.length > 0 && <div className="dsh-input-queue remodex-queue" data-open={queueOpen || undefined}>
+      <FocusPreservingButton type="button" className="remodex-queue-toggle" aria-expanded={queueOpen} aria-controls={queuePanelId}
+        onClick={() => setQueueOpen(value => !value)}>
+        <ListOrdered size={14} />{t('client.chat.queued')} {queue.messages.length}<ChevronRight size={12} />
+      </FocusPreservingButton>
+      <div id={queuePanelId} hidden={!queueOpen}>
+        <ChatQueue {...queue} {...state.queueEditor} editDisabled={state.queueEditor.editDisabled || busy} />
+      </div>
+    </div>}
+    <form className="dsh-input" data-open={expanded || undefined}
       data-tray={!!(draft.images.length || attachments.items.length || state.hasQuotes || goalMode.enabled || goal) || undefined}
       onFocusCapture={event => { if (event.target instanceof HTMLTextAreaElement) setFocused(true); }}
       onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setFocused(false); }}
@@ -147,7 +158,10 @@ export function DshComposerInput(props: ComposerProps) {
       {(adding || menu.open) && <div className="chat-composer-popover" onKeyDown={event => {
         if (event.defaultPrevented || event.nativeEvent.isComposing || event.keyCode === 229) return;
         if (event.key === 'Escape') { setAdding(false); menu.close(); menu.input.current?.focus(); }
-      }}>{adding && <><div className="dsh-input-extra-action"><MessageDeliveryMode disabled={busy} /></div>
+      }}>{adding && <><div className="dsh-input-extra-action"><MessageDeliveryMode disabled={busy} />
+        <button type="button" aria-pressed={selection.speed === 'fast'} disabled={busy || settingsBusy || !ready}
+          onClick={() => { void updateSettings({ speed: selection.speed === 'fast' ? 'normal' : 'fast' }); }}>
+          {t('client.chat.fastMode.6e02d1')}<Zap size={18} /></button></div>
         <ComposerAddMenu busy={busy} choose={chooseAdd} /></>}
         {!adding && menu.conversations && props.loadConversations && <ComposerConversationMenu
           key={threadId} input={menu.input} query={menu.query} threadId={threadId} ready={ready && !busy}
@@ -212,33 +226,28 @@ export function DshComposerInput(props: ComposerProps) {
             }} />
         </div>
         <div className="dsh-input-leading">
-          <button type="button" className="dsh-input-key" aria-label={t("client.chat.addContent")} aria-expanded={adding}
-            disabled={busy} onPointerDown={event => event.preventDefault()}
-            onClick={() => { menu.close(); setAdding(value => !value); }}><Plus size={desktop ? 18 : 24} /></button>
+          <FocusPreservingButton type="button" className="dsh-input-key" aria-label={t("client.chat.addContent")} aria-expanded={adding}
+            disabled={busy} onClick={() => { menu.close(); setAdding(value => !value); }}>
+            <Plus size={desktop ? 18 : 24} /></FocusPreservingButton>
         </div>
-        <div className="dsh-input-footer" hidden={!focused}>
-            <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
-              scope={threadId ?? props.draftScope} selection={selection} variant="footer"
-              updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
-            <button type="button" className="dsh-input-key dsh-input-settings" onPointerDown={event => event.preventDefault()}
-              aria-label={t("client.chat.chatSettings", {
-                value1: label, value2: requestSpeedSuffix(selection.speed, displayText) })}
-              onClick={showSettings}>
-              <SlidersHorizontal size={20} />
-            </button>
+        <div className="dsh-input-footer" hidden={!expanded}>
+          <RemodexUsage props={props} settings={showSettings} />
+          <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
+            scope={threadId ?? props.draftScope} selection={selection} variant="footer"
+            updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
         </div>
         <div className="dsh-input-trailing">
-            {voiceAction && props.dictation && <ComposerDictation key={`dictation:${threadId}:${cwd}`} client={props.dictation}
+            {props.dictation && <ComposerDictation key={`dictation:${threadId}:${cwd}`} client={props.dictation}
               buttonClassName="dsh-input-key dsh-input-voice"
               active={active && ready && !sending && !props.compacting && !settings && !settingsBusy && !goalBusy}
               disabled={!active || !ready || busy || settingsBusy || props.compacting || goalBusy}
               onBusyChange={state.setDictationBusy}
               onText={text => { flushSync(() => draft.appendDictation(text)); menu.input.current?.focus(); }} />}
-            {!voiceAction && <button type="submit"
+            {(!props.dictation || expanded || action !== 'send') && <FocusPreservingButton type="button"
               className="dsh-input-key dsh-input-send" aria-label={displayText(COMPOSER_ACTION_LABELS[action])}
-              onPointerDown={event => event.preventDefault()} aria-busy={state.pausing || sending} disabled={actionDisabled}>
+              onClick={() => { void state.submit(); }} aria-busy={state.pausing || sending} disabled={actionDisabled}>
               <ActionIcon size={desktop ? 18 : 22}
-                fill={action === 'continue' || (desktop && action === 'pause') ? 'currentColor' : 'none'} /></button>}
+                fill={action === 'continue' || (desktop && action === 'pause') ? 'currentColor' : 'none'} /></FocusPreservingButton>}
         </div>
       </div>
     </form>

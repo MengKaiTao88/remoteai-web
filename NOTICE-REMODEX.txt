@@ -1,0 +1,13 @@
+Remodex source reference and adaptations
+https://github.com/Emanuele-web04/remodex
+Revision c06dcb16a7059603a41e26a2cb4a81b6d4b5514d
+Copyright 2025-2026 Emanuele Di Pietro
+Licensed under the Apache License, Version 2.0.
+See docs/licenses/remodex-LICENSE.txt.
+
+This personal Web edition adapts the presentation ideas and conservative parsing
+approaches from ThinkingDisclosureParser.swift and StreamingMarkdownBlockSplitter.swift
+into new TypeScript components. Changes include fenced-example handling, Remote AI item
+mapping, memoized React blocks, browser dialogs and existing-controller integration.
+Other composer and sidebar layouts are source-informed React/CSS adaptations.
+No Remodex branding or native runtime is bundled. This notice does not imply endorsement.

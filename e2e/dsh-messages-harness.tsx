@@ -17,10 +17,13 @@ import 'antd/dist/reset.css';
 import '../../../shared/remote-chat/views/chat.css';
 import '../src/chat/dshChatWorkspace.css';
 import '../src/chat/dshControls.css';
+import '../src/chat/remodexWorkspace.css';
 
 
 initializeTheme();
 const stress = new URLSearchParams(location.search).has('stress');
+const deferred = new URLSearchParams(location.search).has('deferred');
+const sequence = new URLSearchParams(location.search).has('sequence');
 const metrics = { updates: 0, commits: 0, renderTotal: 0, renderMax: 0, pulse: 0,
   mountDuration: 0, initialMarkdown: 0, initialActivities: 0 };
 Object.assign(window, { dshPerformance: metrics });
@@ -41,7 +44,12 @@ const tools: Item[] = ['one', 'two', 'three'].map(id => ({
 const base: Thread = { id: 'fixture', preview: '', cwd: '/workspace', updatedAt: 1, turns: [
   { id: 'complete', status: 'completed', items: [
     { id: 'user', type: 'userMessage', text: '源码调研完成后再修改。' },
-    ...tools, { id: 'answer', type: 'agentMessage', phase: 'final_answer', text: '已读取源码。最终回答保持展开。' },
+    ...(sequence ? [{ id: 'before-tools', type: 'reasoning', summary: ['**Before tools**\nInitial check.'] }] : []),
+    ...(deferred ? [{ id: 'deferred-summary', type: 'processSummary', activityCount: 4,
+      processRef: { threadId: 'fixture', turnId: 'complete', itemId: 'one', endItemId: 'three' } }] : tools),
+    ...(sequence ? [{ id: 'after-tools', type: 'reasoning', summary: ['**After tools**\nSubsequent check.'] },
+      { id: 'commentary-sequence', type: 'agentMessage', phase: 'commentary' as const, text: 'Narrative after execution.' }] : []),
+    { id: 'answer', type: 'agentMessage', phase: 'final_answer', text: '已读取源码。最终回答保持展开。' },
   ] },
   { id: 'failed', status: 'interrupted', items: [
     { id: 'second', type: 'userMessage', text: '检查失败过程。' },
@@ -62,7 +70,7 @@ const stressThread: Thread = { ...base, turns: [
     } : { id: 'live-' + index, type: 'agentMessage', phase: 'commentary' as const,
       text: 'Checking [the implementation](https://example.test/source.ts).\n\n```ts\nconst preserved = true;\n```\n\n'
         + 'The current change preserves the surrounding behavior. '.repeat(8) }),
-    { id: 'stream', type: 'agentMessage', phase: 'commentary', text: 'Streaming update 0' },
+    { id: 'stream', type: 'agentMessage', phase: 'final_answer', text: '# Live response\n\nSettled paragraph.\n\nStreaming update 0' },
   ] },
 ] };
 function Harness() {
@@ -79,7 +87,7 @@ function Harness() {
       metrics.updates++;
       setThread(current => ({ ...current, turns: [...current.turns!.slice(0, -1), {
         ...current.turns!.at(-1)!, items: [...current.turns!.at(-1)!.items.slice(0, -1), {
-          id: 'stream', type: 'agentMessage', phase: 'commentary', text: 'Streaming update ' + metrics.updates,
+          id: 'stream', type: 'agentMessage', phase: 'final_answer', text: '# Live response\n\nSettled paragraph.\n\nStreaming update ' + metrics.updates,
         }],
       }] }));
     }, 100);
@@ -105,12 +113,13 @@ function Harness() {
     }
     metrics.renderTotal += duration; metrics.renderMax = Math.max(metrics.renderMax, duration);
   }}><DshMessages state={state} controller={controller} view={view} active /></Profiler>;
-  return <ConfigProvider><AntApp><div className="dsh-workspace" data-theme={theme} style={{ height: '100dvh' }}>
+  return <ConfigProvider><AntApp><div className="dsh-workspace remodex-workspace" data-theme={theme} style={{ height: '100dvh' }}>
     {stress && <button data-testid="performance-pulse" style={{ position: 'fixed', left: 4, top: 4, zIndex: 30 }}
       onClick={() => { metrics.pulse++; document.body.dataset.pulse = String(metrics.pulse); }}>Pulse</button>}
     <button data-testid="enable-history" style={{ position: 'fixed', right: 4, top: 4, zIndex: 20 }}
       onClick={() => setHasMore(true)}>Enable fixture history</button>
-    <ProcessDetailsContext.Provider value={{ active: true, load: async () => ({ items: tools }) }}>
+    <ProcessDetailsContext.Provider value={{ active: true, load: async () => { document.body.dataset.processReads = String(Number(document.body.dataset.processReads ?? 0) + 1);
+        return { items: deferred ? [{ id: 'deferred-thinking', type: 'reasoning', summary: ['**Inspect source**\nRead real details.\n\n**Verify behavior**\nCheck the result.'] }, ...tools] : tools }; } }}>
       {stress ? <div className="dsh-chat-main"><header className="dsh-chat-header">Long conversation fixture</header>
         <div className="dsh-codex-content">{history}<div className="dsh-composer-dock">
           <p className="chat-processing-status">Streaming task</p><DshComposerInput {...composer} />

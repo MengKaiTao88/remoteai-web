@@ -62,18 +62,29 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
       await input.fill('');
     }
 
-    const model = page.locator('.dsh-header-model');
-    await model.getByRole('button').click();
+    const composerInput = page.getByRole('textbox', { name: '聊天消息' });
+    await composerInput.click();
+    const originalInput = await composerInput.elementHandle();
+    const model = page.locator('.dsh-model-chip-footer');
+    await model.click();
     const modelSheet = page.getByRole('dialog', { name: '选择模型', exact: true });
     await expect(modelSheet).toBeVisible();
-    await expect(modelSheet.getByRole('slider')).toHaveCount(0);
+    await expect(modelSheet.getByRole('slider')).toHaveCount(1);
+    await expect(modelSheet.getByRole('slider')).toHaveAttribute('aria-valuetext', '中');
     await screenshot(page, info, 'dsh-model-sheet');
+    await modelSheet.locator('.remodex-model-list-trigger').click();
+    await screenshot(page, info, 'model-list');
     await modelSheet.getByRole('radio', { name: '第二模型', exact: true }).click();
     await expect(model).toContainText('第二模型');
-    await modelSheet.getByRole('radio', { name: '高', exact: true }).click();
+    await modelSheet.getByRole('slider').fill('1');
+    await expect(modelSheet.getByRole('slider')).toHaveAttribute('aria-valuetext', '高');
+    await screenshot(page, info, 'runtime-effort-high');
+    await modelSheet.getByRole('button', { name: '关闭', exact: true }).click();
     await expect(modelSheet).toBeHidden();
+    expect(await composerInput.evaluate((node, previous) => node === previous, originalInput)).toBe(true);
     // App navigation may occur outside the modal (history/swipe/host action); release its top layer.
-    await model.getByRole('button').click();
+    await composerInput.click();
+    await model.click();
     await expect(modelSheet).toBeVisible();
     await nav.getByText('账号', { exact: true }).dispatchEvent('click');
     await expect(page.locator('.dsh-model-sheet[open]')).toHaveCount(0);
@@ -92,7 +103,11 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
         .getByRole('button', { name: '关闭', exact: true }).click();
       await expect(page.locator('.chat-settings')).toBeHidden();
     }
-    await send(page, 'H5 regression message');
+    if (desktop) await send(page, 'H5 regression message');
+    else {
+      await page.getByRole('textbox', { name: '聊天消息' }).fill('H5 regression message');
+      await page.getByRole('button', { name: '发送消息', exact: true }).tap();
+    }
     await settled(page);
     await expect(page.locator('.chat-markdown pre')).toHaveText('const connected = true;');
     await screenshot(page, info, 'reply');
@@ -111,9 +126,24 @@ test('DSH workspace preserves authoritative chat actions, layout, settings and o
     await expect(liveInput).toBeInViewport();
     await screenshot(page, info, 'dsh-running-composer');
     await send(page, 'personal queue check');
+    if (desktop) await page.locator('.remodex-queue-toggle').click();
+    else await page.locator('.remodex-queue-toggle').tap();
+    await expect(page.locator('.remodex-queue-toggle')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('.chat-queue')).toBeVisible();
     await expect(page.locator('.chat-queue')).toContainText('personal queue check');
     await screenshot(page, info, 'queue');
-    await page.getByRole('button', { name: '暂停生成' }).click();
+    const queueToggle = page.locator('.remodex-queue-toggle');
+    if (desktop) await queueToggle.click(); else await queueToggle.tap();
+    await page.getByRole('textbox', { name: '聊天消息' }).blur();
+    await expect(page.locator('.dsh-input')).not.toHaveAttribute('data-open');
+    if (desktop) await queueToggle.click(); else await queueToggle.tap();
+    await expect(queueToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('.chat-queue')).toBeVisible();
+    const removeQueued = page.getByRole('button', { name: '删除待发送消息', exact: true });
+    if (desktop) await removeQueued.click(); else await removeQueued.tap();
+    await expect(page.locator('.remodex-queue')).toHaveCount(0);
+    if (desktop) await page.getByRole('button', { name: '暂停生成' }).click();
+    else await page.getByRole('button', { name: '暂停生成' }).tap();
     await expect.poll(async () => (await state(request)).operations.some(value => value.operation === 'interrupt')).toBe(true);
     const input = page.getByRole('textbox', { name: '聊天消息' });
     await input.fill('draft survives rotation');

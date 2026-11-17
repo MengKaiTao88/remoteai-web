@@ -29,7 +29,8 @@ test('keeps the writing capsule visible through long live history and short view
   await expect(input).toBeInViewport();
   await expect(input).toHaveValue('draft before loading older history');
   await input.fill('');
-  await page.locator('.dsh-header-model button').click();
+  await input.click();
+  await page.locator('.dsh-model-chip-footer').click();
   const sheet = page.getByRole('dialog', { name: '选择模型', exact: true });
   await sheet.getByRole('button', { name: '关闭', exact: true }).click();
   const original = page.viewportSize()!;

@@ -1,4 +1,8 @@
 import { DshComposerInput } from './DshComposerInput';
+import { useEffect, useState } from 'react';
+import { ChevronRight, ListChecks } from 'lucide-react';
+import { ChatTurnDetails } from '../../../../shared/remote-chat/views/ChatTurnDetails';
+import { ChatProjectSwitch } from '../../../../shared/remote-chat/views/ChatProjectSwitch';
 import { ChatAsyncQuestions } from '../../../../shared/remote-chat/views/ChatAsyncQuestions';
 import { ChatProcessing } from '../../../../shared/remote-chat/views/ChatProcessing';
 import { queueProps } from '../../../../shared/remote-chat/client/queueProps';
@@ -17,7 +21,20 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
   const catalog = useChatCatalog(controller, cwd, state.ready);
   const runningTurn = currentRunningTurn(state.selected?.turns);
   const enabled = active && chat.foreground;
+  const [planOpen, setPlanOpen] = useState(false);
+  const planTurn = state.selected?.turns?.at(-1);
+  const plan = planTurn?.plan ?? [];
+  const currentStep = plan.find(step => ['inProgress', 'in_progress'].includes(step.status))
+    ?? plan.find(step => step.status !== 'completed') ?? plan.at(-1);
+  useEffect(() => { setPlanOpen(false); }, [state.selected?.id, enabled]);
   return <div className="dsh-composer-dock">
+    {!!plan.length && <button className="remodex-plan-capsule" type="button"
+      aria-label={t('client.chat.viewTaskPlan')} onClick={() => setPlanOpen(true)}>
+      <ListChecks size={15} /><span>{currentStep?.step}</span>
+      <small>{plan.filter(step => step.status === 'completed').length}/{plan.length}</small><ChevronRight size={12} />
+    </button>}
+    {planOpen && planTurn && enabled && <ChatTurnDetails turn={planTurn} panel="plan" onClose={() => setPlanOpen(false)} />}
+    {!state.selected && <div className="remodex-new-context"><ChatProjectSwitch state={state} controller={controller} active={enabled} /></div>}
     {runningTurn && <ChatProcessing key={runningTurn.id} turn={runningTurn} processing={state.processing}
       active={enabled && state.ready} />}
     <ChatAsyncQuestions thread={state.selected} error={state.error} scope={scope}

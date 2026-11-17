@@ -1,51 +1,51 @@
 # Personal mobile Web / PWA
 
 This edition keeps Remote AI's existing application, authentication, transport and ChatController.
-Only the personal Web/PWA GUI chat workspace uses a dedicated DSH-style React presentation.
+Only the personal Web/PWA GUI chat workspace uses a dedicated Remodex-inspired React presentation.
 Application navigation, accounts, 2FA, settings, devices and token summary retain their host UI.
 The normal Web build and desktop/native packages keep their existing conversation presentation.
 
 ## Source basis and implementation
 
-The reference is DSH Go revision
-[`d46847ff2e0953d2035e0e6078be1e06dd7cbc40`](https://github.com/ccch1mneyyy/dsh-go/tree/d46847ff2e0953d2035e0e6078be1e06dd7cbc40).
-The researched Flutter sources include `adaptive_layout.dart`, `chat_header.dart`, `composer.dart`,
-`chat_rows.dart`, `chat_list.dart` and `model_sheet.dart`. The React code implements their layout and interaction rules:
+The current visual reference is [Remodex revision c06dcb16a7059603a41e26a2cb4a81b6d4b5514d](https://github.com/Emanuele-web04/remodex/tree/c06dcb16a7059603a41e26a2cb4a81b6d4b5514d).
+The source review covered the composer host/bottom bar/runtime slider, thinking disclosure parser,
+streaming Markdown splitter, queue, sidebar actions, timeline, approvals, plans and file diffs.
+The fixed-revision source inventory and feature matrix are retained in the parent workspace's
+research artifacts. Earlier DSH-inspired responsive shells remain internal component names.
 
-- Compact layouts below 600 CSS px wide or 480 px high, medium layouts below 840 px, and expanded layouts.
-- A phone drawer, medium bottom details sheet, 68 px rail, 320 px conversation sidebar and 320-420 px
-  details panel. Navigation collapses when necessary to preserve the reading column.
-- Floating header controls and model chip, 44 px header hit targets, a 28 px composer radius, glass
-  surfaces and optional browser-supported superellipse corners.
-- Successful process folding, three-adjacent-tool groups, stable row keys, visible interrupted/failed
-  work, current approvals and original pending-message identities.
-- Retained chat/composer nodes across shell transitions and existing DOM reading-anchor/following hooks.
+The personal Web implementation includes:
 
-`dshViewModel.ts` adapts Remote AI conversation entries and queue messages; it does not change the
-protocol or recreate history synchronization. `DshChatWorkspace`, `DshMessages`, `DshComposer` and
-`DshDetails` form the presentation. Original message, approval, editable-message, file/image, queue,
-settings, terminal and tool components remain connected through `DshChatProviders` and ChatController.
-Cached unchanged turns and memoized presentation rows limit unrelated streamed updates.
-Rows are memoized by their immutable item/group contents, rather than the changing live-turn wrapper.
-Only the last editable user row receives full editor state. Offscreen tools and messages keep measured
-slots; open disclosures and active editors retain their existing interaction state.
-`dshGallery.ts` discovers image-bearing items once and reuses an unchanged gallery during unrelated
-text streaming, preserving all selected-thread images without reparsing the full live history.
-The composer is an independently positioned bottom layer with a measured history inset. Mobile
-surfaces avoid large backdrop-filter layers over long histories. A 1602-row streaming harness checks
-interaction latency, bounded mounted rich content, input hit testing and typing in Chromium/WebKit.
+- Neutral light/dark chat surfaces, gray user bubbles, plain assistant prose and compact header controls.
+- One continuously mounted input: a narrow capsule at rest and an expanded writing surface with
+  attachments, real context ring, model/effort selector, dictation and send/stop controls.
+- A centered runtime overlay with real supported reasoning levels and fast mode; a separate model list
+  uses the connected computer's catalog and confirmed settings. Full settings remain reachable from usage.
+- Independent reasoning disclosures, summary-only labels, grouped consecutive tools and visible failures.
+  Authenticated deferred process/tool loading is retained. Plain reasoning without headings remains intact.
+- A live plan capsule showing the current step and completed count, linked to the existing plan details.
+- Memoized settled Markdown blocks: only changing blocks re-render during streaming. Lists, references,
+  quotes, HTML, math and tables conservatively keep the remaining document together for correct parsing.
+- Project/recent conversation lists, circular new-chat/search/new-project actions, anchored management links,
+  existing project creation, search, pinning, menus, long press and pagination.
+- Existing file/diff/artifact cards, inline approvals/questions, per-chat drafts, attachments, queue actions,
+  failed-send recovery and desktop-owned queue identities. These features keep their original controllers.
 
-`DshModelPicker` follows the reference's `model_sheet.dart`: a bottom sheet with model cards and a
-segmented effort capsule. The header and focused-composer pill share this picker. Remote AI's real
-catalog and acknowledged settings remain authoritative; model provider management is not fabricated.
-`DshComposerInput` uses the existing `useComposerState`, draft, attachment and menu hooks with a
-dedicated presentation: one 48 px capsule at rest and two rows while editing, with 36 px end keys.
-The history uses a bounded grid row above the composer, so live or long history cannot displace it.
+The runtime slider owns pointer drags and commits the final level on release, while retaining native range keyboard controls. The detail-panel picker closes with its owner so it cannot leave a native modal layer over the application.
 
-This is an original TypeScript adaptation, with no copied Flutter source, DSH brands, mascot assets
-or Android runtime. It does not introduce DSH's independent agent engine, phone automation or native
-background services. The reference project's root license and file-specific notices are not treated
-as permission to import its excluded artwork. Unsupported CSS corner shapes use ordinary round corners.
+Focus-preserving controls handle touch activation once without depending on a canceled compatibility click. Modal backdrop dismissal requires the press to begin outside; the opening touch cannot immediately dismiss its new modal. Queue toggles preserve the composer geometry through touch activation.
+
+Composer width changes schedule height measurement in the next animation frame. This shared fix coalesces notifications and cancels pending work on unmount, preventing WebKit ResizeObserver delivery loops when the input expands or collapses. The generated Web snapshot is exported from the shared source; it is not edited manually. Desktop compilation remains deferred.
+
+The adapter and history viewport preserve stable row keys, measured offscreen slots, reading anchors and
+limited mounted rich content. They do not introduce another synchronization protocol or queue implementation.
+The plan button appears only with a real plan; the interface does not expose Remodex-only protocol controls
+that the current Remote AI connection cannot support. Browser approvals use accessible inline cards rather
+than native iOS alerts. iPhone Safari/PWA cannot provide Remodex's native custom haptic feedback.
+
+This is a TypeScript/CSS adaptation, not a SwiftUI runtime or installation of Remodex. Its Apache-2.0 source basis is
+credited in source comments, this document, NOTICE-REMODEX.txt and the deployed third-party/remodex.txt; no Remodex artwork, icons, subscription mechanism or relay is
+bundled. The layout adapts to phone drawers, tablet sheets and desktop rails/sidebars while retaining the
+existing Remote AI application navigation and management pages.
 
 ## Build and hosting
 
@@ -100,40 +100,32 @@ manifest start URL with a failed entry script, then click Retry and verify recov
 
 ## Verification
 
-The personal mobile drawer follows DSH Go 1.1.0 (`e9d3239bee18029d48618c7514303bc7fa7bbf8f`)
-for its rounded sheet, primary new-conversation pill, consistent chevrons, full-height scroll list
-and anchored navigation. The user-selected adaptation places Discover, Settings and Accounts in
-the drawer footer and removes the personal mobile bottom tab bar. Management pages retain a return
-to the mounted chat. Desktop Web and ordinary Web retain their existing application navigation.
-The list starts in project mode and toggles to a recent-activity list. It preserves custom groups,
-project/conversation menus, long-press actions, CLI entries and cursor pagination, displaying all
-loaded project members without a separate Show More preview. Flutter components and protected
-brand/pet artwork are not copied. This change does not build or package the desktop application.
+Run npm run check:personal, npm test, npm run test:personal:e2e, npm run test:personal:pwa and
+npm run test:personal:webkit sequentially. The build/test commands prepare a generated workspace;
+concurrent preparations would interfere with each other. The ordinary npm run check remains supported.
 
-Verification on 2026-11-17 passed 52 Vitest cases and two workspace cases, the 30-case personal
-browser regression (12 platform-specific skips), and five final sidebar journeys (two desktop skips).
-The final sidebar journeys cover six loaded members in one project, collapse/reopen, recent/project
-switching, outside dismissal, new conversation, and all three management entry/return paths in light,
-dark, 320 px enlarged-font, tablet and WebKit phone viewports. Production PWA and WebKit startup/retry
-checks also passed. Screenshots were inspected; physical-phone acceptance remains with the user.
+The Web suite contains 66 Vitest cases plus two Node workspace cases. The shared helpers have five additional unit cases covering deferred/coalesced measurement, cancellation, touch/mouse/keyboard activation and duplicate-click suppression. The browser
+matrix covers light/dark phones, a 320 px enlarged-font phone, a tablet sheet, WebKit and wide/narrow
+Web desktop layouts. Mobile queue tests use real touch taps and require visible contents. Runtime
+slider tests verify final drag/fast-mode values in the host fixture, not only the displayed label.
+Deferred-history tests verify that process details load only when opened and retain the new thinking UI. Interleaved thinking/tool/commentary tests preserve chronology, and file-summary tests open the actual shared diff viewer.
+Navigation tests verify native modal release when its owner closes or the application changes pages. A unit test verifies that a modal belongs to its own retained device workspace rather than the first workspace in the DOM.
 
-Use `npm run check:personal`, `npm test`, `npm run test:personal:e2e`,
-`npm run test:personal:pwa` and `npm run test:personal:webkit` sequentially. The commands prepare a
-generated workspace; concurrent preparations would interfere with one another.
-Browser tests use a local fixture, bundled Chromium and bundled WebKit, without real cloud credentials.
-The matrix covers light/dark phones, a 320 px enlarged-font phone, a tablet sheet, WebKit and wide/narrow
-desktop layouts. Screenshots and reports are retained in `test-results/` and selected evidence is kept
-in the parent workspace's `.artifacts/personal-mobile-web/` delivery folder.
-Physical iPhone/Android installation, real paired-computer use and cellular-network behavior still
-require device acceptance; browser engine tests do not establish those outcomes.
+The 1602-row, 10 Hz stress harness checks initial/mounted rich-node limits, stable settled Markdown,
+input hit testing, typing, scrolling and click latency in Chromium and WebKit. The application tests
+use a local fixture and bundled browsers, without real cloud credentials. The normal mobile composer
+smoke check needed a warm retry after its existing 20-second development startup deadline; the same
+prepared workspace then passed the UI assertions without changing the deadline.
 
-Local verification on 2026-11-16 passed the personal type/build/i18n/provenance checks, two Node
-workspace tests, 43 Vitest tests, 23 personal browser journeys and production PWA/WebKit recovery checks.
-Five non-mobile projects intentionally skip the mobile-only streaming stress case; their normal chat,
-composer and process/approval journeys still run. The stress fixture contains 500 historical turns,
-600 live process items and updates at 10 Hz. It checks mounted rich-content limits and input hit testing.
-The ordinary Web relay journey passed on desktop and mobile; its mobile dev-server cold start exceeded
-the existing 20-second navigation deadline and needed a warm retry. No application assertion was removed.
+Production PWA checks cover manifest installation, an offline public shell, retained local preferences,
+and recovery from a failed entry script through Retry. WebKit checks cover light/dark startup and retry.
+Screenshots and reports remain in test-results/; selected inspected running-interface evidence is kept
+in the parent workspace's .artifacts/personal-mobile-web/remodex-v1/ delivery folder. These are fixture
+screenshots, not screenshots from a real account. The source reference preview remains separate.
 
-To return to the author's interface, open `https://codex.onepiper.cloud/web/`. The two entry points
-are independent; this edition cannot replace the author's hosted files.
+Physical iPhone/Android installation, actual paired-computer conversations and cellular-network behavior
+still require device acceptance. This task does not compile desktop packages or run maintenance cleanup.
+After the user accepts the Web edition, desktop compilation can proceed under the existing workflow.
+
+The author's original entry remains https://codex.onepiper.cloud/web/. The personal edition is hosted
+at https://mengkaitao88.github.io/remoteai-web/ and retains the existing Remote AI service connection.

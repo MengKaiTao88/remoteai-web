@@ -75,7 +75,10 @@ export async function openChatSettings(page: Page) {
     Object.defineProperty(window.visualViewport, 'height', { configurable: true, get: () => innerHeight - 300 });
     window.visualViewport.dispatchEvent(new Event('resize'));
   });
-  await page.getByRole('button', { name: /聊天设置/ }).click();
+  if (await page.locator('.remodex-context-ring').count()) {
+    await page.locator('.remodex-context-ring').click();
+    await page.locator('.remodex-settings-link').click();
+  } else await page.getByRole('button', { name: /聊天设置/ }).click();
   if (emulateKeyboard) await page.evaluate(() => {
     if (!window.visualViewport) return;
     Reflect.deleteProperty(window.visualViewport, 'height');

@@ -1,10 +1,11 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { lastUserMessage } from '../../../../shared/chat/latestUserMessage';
-import { ArrowDown, ChevronRight, Terminal } from 'lucide-react';
+import { ArrowDown, Terminal } from 'lucide-react';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { ChatMessage } from '../../../../shared/remote-chat/views/ChatMessage';
 import { EditableChatMessage } from '../../../../shared/remote-chat/views/EditableChatMessage';
-import { ChatProcessItems } from '../../../../shared/remote-chat/views/ChatProcessItems';
+import { RemodexProcess, RemodexReasoning } from './RemodexProcess';
+import { RemodexAssistant } from './RemodexAssistant';
 import { ChatTurnSummary, type TurnPanel } from '../../../../shared/remote-chat/views/ChatTurnSummary';
 import { ChatTurnDetails } from '../../../../shared/remote-chat/views/ChatTurnDetails';
 import { ChatToolDetails } from '../../../../shared/remote-chat/views/ChatToolDetails';
@@ -23,21 +24,6 @@ import '../../../../shared/remote-chat/views/messages.css';
 import '../../../../shared/remote-chat/views/desktopMessages.css';
 
 interface Props { state: ChatState; controller: ChatController; view: DshChatViewModel; active: boolean }
-const Process = memo(function Process({ row }: { row: DshRow }) {
-  useLanguage();
-  const [open, setOpen] = useState(false);
-  const items = row.items ?? (row.item ? [row.item] : []);
-  const count = items.reduce((total, item) => total + (item.activityCount ?? 1), 0);
-  return <section className="dsh-process">
-    <button type="button" className="dsh-process-trigger" aria-expanded={open}
-      onClick={() => setOpen(value => !value)}>
-      <ChevronRight size={15} className={open ? 'is-open' : ''} />
-      <span>{t('client.chat.viewActivityActions', { value1: count })}</span>
-    </button>
-    {open && row.turn && <ChatProcessItems items={items} turn={row.turn} />}
-  </section>;
-});
-
 interface RowProps {
   row: DshRow; editState?: ChatState; ready: boolean; controller: ChatController; active: boolean;
   openItem: (item: Item) => void; openTurn: (turn: Turn, panel: TurnPanel) => void;
@@ -50,10 +36,13 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
     <ChatTurnTiming turn={row.turn} /></p>;
   if (row.kind === 'summary' && row.turn) return <ChatTurnSummary turn={row.turn}
     onOpen={panel => openTurn(row.turn!, panel)} />;
-  if (row.kind === 'process' || row.kind === 'tool-group') return <Process row={row} />;
+  if (row.kind === 'process' || row.kind === 'tool-group') return <RemodexProcess row={row} />;
   if (!row.item) return null;
+  if (row.item.type === 'reasoning' && !row.item.processRef) return <RemodexReasoning item={row.item} />;
   if (row.kind === 'user' && row.turn && editState) return <EditableChatMessage item={row.item} turn={row.turn}
     state={editState} controller={controller} active={active} />;
+  if (row.kind === 'assistant' && row.item.type === 'agentMessage') return <RemodexAssistant item={row.item}
+    running={row.turn?.status === 'inProgress'} />;
   return <ChatMessage item={row.item} desktop running={row.turn?.status === 'inProgress'}
     onOpen={inspect} />;
 }

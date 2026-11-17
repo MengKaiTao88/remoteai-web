@@ -7,6 +7,9 @@ test('keeps long live conversations interactive during sustained updates', async
   const pulse = page.getByTestId('performance-pulse');
   await expect(pulse).toBeVisible({ timeout: 30000 });
   await page.waitForFunction(() => (window as unknown as { dshPerformance: { updates: number } }).dshPerformance.updates >= 30);
+  const stableBlock = await page.locator('[data-message-id=stream] .chat-markdown').first().elementHandle();
+  await page.waitForFunction(() => (window as unknown as { dshPerformance: { updates: number } }).dshPerformance.updates >= 50);
+  expect(await page.locator('[data-message-id=stream] .chat-markdown').first().evaluate((node, original) => node === original, stableBlock)).toBe(true);
   const latencies: number[] = [];
   for (let index = 1; index <= 10; index++) {
     const start = Date.now();

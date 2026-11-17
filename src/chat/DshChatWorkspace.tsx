@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { PanelLeft, Plus, Search, SquarePen, X } from 'lucide-react';
+import { Ellipsis, PanelLeft, Plus, Search, SquarePen, X } from 'lucide-react';
 import { t, displayText, displayError, useLanguage } from '../../../../shared/localization/browserClient';
 import type { ChatComputer } from '../../../../shared/remote-chat/devices';
 import type { ComputerListRefresh } from '../../../../shared/remote-chat/ComputerSearchBar';
@@ -10,7 +10,6 @@ import { ChatDevices } from '../../../../shared/remote-chat/views/ChatDevices';
 import { ChatProfileMenu } from '../../../../shared/remote-chat/views/ChatProfileMenu';
 import { ChatThreadFilter } from '../../../../shared/remote-chat/views/ChatThreadFilter';
 import { ChatProjectSwitch } from '../../../../shared/remote-chat/views/ChatProjectSwitch';
-import { DshModelPicker } from './DshModelPicker';
 import { CliGuiProvider, useCliGui } from '../../../../shared/cli-gui/context';
 import { CliConversationPane } from '../../../../shared/cli-gui/CliConversationPane';
 import { ChatTaskStatus } from '../../../../shared/remote-chat/views/ChatTaskStatus';
@@ -32,6 +31,7 @@ import { useThemeMode } from '../theme/preference';
 import '../../../../shared/remote-chat/views/chat.css';
 import './dshChatWorkspace.css';
 import './dshControls.css';
+import './remodexWorkspace.css';
 
 export interface DshChatWorkspaceProps {
   chat: { state: ChatState; controller: ChatController; foreground: boolean };
@@ -100,7 +100,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   const profile = <ChatProfileMenu client={controller.guiAccounts} deviceName={device?.name ?? ''}
     email={props.email} ready={state.ready} guiTools={controller.guiTools} active={enabled}
     running={view.running || state.sending} chooseDevice={chooseComputer} />;
-  return <div className="dsh-workspace" data-theme={preference}>
+  return <div className="dsh-workspace remodex-workspace" data-theme={preference}>
     <DshChatProviders controller={controller} state={state} active={enabled}>
       <ChatTerminalLayout>
       <div ref={host} className="dsh-chat-shell" data-left={layout.left} data-size={layout.sizeClass}
@@ -140,12 +140,12 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
                 {t(!state.ready ? 'client.chat.offline' : view.running ? 'client.chat.inProgress' : 'client.chat.online')}
                 {device?.name && <small>{device.name}</small>}</span>
             </button>
-            <div className="dsh-header-model"><DshModelPicker models={state.models} selection={state.settings}
-              scope={selected?.id ?? state.draftScope} settingsError={state.settingsError}
-              active={enabled} ready={state.ready} settingsBusy={state.settingsBusy} refreshModels={controller.refreshModels}
-              updateSettings={patch => controller.setSettings(patch)} beforeOpen={() => setDrawer(false)} /></div>
-            <button className="dsh-icon-button" aria-label={t('client.chat.newChat')} onClick={() => newChat()}>
-              <Plus size={20} /></button>
+            <div className="remodex-header-actions">
+              <button className="dsh-icon-button" aria-label={t('client.chat.newChat')} onClick={() => newChat()}>
+                <SquarePen size={20} /></button>
+              <button className="dsh-icon-button" aria-label={t('client.chat.chatSettings.1e06eb')}
+                onClick={() => setDetails(value => !value)} aria-expanded={details}><Ellipsis size={21} /></button>
+            </div>
           </header>
           <div className="dsh-notices"><ChatTaskStatus state={state} />
             {!!error && <p role="alert" className="chat-error">{displayError(error)}</p>}</div>
