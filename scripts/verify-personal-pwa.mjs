@@ -32,6 +32,14 @@ try {
   assert.deepEqual((await protocol.send('Page.getAppManifest')).errors, []);
   await page.reload();
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  const resumeNavigation = server.pauseNavigation();
+  try {
+    // Keep the network document unavailable until the installed shell has rendered.
+    const response = await page.goto(server.url, { waitUntil: 'domcontentloaded', timeout: 10_000 });
+    assert.ok(response?.fromServiceWorker());
+    await page.getByPlaceholder('name@example.com').waitFor({ timeout: 10_000 });
+    await page.screenshot({ path: path.join(output, 'installed-slow-navigation.png') });
+  } finally { resumeNavigation(); }
   await context.setOffline(true);
   await page.reload({ waitUntil: 'load' });
   await page.getByPlaceholder('name@example.com').waitFor();
@@ -62,9 +70,10 @@ try {
   assert.equal(await installedWindow.locator('#personal-startup').isVisible(), false);
   await installedWindow.screenshot({ path: path.join(output, 'installed-entry-recovered.png') });
   await writeFile(path.join(output, 'verification.json'), JSON.stringify({
-    ...registration, offlineShell: true, installedEntryRetryRecovered: true, localPreferencesPreserved: true, credentialsUsed: false,
+    ...registration, offlineShell: true, installedSlowNavigationRecovered: true,
+    installedEntryRetryRecovered: true, localPreferencesPreserved: true, credentialsUsed: false,
   }, null, 2));
-  console.log('PWA manifest, offline shell and installed start URL verified; a failed entry script recovered by Retry without clearing local preferences.');
+  console.log('PWA manifest, offline shell, slow installed navigation and recovery from an entry error passed.');
 } finally {
   await browser.close();
   await server.close();

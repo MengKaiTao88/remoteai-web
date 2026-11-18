@@ -9,10 +9,12 @@ export async function personalPreview() {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
     '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' };
   let entryFailure = false;
+  let navigationGate;
   const server = createServer(async (request, response) => {
     try {
       const pathname = new URL(request.url, 'http://localhost').pathname;
       if (!pathname.startsWith(base)) { response.writeHead(404).end(); return; }
+      if (pathname === base && navigationGate) await navigationGate;
       const relative = decodeURIComponent(pathname.slice(base.length)) || 'index.html';
       if (entryFailure && /^assets\/index-[^/]+\.js$/.test(relative)) {
         response.writeHead(503).end(); return;
@@ -29,5 +31,10 @@ export async function personalPreview() {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   return { url: `http://127.0.0.1:${server.address().port}${base}`,
     setEntryFailure: value => { entryFailure = value; },
+    pauseNavigation: () => {
+      let release;
+      navigationGate = new Promise(resolve => { release = resolve; });
+      return () => { navigationGate = undefined; release(); };
+    },
     close: () => new Promise(resolve => server.close(resolve)) };
 }

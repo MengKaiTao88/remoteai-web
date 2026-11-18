@@ -78,13 +78,28 @@ self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys
     .filter(key => key.startsWith(PREFIX) && key !== CACHE).map(key => caches.delete(key)))));
 });
+async function appNavigation(request) {
+  const installed = await caches.open(CACHE).then(cache => cache.match(BASE + 'index.html')).catch(() => undefined);
+  if (!installed) return fetch(request);
+  // Use the installed document and its matching assets if the network stalls.
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), 2500);
+  try {
+    const response = await fetch(request, { signal: controller.signal });
+    return response.ok ? response : installed;
+  } catch {
+    return installed;
+  } finally {
+    clearTimeout(deadline);
+  }
+}
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin
     || request.headers.has('Authorization')) return;
   if (request.mode === 'navigate' && (url.pathname === BASE || url.pathname === BASE + 'index.html')) {
-    event.respondWith(fetch(request).catch(() => caches.match(BASE + 'index.html')));
+    event.respondWith(appNavigation(request));
     return;
   }
   if (url.search || !SHELL.includes(url.pathname) || url.pathname === BASE + 'index.html') return;

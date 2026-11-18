@@ -25,6 +25,34 @@ try {
     await page.screenshot({ path: path.join(output, `iphone-${colorScheme}-login.png`) });
     await context.close();
   }
+  const slowContext = await browser.newContext({ ...devices['iPhone 13'], locale: 'zh-CN',
+    colorScheme: 'dark', serviceWorkers: 'block' });
+  const slowPage = await slowContext.newPage();
+  let releaseEntry;
+  const entryGate = new Promise(resolve => { releaseEntry = resolve; });
+  await slowPage.route('**/assets/index-*.js', async route => { await entryGate; await route.continue(); });
+  try {
+    await slowPage.goto(server.url, { waitUntil: 'commit' });
+    const retry = slowPage.locator('#personal-startup button:visible');
+    await retry.waitFor({ timeout: 25_000 });
+    assert.equal(await retry.innerText(), '重试');
+    assert.equal(await slowPage.locator('#personal-startup small').innerText(), '');
+    assert.ok(await slowPage.locator('#personal-startup p').innerText());
+    // The deliberately pending module can hold document.fonts.ready until the test releases it.
+    const skipFonts = process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY;
+    process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = '1';
+    try { await slowPage.screenshot({ path: path.join(output, 'iphone-slow-startup.png') }); }
+    finally {
+      if (skipFonts === undefined) delete process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY;
+      else process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = skipFonts;
+    }
+  } finally { releaseEntry(); }
+  await slowPage.getByPlaceholder('name@example.com').waitFor({ timeout: 30_000 });
+  assert.equal(await slowPage.locator('#personal-startup').isVisible(), false);
+  assert.equal(new URL(slowPage.url()).search, '');
+  await slowPage.screenshot({ path: path.join(output, 'iphone-slow-startup-ready.png') });
+  await slowContext.close();
+
   const context = await browser.newContext({ ...devices['iPhone 13'], locale: 'zh-CN', serviceWorkers: 'block' });
   const page = await context.newPage();
   await page.route('**/assets/index-*.js', route => route.abort());
@@ -39,7 +67,7 @@ try {
   assert.equal(await page.locator('#personal-startup').isVisible(), false);
   await page.screenshot({ path: path.join(output, 'iphone-startup-recovered.png') });
   await context.close();
-  console.log('WebKit phone login passed in light/dark; a blocked startup script recovered to login after clicking Retry.');
+  console.log('WebKit phone login, a slow startup without reloading and Retry after a blocked script passed.');
 } finally {
   await browser.close();
   await server.close();

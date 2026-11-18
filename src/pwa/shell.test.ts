@@ -9,10 +9,10 @@ function worker() {
   runInNewContext(serviceWorker({ base: '/personal/', files: ['index.html', 'assets/app-123.js'], hash: 'abc' }), {
     self: { location: { origin: 'https://web.example' },
       addEventListener: (name: string, listener: (event: unknown) => void) => listeners.set(name, listener) },
-    caches: { open: async () => ({ add: async (url: string) => cached.push(url) }),
+    caches: { open: async () => ({ add: async (url: string) => cached.push(url), match: async () => 'cached-shell' }),
       keys: async () => ['unrelated', 'remoteai-shell:/other/:old', 'remoteai-shell:/personal/:old'],
-      delete: async (name: string) => removed.push(name), match: async () => 'cached-shell' },
-    fetch: async () => { throw new Error('offline'); }, URL,
+      delete: async (name: string) => removed.push(name) },
+    fetch: async () => { throw new Error('offline'); }, URL, AbortController, setTimeout, clearTimeout,
   });
   return { listeners, cached, removed };
 }
