@@ -112,6 +112,7 @@ test('personal chat preserves real usage, live commentary, plan and composer ide
       { id: 'remodex-user', type: 'userMessage', text: '检查手机聊天界面。' },
       { id: 'remodex-thinking', type: 'reasoning', summary: ['**检查布局**\n检查输入框和消息区。\n\n**验证交互**\n分别验证浮层和侧栏。'] },
       { id: 'remodex-commentary', type: 'agentMessage', phase: 'commentary', text: '正在检查输入框和消息区。' },
+      { id: 'remodex-wait', type: 'dynamicToolCall', tool: 'sleep', status: 'completed', arguments: '{"durationMs":1000}' },
       { id: 'remodex-answer', type: 'agentMessage', phase: 'final_answer', text: '界面验证完成。\n\n草稿、队列和远程连接继续使用原有逻辑。' },
     ] };
   await emit('turn/started', { threadId: 'demo-chat', turn });
@@ -124,6 +125,7 @@ test('personal chat preserves real usage, live commentary, plan and composer ide
   else await page.getByRole('dialog').getByRole('button', { name: '关闭', exact: true }).click();
   await expect(page.getByText('正在检查输入框和消息区。', { exact: true })).toBeVisible();
   await expect(page.getByText('检查布局', { exact: true })).toHaveCount(0);
+  await expect(page.locator('[data-process-item="remodex-wait"] > button')).toHaveText('等待');
   await screenshot(page, info, 'live-commentary');
   await emit('turn/completed', { threadId: 'demo-chat', turn: { ...turn, status: 'completed' } });
   await expect(page.getByText('界面验证完成。', { exact: true })).toBeVisible();

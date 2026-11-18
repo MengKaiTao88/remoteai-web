@@ -38,7 +38,7 @@ function categoryLabel(category: ActivityCategory, item: Item, running = false):
 function summary(item: Item, category: ActivityCategory, nested: boolean, status?: string) {
   const label = categoryLabel(category, item, status === 'inProgress');
   if (category === 'agent') return collaborationSummary(item, displayText);
-  if (category === 'chats') return label;
+  if (category === 'chats' || category === 'wait' || (category === 'image' && item.tool === '图片预览')) return label;
   if (category === 'command') {
     const text = commandPreview(item.commandPreview ?? item.command ?? '');
     return text ? (nested ? text : [t(status === 'inProgress' ? 'client.mobile.running' : 'client.mobile.ran'), text].join(' ')) : label;
