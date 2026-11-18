@@ -101,6 +101,8 @@ export async function login(page: Page) {
   await page.getByRole('button', { name: '登录并查看', exact: true }).click();
   const consent = page.getByRole('dialog').filter({ has: page.getByRole('button', { name: '同意并登录', exact: true }) });
   await expect(consent).toBeVisible();
+  // WebKit can report a stable button while the modal is still scaling in.
+  await expect(consent).not.toHaveClass(/\bant-zoom-(?:appear|enter)\b/);
   // Observe the actual sign-in response before beginning fixture-dependent journeys.
   const authenticated = page.waitForResponse(response => new URL(response.url()).pathname.endsWith('/auth/login')
     && response.request().method() === 'POST');
