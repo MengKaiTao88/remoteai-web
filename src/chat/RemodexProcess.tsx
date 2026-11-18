@@ -25,19 +25,19 @@ export const RemodexReasoning = memo(function RemodexReasoning({ item }: { item:
     </DeferredDetails> : <p key={section.id}>{section.title}</p>)}</div>;
 });
 
-function LoadedProcess({ items, turn }: { items: Item[]; turn: Turn }) {
-  const entries = useMemo(() => processEntries(items), [items]);
+function LoadedProcess({ items, turn, official }: { items: Item[]; turn: Turn; official?: boolean }) {
+  const entries = useMemo(() => processEntries(items, official), [items, official]);
   const live = turn.status === 'inProgress';
   const standalone = (item: Item): ReactNode => {
     if (item.type === 'reasoning') return <RemodexReasoning item={item} />;
     if (item.type === 'agentMessage') return <div className="remodex-commentary">
       <ChatMessage item={item} process desktop onOpen={() => undefined} />
     </div>;
-    return <OfficialActivity item={item} live={live} />;
+    return <OfficialActivity item={item} live={live} official={official} />;
   };
   return <div className="remodex-process-records">{entries.map((entry, index) => {
     const render = () => entry.kind === 'group'
-      ? <OfficialActivityGroup items={entry.items} live={live} />
+      ? <OfficialActivityGroup items={entry.items} live={live} official={official} />
       : <div className="official-process-standalone">{standalone(entry.item)}</div>;
     return <DshHistoryViewport key={entry.id} enabled={entries.length > 32}
       estimatedHeight={entry.kind === 'group' ? 30 : undefined}
@@ -70,7 +70,7 @@ export const RemodexProcess = memo(function RemodexProcess({ row, active }: { ro
       <ChevronDown size={14} />
     </button>
     <div id={id} hidden={!open}>{open && <DeferredProcessDetails items={items}>
-      {details => <LoadedProcess items={details} turn={turn} />}
+      {details => <LoadedProcess items={details} turn={turn} official={row.official} />}
     </DeferredProcessDetails>}</div>
   </section>;
 });

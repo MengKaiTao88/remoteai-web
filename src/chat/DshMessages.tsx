@@ -51,7 +51,8 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
 
 function sameContent(before: DshRow, after: DshRow) {
   if (before === after) return true;
-  if (before.key !== after.key || before.kind !== after.kind || before.timed !== after.timed) return false;
+  if (before.key !== after.key || before.kind !== after.kind || before.timed !== after.timed
+    || before.official !== after.official) return false;
   if (before.timed && (before.turn?.durationMs !== after.turn?.durationMs
     || before.turn?.startedAt !== after.turn?.startedAt || before.turn?.completedAt !== after.turn?.completedAt)) return false;
   if (before.event || after.event) return before.event === after.event;

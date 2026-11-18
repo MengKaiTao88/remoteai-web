@@ -8,6 +8,9 @@ test('file summaries and real diffs remain accessible in the personal chat surfa
   await request.post(fixtureUrl + '/test/reset');
   await login(page);
   await navigate(page, 'Agent Hub');
+  if (info.project.name === 'desktop-wide') {
+    await expect(page.locator('.dsh-chat-shell')).toHaveAttribute('data-left', 'sidebar');
+  }
   if (!await page.locator('.dsh-sidebar').isVisible()) {
     await page.locator('.dsh-chat-shell').getByRole('button', { name: '打开聊天列表', exact: true }).click();
   }
@@ -138,19 +141,28 @@ test('a completed Codex timeline discloses mixed operations, independent events 
   await request.post(fixtureUrl + '/test/reset');
   await login(page);
   await navigate(page, 'Agent Hub');
+  if (info.project.name === 'desktop-wide') {
+    await expect(page.locator('.dsh-chat-shell')).toHaveAttribute('data-left', 'sidebar');
+  }
   if (!await page.locator('.dsh-sidebar').isVisible()) {
     await page.locator('.dsh-chat-shell').getByRole('button', { name: '打开聊天列表', exact: true }).click();
   }
   await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
   await expect(page.getByText('你可以直接从手机继续这个任务。', { exact: true })).toBeVisible();
+  const emit = (method: string, params: unknown) => request.post(fixtureUrl + '/test/chat-event', { data: { method, params } });
+  expect((await emit('thread/started', { thread: {
+    id: 'demo-chat', cwd: '/demo', preview: '', name: '移动端聊天体验', updatedAt: 0, officialSidebar: { pinned: false },
+  } })).ok()).toBe(true);
   const turn = { id: 'official-timeline', status: 'completed', durationMs: 150000, items: [
     { id: 'timeline-user', type: 'userMessage', text: '帮我核对目录和参考资料。' },
     { id: 'timeline-progress', type: 'agentMessage', phase: 'commentary', text: '先检查目录，再搜索资料。' },
     { id: 'timeline-read', type: 'commandExecution', status: 'completed', command: 'Get-Content guide.md',
       commandActions: [{ type: 'read', name: 'guide.md' }], aggregatedOutput: 'File contents' },
+    { id: 'timeline-scratch', type: 'reasoning', summary: ['Inspecting current state'] },
     { id: 'timeline-web', type: 'webSearch', status: 'completed', query: 'Codex app-server item events' },
     { id: 'timeline-shell', type: 'commandExecution', status: 'completed', command: 'npm test -- --runInBand --verbose -- ' + 'activity.test.ts '.repeat(12),
       exitCode: 1, aggregatedOutput: 'One assertion failed' },
+    { id: 'timeline-chats', type: 'dynamicToolCall', status: 'completed', tool: 'codex_app · list_threads', output: 'Found two chats' },
     { id: 'timeline-mcp', type: 'mcpToolCall', status: 'completed', server: 'GitHub', tool: 'list_issues', result: { issues: [] } },
     { id: 'timeline-files', type: 'fileChange', status: 'completed', changes: [
       { path: 'src/example.ts', kind: { type: 'update' }, diff: '@@ -1 +1 @@\n-const a = 1;\n+const a = 2;' },
@@ -160,8 +172,7 @@ test('a completed Codex timeline discloses mixed operations, independent events 
     { id: 'timeline-thinking', type: 'reasoning', summary: ['**检查结果**\n对照两个来源。'] },
     { id: 'timeline-answer', type: 'agentMessage', phase: 'final_answer', text: '目录和资料核对完成。' },
   ] };
-  const response = await request.post(fixtureUrl + '/test/chat-event', { data: { method: 'turn/completed',
-    params: { threadId: 'demo-chat', turn } } });
+  const response = await emit('turn/completed', { threadId: 'demo-chat', turn });
   expect(response.ok()).toBe(true);
   const answer = page.getByText('目录和资料核对完成。', { exact: true });
   await expect(answer).toBeVisible();
@@ -172,6 +183,7 @@ test('a completed Codex timeline discloses mixed operations, independent events 
   await screenshot(page, info, 'codex-timeline-folded');
   await toggle.click();
   await expect(page.getByText('先检查目录，再搜索资料。', { exact: true })).toBeVisible();
+  await expect(activity.locator('.remodex-reasoning')).toHaveCount(0);
   const group = activity.locator('.official-activity-group');
   const summary = group.locator(':scope > button');
   await expect(summary).toContainText('GitHub');
@@ -180,7 +192,7 @@ test('a completed Codex timeline discloses mixed operations, independent events 
   await summary.click();
   const children = group.locator('.official-activity-children [data-activity-category]');
   await expect.poll(() => children.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-activity-category'))))
-    .toEqual(['read', 'web', 'command', 'integration', 'files']);
+    .toEqual(['read', 'web', 'command', 'chats', 'integration', 'files']);
   await expect(children.nth(2)).toHaveAttribute('data-status', 'failed');
   await expect(activity.locator('[data-process-item="timeline-agent"] > .official-activity-line')).toContainText('source-review');
   await expect(activity.locator('[data-process-item="timeline-agent"] > span')).toBeVisible();

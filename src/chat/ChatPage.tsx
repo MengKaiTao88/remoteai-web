@@ -1,13 +1,10 @@
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useState } from 'react';
 import { usePagePreview } from '../../../../shared/navigation/PageSwipeContext';
 import { useAppDispatch } from '../hooks';
 import { chatDeviceSelected } from '../store';
 import type { AuthSession, RemoteDevice } from '../types';
 import { DshChatWorkspace } from './DshChatWorkspace';
-import { ConnectedChat } from '../../../../shared/remote-chat/views/ConnectedChat';
-import { ChatTokenSummary } from './ChatTokenSummary';
-import { SshPage } from '../discovery/SshPage';
 import { ChatTools } from './ChatTools';
 import { useChat } from './useChat';
 import { useChatViewport } from './useChatViewport';
@@ -22,10 +19,20 @@ import { useRemoteTerminalLauncher } from '../../../../shared/remote-chat/useRem
 import { TerminalWorkspaceProvider } from '../../../../shared/terminal/TerminalWorkspaceProvider';
 import { GuiRemoteDesktop } from '../../../../shared/conversation/GuiRemoteDesktop';
 import { RemoteGuiTools } from '../../../../shared/conversation/remote/RemoteGuiTools';
-import { RemoteGuiProject } from '../../../../shared/conversation/remote/RemoteGuiProject';
 import './desktopTools.css';
 import { CodexAppearance } from '../../../../shared/appearance/CodexAppearance';
 import { ConversationSync } from './ConversationSync';
+
+const ConnectedChat = lazy(() => import('../../../../shared/remote-chat/views/ConnectedChat')
+  .then(module => ({ default: module.ConnectedChat })));
+const ChatTokenSummary = lazy(() => import('./ChatTokenSummary').then(module => ({ default: module.ChatTokenSummary })));
+const SshPage = lazy(() => import('../discovery/SshPage').then(module => ({ default: module.SshPage })));
+const RemoteGuiProject = lazy(() => import('../../../../shared/conversation/remote/RemoteGuiProject')
+  .then(module => ({ default: module.RemoteGuiProject })));
+
+function LoadingChat() {
+  return <p className="web-page-loading" role="status">{t('client.mobile.loading')}</p>;
+}
 
 interface Props {
   session: AuthSession; devices: RemoteDevice[]; active: boolean; openAccounts?: () => void;
@@ -93,20 +100,20 @@ function WebChat({ session, device, selected, ...props }: Props & {
   const Workspace = personal ? DshChatWorkspace : ConnectedChat;
   const Appearance = personal ? Fragment : CodexAppearance;
   return <TerminalWorkspaceProvider panel={terminal}>
-    {props.sshDiscovery && <SshPage client={chat.controller.guiTools.terminal} connected={chat.state.ready}
+    {props.sshDiscovery && <Suspense fallback={<LoadingChat />}><SshPage client={chat.controller.guiTools.terminal} connected={chat.state.ready}
       deviceName={device?.name} devices={props.devices} chooseDevice={props.chooseDevice}
-      onBack={props.closeSshDiscovery!} />}
-    {props.tokenSummary && <ChatTokenSummary read={chat.controller.readTokenSummary} ready={chat.state.ready}
+      onBack={props.closeSshDiscovery!} /></Suspense>}
+    {props.tokenSummary && <Suspense fallback={<LoadingChat />}><ChatTokenSummary read={chat.controller.readTokenSummary} ready={chat.state.ready}
       scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])}
-      deviceName={device?.name} onClose={props.closeTokenSummary} />}
+      deviceName={device?.name} onClose={props.closeTokenSummary} /></Suspense>}
     <div hidden={props.sshDiscovery} style={{ display: props.sshDiscovery ? 'none' : 'contents' }}>
-    <Appearance><Workspace {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
+    <Appearance><Suspense fallback={<LoadingChat />}><Workspace {...props} active={props.active && !props.sshDiscovery} chat={chat} device={device} email={session.email}
     cliVersion={installer.version}
     onWorkspaceChange={setWorkspaceCwd}
-    composerHeader={desktop && <RemoteGuiProject state={chat.state} controller={chat.controller}
+    composerHeader={desktop && <Suspense fallback={null}><RemoteGuiProject state={chat.state} controller={chat.controller}
       active={props.active && chat.foreground} computers={{ ...props.deviceRefresh, allowLocal: false,
         current: device ?? null, devices: props.devices, authenticated: true, login: () => {},
-        choose: selected => { if (selected) props.chooseDevice(selected.deviceId); } }} />}
+        choose: selected => { if (selected) props.chooseDevice(selected.deviceId); } }} /></Suspense>}
     headerActions={<div className="chat-header-tools">
       {desktop && device && <ConversationSync session={session} devices={props.devices} deviceId={device.deviceId}
         active={props.active && chat.foreground}
@@ -118,7 +125,7 @@ function WebChat({ session, device, selected, ...props }: Props & {
         connected={chat.state.ready} deviceName={device?.name}
         cwd={cwd} />
     </div>}
-    scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])} /></Appearance>
+    scope={JSON.stringify([session.baseUrl, session.email, device?.deviceId ?? ''])} /></Suspense></Appearance>
     </div>
   </TerminalWorkspaceProvider>;
 }

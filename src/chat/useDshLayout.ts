@@ -7,12 +7,15 @@ export function useDshLayout(sidebar: boolean, details: boolean) {
   useLayoutEffect(() => {
     const node = host.current;
     if (!node) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
+    const updateSize = (width: number, height: number) => {
       if (height) node.style.setProperty('--dsh-available-height', height + 'px');
       // Retained hidden device sessions keep their last visible geometry.
       if (width && height) setSize(current =>
         current.width === width && current.height === height ? current : { width, height });
+    };
+    updateSize(node.clientWidth, node.clientHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      updateSize(entry.contentRect.width, entry.contentRect.height);
     });
     observer.observe(node);
     return () => observer.disconnect();

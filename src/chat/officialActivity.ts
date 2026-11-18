@@ -4,10 +4,10 @@ import { activityStatus } from '../../../../shared/conversation/itemStatus';
 import { hasVisibleProcessContent } from '../../../../shared/chat/processContent';
 
 export type ActivityCategory =
-  | 'read' | 'list' | 'search' | 'command' | 'web' | 'integration' | 'tool' | 'files'
+  | 'read' | 'list' | 'search' | 'command' | 'web' | 'integration' | 'chats' | 'tool' | 'files'
   | 'agent' | 'plan' | 'image' | 'review' | 'context' | 'wait' | 'error' | 'other';
 
-export function activityCategory(item: Item): ActivityCategory {
+export function activityCategory(item: Item, official = false): ActivityCategory {
   if (isCollaborationActivity(item)) return 'agent';
   switch (item.type) {
     case 'commandExecution': {
@@ -22,7 +22,12 @@ export function activityCategory(item: Item): ActivityCategory {
     case 'fileChange': return 'files';
     case 'webSearch': return 'web';
     case 'mcpToolCall': return item.server ? 'integration' : 'tool';
-    case 'dynamicToolCall':
+    case 'dynamicToolCall': {
+      // Older Desktop bridges send these activities with only their gateway title.
+      if (official && item.tool === '文件变更') return 'files';
+      if (official && item.tool === 'codex_app · list_threads') return 'chats';
+      return 'tool';
+    }
     case 'functionCallOutput': return 'tool';
     case 'plan': return 'plan';
     case 'imageGeneration':
@@ -40,14 +45,14 @@ export type ProcessEntry =
   | { kind: 'group'; id: string; items: Item[] }
   | { kind: 'standalone'; id: string; item: Item };
 
-const GROUPABLE = new Set<ActivityCategory>(['read', 'list', 'search', 'command', 'web', 'integration', 'tool', 'files']);
+const GROUPABLE = new Set<ActivityCategory>(['read', 'list', 'search', 'command', 'web', 'integration', 'chats', 'tool', 'files']);
 
 /** Activities can share a group across tool types. Explanations and independent events end that group. */
-export function processEntries(items: readonly Item[]): ProcessEntry[] {
+export function processEntries(items: readonly Item[], official = false): ProcessEntry[] {
   const entries: ProcessEntry[] = [];
   for (const item of items) {
-    if (!hasVisibleProcessContent(item)) continue;
-    if (GROUPABLE.has(activityCategory(item))) {
+    if ((official && item.type === 'reasoning') || !hasVisibleProcessContent(item)) continue;
+    if (GROUPABLE.has(activityCategory(item, official))) {
       const previous = entries.at(-1);
       if (previous?.kind === 'group') previous.items.push(item);
       else entries.push({ kind: 'group', id: item.id, items: [item] });

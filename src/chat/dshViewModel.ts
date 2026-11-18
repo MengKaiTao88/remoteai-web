@@ -7,10 +7,10 @@ export type DshRowKind = 'user' | 'assistant' | 'tool' | 'process' | 'approval'
 export interface DshRow {
   key: string; kind: DshRowKind; turn?: Turn; item?: Item; items?: Item[];
   event?: GuiEvent; pending?: QueueMessage;
-  timed?: boolean;
+  timed?: boolean; official?: boolean;
 }
 export interface DshChatViewModel { rows: DshRow[]; approvals: GuiEvent[]; running: boolean }
-const turnCache = new WeakMap<Turn, Map<boolean, DshRow[]>>();
+const turnCache = new WeakMap<Turn, Map<string, DshRow[]>>();
 const offlineCache = new WeakMap<Turn, Turn>();
 
 function itemKind(item: Item): DshRowKind {
@@ -26,9 +26,10 @@ function itemKind(item: Item): DshRowKind {
   return item.processRef ? 'process' : 'tool';
 }
 
-function turnRows(turn: Turn, previous?: Turn): DshRow[] {
+function turnRows(turn: Turn, previous: Turn | undefined, official: boolean): DshRow[] {
   const continuation = previous?.status === 'interrupted' || previous?.status === 'failed';
-  const cached = turnCache.get(turn)?.get(continuation);
+  const cacheKey = `${continuation}:${official}`;
+  const cached = turnCache.get(turn)?.get(cacheKey);
   if (cached) return cached;
   const entries = conversationEntries(previous ? [previous, turn] : [turn], new Map([[turn.id, false]]))
     .filter(entry => entry.turn === turn);
@@ -42,17 +43,21 @@ function turnRows(turn: Turn, previous?: Turn): DshRow[] {
       const flush = () => {
         if (!pending.length) return;
         rows.push({ key: `${turn.id}:process:${boundary}:${segment++}`,
-          kind: 'process', turn, items: pending, timed });
+          kind: 'process', turn, items: pending, timed, official });
         timed = false;
         pending = [];
       };
       for (const item of entry.items) {
+        if (official && item.type === 'reasoning') continue;
         const kind = itemKind(item);
         // A command failure is a status of that operation, so it stays with its neighboring tools.
         if (kind === 'question' || item.type === 'error') {
           flush();
           rows.push({ key: turn.id + ':message:' + item.id, kind, turn, item });
         } else pending.push(item);
+      }
+      if (timed && !pending.length && official && entry.timed && segment === 0) {
+        rows.push({ key: `${turn.id}:duration`, kind: 'duration', turn });
       }
       flush();
     } else if (entry.kind === 'summary' || entry.kind === 'duration') {
@@ -62,16 +67,21 @@ function turnRows(turn: Turn, previous?: Turn): DshRow[] {
       if (entry.item.type === 'userMessage') { boundary = entry.item.id; segment = 0; }
     }
   }
-  const cache = turnCache.get(turn) ?? new Map<boolean, DshRow[]>();
-  cache.set(continuation, rows);
+  const cache = turnCache.get(turn) ?? new Map<string, DshRow[]>();
+  cache.set(cacheKey, rows);
   turnCache.set(turn, cache);
   return rows;
 }
 
+export function isOfficialThread(thread: Thread | null | undefined): boolean {
+  return Boolean(thread && 'officialSidebar' in thread && thread.officialSidebar);
+}
+
 export function deriveDshRows(input: {
-  thread: Thread | null; approvals: GuiEvent[]; queue: QueueMessage[]; offline?: boolean;
+  thread: Thread | null; approvals: GuiEvent[]; queue: QueueMessage[]; offline?: boolean; official?: boolean;
 }): DshChatViewModel {
   const { thread, approvals, queue } = input;
+  const official = input.official ?? isOfficialThread(thread);
   const current = approvals.filter(event => thread && event.params.threadId === thread.id);
   const turns = (thread?.turns ?? []).map(turn => {
     if (!input.offline || turn.status !== 'inProgress') return turn;
@@ -80,7 +90,7 @@ export function deriveDshRows(input: {
     return cached;
   });
   return { rows: [
-    ...turns.flatMap((turn, index) => turnRows(turn, turns[index - 1])),
+    ...turns.flatMap((turn, index) => turnRows(turn, turns[index - 1], official)),
     ...current.map(event => ({
       key: 'approval:' + thread!.id + ':' + String(event.id), kind: 'approval' as const, event,
     })),

@@ -48,6 +48,8 @@ h1, h2, h3, .brand-lockup { font-family: "Manrope", "PingFang SC", "Microsoft Ya
 .boot-screen { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; color: var(--muted); background: radial-gradient(circle at 50% 35%, #e3f5ed, transparent 38%), var(--canvas); }
 .boot-screen .brand-mark { width: 48px; height: 48px; }
 .boot-screen p { font-size: 13px; letter-spacing: 0.3px; }
+.web-page-loading { display: flex; min-height: 160px; padding: 24px; align-items: center;
+  justify-content: center; gap: 12px; color: var(--muted); }
 
 /* Login */
 .login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(440px, 1.02fr) minmax(480px, 0.98fr); background: var(--app-surface, #fff); }

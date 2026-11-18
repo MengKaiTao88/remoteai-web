@@ -1,5 +1,5 @@
 import { displayText } from '../../../../shared/localization/browserClient';
-import { useContext, useEffect, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useContext, useEffect, useState, type ReactNode } from 'react';
 import { WorkspaceDrawerContext, workspaceTabId } from '../../../../shared/chat/workspaceDrawer';
 import { useWorkspaceLauncher } from '../../../../shared/chat/workspaceLaunchers';
 import { Popover } from 'antd';
@@ -11,9 +11,11 @@ import { ChatGit } from '../../../../shared/git/views/ChatGit';
 import { RemoteDesktop } from '../../../../shared/remote-desktop/views/RemoteDesktop';
 import { t } from '../../../../shared/localization/browserClient';
 import '../../../../shared/git/views/git.css';
-import { ProjectBrowserDrawer } from '../../../../shared/project-browser/views/ProjectBrowserDrawer';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { useProjectBrowsers } from '../../../../shared/project-browser/useProjectBrowsers';
+
+const ProjectBrowserDrawer = lazy(() => import('../../../../shared/project-browser/views/ProjectBrowserDrawer')
+  .then(module => ({ default: module.ProjectBrowserDrawer })));
 
 interface Props {
   client: GuiToolsClient; cwd: string; active: boolean; connected: boolean; deviceName?: string;
@@ -35,9 +37,11 @@ export function ChatTools(props: Props) {
   return <>
     {wide && props.desktopActions}
     <ProjectTools key={props.cwd} {...props} wide={wide} openDesktop={desktop.open} openFiles={openFiles} />
-    {browsers.projects.map(project => <ProjectBrowserDrawer key={project} client={props.client.projectBrowser}
-      cwd={project} active={props.active && browsers.visible === project}
-      connected={props.connected} onClose={browsers.close} />)}
+    <Suspense fallback={<p role="status">{t('client.projectBrowser.loading')}</p>}>
+      {browsers.projects.map(project => <ProjectBrowserDrawer key={project} client={props.client.projectBrowser}
+        cwd={project} active={props.active && browsers.visible === project}
+        connected={props.connected} onClose={browsers.close} />)}
+    </Suspense>
     {desktop.opened && <RemoteDesktop client={props.client.desktop} active={props.active} connected={props.connected}
       close={desktop.close} />}
   </>;

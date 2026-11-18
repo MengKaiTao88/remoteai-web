@@ -3,7 +3,7 @@ import { displayError } from '../../../shared/localization/browserClient';
 import { getLocale, t, useLanguage } from '../../../shared/localization/browserClient';
 import type { RemoteModelTarget } from '../../../shared/remote-chat/modelTarget';
 import { profileRole } from './i18n/profile';
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button, Dialog, Form, Input, PullToRefresh, SafeArea, SpinLoading, TabBar, Toast } from "antd-mobile";
 import { Dropdown, Tooltip, type MenuProps } from "antd";
 import { ChevronRight, CircleGauge, Compass, LayoutDashboard, LogOut, Menu, MonitorCog,
@@ -22,16 +22,11 @@ import { useDeviceScreenControl } from './devices/useDeviceScreenControl';
 import { useRevokeDesktopService } from './devices/useRevokeDesktopService';
 import { useRemoteModelRestartPrompt } from "./devices/useRemoteModelRestartPrompt";
 import { RemoteModelSwitchSheet } from "./components/RemoteModelSwitchSheet";
-import { TotpPage } from "./components/TotpPage";
 import { TotpSyncSwitch } from '../../../shared/totp/TotpSyncSwitch';
 import { DownloadCountIcon } from '../../../shared/downloads/DownloadCountIcon';
 import { DiscoveryBackButton, DiscoveryPage } from './discovery/DiscoveryPage';
 import { DiscoveryIcon } from './discovery/DiscoveryIcon';
 import { isDiscoveryPage, primaryNavigationPage } from '../../../shared/navigation/discovery';
-import { AccountsPage } from "./accounts/AccountsPage";
-import { SettingsPage } from "./settings/SettingsPage";
-import { DownloadManagerPage } from './downloads/DownloadManagerPage';
-import { LoungePage } from '../../../shared/lounge/LoungePage';
 import { LoungeIcon } from '../../../shared/lounge/LoungeIcon';
 import { useWebLounge } from './lounge/useWebLounge';
 import { LoungeAvatar } from '../../../shared/lounge/LoungeAvatar';
@@ -41,13 +36,39 @@ import { useSyncDownloadAccount } from '../../../shared/conversation/sync/useSyn
 import { WebSyncDownloads } from './chat/useWebSyncHosts';
 import { loadRefreshMinutes, REFRESH_INTERVAL_EVENT } from "./settings/refreshInterval";
 import { useTotpVault } from "./useTotpVault";
-import { ChatPage } from "./chat/ChatPage";
 import { PrimaryPagePager } from './navigation/PrimaryPagePager';
 import type { PrimaryPage } from '../../../shared/navigation/pageSwipe';
 import { useDesktopLayout, usePanelVisibility } from "../../../shared/layout/useDesktopLayout";
 import { useChatViewport } from './chat/useChatViewport';
 import { AgreementConsent } from '../../../shared/legal/AgreementConsent';
 import { useAgreementConsent } from '../../../shared/legal/useAgreementConsent';
+
+const ChatPage = lazy(() => import('./chat/ChatPage').then(module => ({ default: module.ChatPage })));
+const AccountsPage = lazy(() => import('./accounts/AccountsPage').then(module => ({ default: module.AccountsPage })));
+const SettingsPage = lazy(() => import('./settings/SettingsPage').then(module => ({ default: module.SettingsPage })));
+const TotpPage = lazy(() => import('./components/TotpPage').then(module => ({ default: module.TotpPage })));
+const DownloadManagerPage = lazy(() => import('./downloads/DownloadManagerPage')
+  .then(module => ({ default: module.DownloadManagerPage })));
+const LoungePage = lazy(() => import('../../../shared/lounge/LoungePage').then(module => ({ default: module.LoungePage })));
+
+function OpeningPage() {
+  return <div className="boot-screen" role="status"><BrandMark /><SpinLoading color="primary" />
+    <p>{t('client.app.openingRemoteAi')}</p></div>;
+}
+
+class PageContent extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() { return { failed: true }; }
+
+  render() {
+    return this.state.failed ? <div className="web-page-loading" role="alert">
+      <Button onClick={() => window.location.reload()}>{t('client.chat.couldNotLoadSelectToRetry')}</Button>
+    </div> : <Suspense fallback={<div className="web-page-loading" role="status">
+      <SpinLoading />{t('client.mobile.loading')}
+    </div>}>{this.props.children}</Suspense>;
+  }
+}
 
 const PULL_REFRESH_TEXT = {
   get pulling() { return t("client.accounts.pullToRefresh"); },
@@ -368,14 +389,18 @@ function AppShell() {
   const discoveryPage = <DiscoveryPage owner={downloadScope} loungeUnread={lounge.state.unread}
     onOpen={destination => dispatch(pageChanged(destination))} />;
   const otherPages = {
-    lounge: <LoungePage controller={lounge.controller} mobile={!desktopLayout}
-      onBack={() => dispatch(pageChanged('discover'))} />,
+    lounge: <PageContent><LoungePage controller={lounge.controller} mobile={!desktopLayout}
+      onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
     discover: discoveryPage, 'token-summary': discoveryPage, ssh: null,
     downloads: session && <><WebSyncDownloads session={session} devices={devices} />
-      <DownloadManagerPage owner={downloadOwner(session)} onBack={() => dispatch(pageChanged('discover'))} /></>,
-    accounts: session && <AccountsPage session={session} />, devices: <DevicesPage />,
-    totp: <TotpPage manager={totpManager} onBack={() => dispatch(pageChanged('discover'))} />,
-    settings: <SettingsPage totpManager={totpManager} loungeController={lounge.controller} />,
+      <PageContent><DownloadManagerPage owner={downloadOwner(session)}
+        onBack={() => dispatch(pageChanged('discover'))} /></PageContent></>,
+    accounts: session && <PageContent><AccountsPage session={session} /></PageContent>,
+    devices: <DevicesPage />,
+    totp: <PageContent><TotpPage manager={totpManager}
+      onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
+    settings: <PageContent><SettingsPage totpManager={totpManager}
+      loungeController={lounge.controller} /></PageContent>,
   };
   const pageTitle = page === 'devices' ? t('client.app.devices')
     : page === 'totp' ? t('client.discovery.twoFactor') : navItems.find(item => item.key === page)?.label;
@@ -450,11 +475,11 @@ function AppShell() {
             { month: "long", day: "numeric", weekday: "short" }).format(new Date())}</span></div></header>}
       <main className="main-content">
         <PrimaryPagePager page={page} onChange={changePrimaryPage} pages={{
-          chat: session && <ChatPage key={session.baseUrl + session.email} session={session} devices={devices}
+          chat: session && <PageContent key={session.baseUrl + session.email}><ChatPage session={session} devices={devices}
             openAccounts={openAccounts} openDiscover={openDiscover} openSettings={openSettings}
             active={page === 'chat' || page === 'ssh'} tokenSummary={page === 'token-summary'}
             sshDiscovery={page === 'ssh'} closeSshDiscovery={() => dispatch(pageChanged('discover'))}
-            closeTokenSummary={() => dispatch(pageChanged('discover'))} />,
+            closeTokenSummary={() => dispatch(pageChanged('discover'))} /></PageContent>,
           accounts: otherPages.accounts, discover: discoveryPage, settings: otherPages.settings,
         }}>
         {isDiscoveryPage(page)
@@ -481,7 +506,6 @@ export default function App() {
   const dispatch = useAppDispatch();
   const { session, initialized } = useAppSelector((state) => state.auth);
   useEffect(() => { void dispatch(bootstrapApp()); }, [dispatch]);
-  if (!initialized) return <div className="boot-screen"><BrandMark /><SpinLoading color="primary" />
-    <p>{t("client.app.openingRemoteAi")}</p></div>;
+  if (!initialized) return <OpeningPage />;
   return session ? <AppShell /> : <LoginView />;
 }

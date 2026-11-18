@@ -109,6 +109,9 @@ export async function login(page: Page) {
   await consent.getByRole('button', { name: '同意并登录', exact: true }).click();
   expect((await authenticated).ok()).toBe(true);
   await expect(page.locator('.app-shell')).toBeVisible();
+  if (await page.locator('html[data-pocket-web]').count()) {
+    await expect(page.getByRole('region', { name: 'Codex 聊天' })).toBeVisible();
+  }
 }
 
 const beforeClick = new WeakMap<Page, () => Promise<void>>();
