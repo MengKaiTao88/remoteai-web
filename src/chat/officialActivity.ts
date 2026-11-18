@@ -58,7 +58,12 @@ export function processEntries(items: readonly Item[]): ProcessEntry[] {
   const entries: ProcessEntry[] = [];
   for (const item of items) {
     if (item.type === 'reasoning' || !hasVisibleProcessContent(item)) continue;
-    if (GROUPABLE.has(activityCategory(item))) {
+    // Codex Desktop keeps sleep events in the turn data but omits them from
+    // the visible process timeline. Keep the surrounding activities together
+    // so the Web timeline follows that presentation and preserves order.
+    const category = activityCategory(item);
+    if (category === 'wait') continue;
+    if (GROUPABLE.has(category)) {
       const previous = entries.at(-1);
       if (previous?.kind === 'group') previous.items.push(item);
       else entries.push({ kind: 'group', id: item.id, items: [item] });

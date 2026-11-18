@@ -97,6 +97,19 @@ it('uses structured exploration types and breaks groups at standalone activity b
     .toEqual(['list', 'search', 'mixed-command']);
 });
 
+it('keeps sleep events out of the visible process timeline like Codex Desktop', () => {
+  const items = [
+    { id: 'before', type: 'commandExecution', command: 'before' },
+    { id: 'sleep', type: 'sleep', durationMs: 60000 },
+    { id: 'legacy-sleep', type: 'dynamicToolCall', tool: 'sleep' },
+    { id: 'after', type: 'commandExecution', command: 'after' },
+  ];
+  const entries = processEntries(items);
+  expect(entries).toHaveLength(1);
+  expect(entries[0].kind === 'group' && entries[0].items.map(item => item.id))
+    .toEqual(['before', 'after']);
+});
+
 it('retains process identity and timing when earlier work is prepended to the same turn', () => {
   const turn = { id: 'turn', status: 'completed', durationMs: 7000, items: [
     { id: 'work', type: 'commandExecution', command: 'pwd', status: 'completed' },
