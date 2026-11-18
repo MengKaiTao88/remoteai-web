@@ -9,16 +9,20 @@ test.beforeEach(async ({ page }, info) => {
 test('thinking and commentary retain their chronological position around grouped tools', async ({ page }) => {
   await page.goto('e2e/dsh-messages-harness.html?sequence=1');
   const process = page.locator('.dsh-process-trigger').first();
-  await expect(page.locator('.remodex-process-records')).toHaveCount(0);
+  const sequence = page.locator('.remodex-process').first().locator('.remodex-process-records');
+  await expect(sequence).toHaveCount(0);
   await process.click();
-  const sequence = page.locator('.remodex-process-records').first();
   await expect(sequence.locator('.remodex-reasoning summary')).toHaveText(['Before tools', 'After tools']);
   await expect(sequence.locator('.remodex-reasoning-detail')).toHaveCount(0);
   await expect(sequence.locator('.dsh-process-trigger')).toHaveCount(0);
-  await expect(sequence.locator('.chat-activity')).toHaveCount(3);
-  expect(await sequence.evaluate(node => [...node.children].map(child => child.className)))
-    .toEqual(['remodex-reasoning', 'chat-inline-activity', 'chat-inline-activity', 'chat-inline-activity',
-      'remodex-reasoning', 'chat-assistant-message']);
+  const group = sequence.locator('.official-activity-group');
+  const summary = group.locator(':scope > button');
+  await expect(summary).toHaveAttribute('aria-expanded', 'false');
+  expect(await sequence.evaluate(node => [...node.children].map(child => child.firstElementChild?.className)))
+    .toEqual(['official-process-standalone', 'official-activity-group',
+      'official-process-standalone', 'official-process-standalone']);
+  await summary.click();
+  await expect(group.locator('.official-activity-children .official-activity')).toHaveCount(3);
   await sequence.locator('.remodex-reasoning summary').last().click();
   await expect(sequence.getByText('Subsequent check.', { exact: true })).toBeVisible();
   await expect(sequence.getByText('Initial check.', { exact: true })).toHaveCount(0);
@@ -51,6 +55,7 @@ test('process cards remain inspectable, failed tools stay visible and approvals 
   await expect(process).toHaveAttribute('aria-expanded', 'false');
   await process.click();
   await expect(process).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('.official-activity-group > button').click();
   const firstCommand = page.getByRole('button', { name: /echo one/ }).first();
   await expect(firstCommand).toBeVisible();
   await firstCommand.click();
@@ -59,7 +64,7 @@ test('process cards remain inspectable, failed tools stay visible and approvals 
   await screenshot(page, info, 'process-expanded');
   await process.click();
   await expect(page.getByText('echo one', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /运行失败.*check failure/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /失败.*check failure/ })).toBeVisible();
   await page.locator('.chat-approval .chat-primary').click();
   await expect(page.locator('.chat-approval')).toHaveCount(0);
   await expect(page.locator('body')).toHaveAttribute('data-decision', 'accept');

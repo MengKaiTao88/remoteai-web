@@ -129,7 +129,7 @@ function Harness() {
     if (!metrics.commits++) {
       metrics.mountDuration = duration;
       metrics.initialMarkdown = document.querySelectorAll('.chat-markdown').length;
-      metrics.initialActivities = document.querySelectorAll('.chat-activity').length;
+      metrics.initialActivities = document.querySelectorAll('.official-activity-line').length;
       return;
     }
     metrics.renderTotal += duration; metrics.renderMax = Math.max(metrics.renderMax, duration);

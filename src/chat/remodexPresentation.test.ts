@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { processCounts, reasoningSections, reasoningText } from './remodexPresentation';
+import { reasoningSections, reasoningText } from './remodexPresentation';
 
 it('preserves preambles and independently collapsible summaries without inventing detail', () => {
   expect(reasoningSections('Preamble\n\n**Inspect**\nSource detail\n\n**Verify**')).toEqual([
@@ -22,12 +22,7 @@ it('coalesces adjacent streaming snapshots and keeps earlier section keys stable
   expect(after.map(section => section.id)).toEqual(before.map(section => section.id));
   expect(reasoningSections('**Only summary**\n<!-- -->')[0].detail).toBe('');
 });
-it('keeps reasoning text and counts real command, failure and stopped fields', () => {
+it('keeps summary and reasoning text distinct', () => {
   expect(reasoningText({ id: 'r', type: 'reasoning', summary: ['**Inspect**'], text: 'Detail' }))
     .toBe('**Inspect**\n\nDetail');
-  expect(processCounts([
-    { id: 'r', type: 'reasoning' }, { id: 'a', type: 'agentMessage' },
-    { id: 'c', type: 'commandExecution', activityCount: 3, exitCode: 1 },
-    { id: 'm', type: 'mcpToolCall', status: 'cancelled' },
-  ])).toEqual({ commands: 3, tools: 1, failed: 1, stopped: 1 });
 });

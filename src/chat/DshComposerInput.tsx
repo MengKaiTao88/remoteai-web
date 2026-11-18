@@ -1,6 +1,5 @@
 // Remote AI's shared hooks own the draft, queue and send behavior; this file owns DSH's input layout.
 import { displayError, displayText } from '../../../../shared/localization/browserClient';
-import { MessageDeliveryMode } from '../../../../shared/chat/MessageDeliveryMode';
 import { flushSync } from 'react-dom';
 import { ComposerDictation } from '../../../../shared/chat/dictation/ComposerDictation';
 import { useComposerSuggestion } from '../../../../shared/chat/useComposerSuggestion';
@@ -8,7 +7,7 @@ import { ComposerSuggestion } from '../../../../shared/remote-chat/views/Compose
 import { ComposerInput } from '../../../../shared/remote-chat/views/ComposerInput';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
-import { ArrowUp, ChevronRight, ListOrdered, Play, Plus, Square, Zap } from 'lucide-react';
+import { ArrowUp, ChevronRight, ListOrdered, Play, Plus, Square } from 'lucide-react';
 import { COMPOSER_ACTION_LABELS } from '../../../../shared/remote-chat/composerAction';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { DshModelPicker } from './DshModelPicker';
@@ -17,6 +16,7 @@ import { FocusPreservingButton } from '../../../../shared/chat/FocusPreservingBu
 import { ChatSettings } from '../../../../shared/remote-chat/views/ChatSettings';
 import { ModelRefreshButton } from '../../../../shared/remote-chat/views/ModelRefreshButton';
 import { ComposerFooter } from '../../../../shared/remote-chat/views/ComposerFooter';
+import { ComposerAccess } from '../../../../shared/remote-chat/views/ComposerDesktopControls';
 import { DesktopUsageContext } from '../../../../shared/chat/DesktopUsageContext';
 import { useConversationMetrics } from '../../../../shared/remote-chat/client/useConversationMetrics';
 import { ComposerGoal } from '../../../../shared/remote-chat/views/ComposerGoal';
@@ -134,11 +134,6 @@ export function DshComposerInput(props: ComposerProps) {
         <ChatQueue {...queue} {...state.queueEditor} editDisabled={state.queueEditor.editDisabled || busy} />
       </div>
     </div>}
-    <div className="assistant-composer-meta">
-      <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
-        scope={threadId ?? props.draftScope} selection={selection} variant="footer"
-        updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
-    </div>
     <form className="dsh-input" data-open={expanded || undefined}
       data-tray={!!(draft.images.length || attachments.items.length || state.hasQuotes || goalMode.enabled || goal) || undefined}
       onFocusCapture={event => { if (event.target instanceof HTMLTextAreaElement) setFocused(true); }}
@@ -163,14 +158,7 @@ export function DshComposerInput(props: ComposerProps) {
       {(adding || menu.open) && <div className="chat-composer-popover" onKeyDown={event => {
         if (event.defaultPrevented || event.nativeEvent.isComposing || event.keyCode === 229) return;
         if (event.key === 'Escape') { setAdding(false); menu.close(); menu.input.current?.focus(); }
-      }}>{adding && <><div className="dsh-input-extra-action"><MessageDeliveryMode disabled={busy} />
-        {selection.speed !== undefined && <button type="button" aria-pressed={selection.speed !== 'normal'}
-          disabled={busy || (settingsBusy && !settingsError) || !ready}
-          onClick={() => { void updateSettings({ speed: selection.speed === 'normal' ? 'fast'
-            : selection.speed === 'fast' ? 'ultrafast' : 'normal' }); }}>
-          {t(selection.speed === 'ultrafast' ? 'client.chat.ultrafastMode' : 'client.chat.fastMode.6e02d1')}
-          <Zap size={18} fill={selection.speed === 'ultrafast' ? 'currentColor' : 'none'} /></button>}</div>
-        <ComposerAddMenu busy={busy} choose={chooseAdd} /></>}
+      }}>{adding && <ComposerAddMenu busy={busy} choose={chooseAdd} />}
         {!adding && menu.conversations && props.loadConversations && <ComposerConversationMenu
           key={threadId} input={menu.input} query={menu.query} threadId={threadId} ready={ready && !busy}
           load={props.loadConversations} close={menu.close}
@@ -237,9 +225,14 @@ export function DshComposerInput(props: ComposerProps) {
           <FocusPreservingButton type="button" className="dsh-input-key" aria-label={t("client.chat.addContent")} aria-expanded={adding}
             disabled={busy} onClick={() => { menu.close(); setAdding(value => !value); }}>
             <Plus size={desktop ? 18 : 24} /></FocusPreservingButton>
+          <ComposerAccess selection={selection} settingsBusy={settingsBusy || !ready}
+            accessUpdate={props.accessUpdate} updateSettings={updateSettings} beforeOpen={closeMenus} />
         </div>
         <div className="dsh-input-trailing">
             <RemodexUsage props={props} settings={showSettings} />
+            <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
+              scope={threadId ?? props.draftScope} selection={selection} variant="footer"
+              updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
             {props.dictation && <ComposerDictation key={`dictation:${threadId}:${cwd}`} client={props.dictation}
               buttonClassName="dsh-input-key dsh-input-voice"
               active={active && ready && !sending && !props.compacting && !settings && !settingsBusy && !goalBusy}
@@ -254,10 +247,9 @@ export function DshComposerInput(props: ComposerProps) {
         </div>
       </div>
     </form>
-    <ComposerFooter desktop={desktop} cliVersion={props.cliVersion} threadId={props.threadId}
+    {desktop && <ComposerFooter desktop={desktop} cliVersion={props.cliVersion} threadId={props.threadId}
       readServiceStatus={props.readServiceStatus} statusActive={active} statusConnected={props.serviceStatusConnected}
-      usage={usageSnapshot.usage} metrics={metrics}
-      connectionInfo={props.connectionInfo} />
+      usage={usageSnapshot.usage} metrics={metrics} />}
     {active && !busy && editing && <ChatImageEditor key={editing.id} image={editing}
       save={url => draft.replaceImage(editing, url)} close={() => setEditingId(null)} />}
     {projectFiles && <ComposerProjectFiles imagesOnly={projectFiles === 'photos'} threadId={threadId} cwd={cwd}

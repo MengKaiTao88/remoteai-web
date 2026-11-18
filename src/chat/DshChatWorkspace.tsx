@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
-import { ChevronLeft, Ellipsis, PanelLeft, Plus, Search, SquarePen, X } from 'lucide-react';
+import { ChevronLeft, Ellipsis, PanelLeft, SquarePen, X } from 'lucide-react';
 import { t, displayText, displayError, useLanguage } from '../../../../shared/localization/browserClient';
 import type { ChatComputer } from '../../../../shared/remote-chat/devices';
 import type { ComputerListRefresh } from '../../../../shared/remote-chat/ComputerSearchBar';
@@ -115,10 +115,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
         {layout.left === 'rail' && <nav className="dsh-rail" aria-label={t('client.chat.chatList')}>
           <button className="dsh-icon-button" aria-label={t('client.chat.openChatList')} onClick={toggleList}>
             <PanelLeft size={20} /></button>
-          <button className="dsh-icon-button" aria-label={t('client.chat.searchChats')} onClick={() => setSearching(true)}>
-            <Search size={20} /></button>
-          <button className="dsh-icon-button" aria-label={t('client.chat.newChat')} onClick={() => newChat()}>
-            <Plus size={20} /></button><span className="dsh-rail-spacer" />{profile}
+          <span className="dsh-rail-spacer" />{profile}
         </nav>}
         <aside className="dsh-sidebar" hidden={!listOpen} aria-label={t('client.chat.chatList')}>
           <header className="dsh-sidebar-heading"><strong>Remote AI</strong>
@@ -146,8 +143,6 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
                 {cwd && <small>· {cwd.split(/[\\/]/).filter(Boolean).at(-1)}</small>}</span>
             </button>
             <div className="remodex-header-actions">
-              <button className="dsh-icon-button" aria-label={t('client.chat.newChat')} onClick={() => newChat()}>
-                <SquarePen size={20} /></button>
               <button className="dsh-icon-button" aria-label={t('client.chat.chatSettings.1e06eb')}
                 onClick={() => setDetails(value => !value)} aria-expanded={details}><Ellipsis size={21} /></button>
             </div>

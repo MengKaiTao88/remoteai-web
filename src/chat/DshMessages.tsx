@@ -36,7 +36,7 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
     <ChatTurnTiming turn={row.turn} /></p>;
   if (row.kind === 'summary' && row.turn) return <ChatTurnSummary turn={row.turn}
     onOpen={panel => openTurn(row.turn!, panel)} />;
-  if (row.kind === 'process' || row.kind === 'tool-group') return <RemodexProcess row={row} />;
+  if (row.kind === 'process') return <RemodexProcess row={row} />;
   if (!row.item) return null;
   if (row.item.type === 'reasoning' && !row.item.processRef) return <RemodexReasoning item={row.item} />;
   if (row.kind === 'commentary') return <div className="remodex-commentary">
@@ -52,7 +52,8 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
 function sameContent(before: DshRow, after: DshRow) {
   if (before === after) return true;
   if (before.key !== after.key || before.kind !== after.kind || before.timed !== after.timed) return false;
-  if (before.timed && before.turn?.durationMs !== after.turn?.durationMs) return false;
+  if (before.timed && (before.turn?.durationMs !== after.turn?.durationMs
+    || before.turn?.startedAt !== after.turn?.startedAt || before.turn?.completedAt !== after.turn?.completedAt)) return false;
   if (before.event || after.event) return before.event === after.event;
   if (before.turn?.id !== after.turn?.id || before.turn?.status !== after.turn?.status) return false;
   if (before.item || after.item) return before.item === after.item;

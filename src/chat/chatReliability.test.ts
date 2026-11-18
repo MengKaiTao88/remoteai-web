@@ -2,9 +2,9 @@ import { expect, it, vi } from 'vitest';
 import { updateThread } from '../../../../shared/remote-chat/client/events';
 import { ImageCache } from '../../../../shared/remote-chat/client/imageCache';
 import { itemImageSources } from '../../../../shared/chat/imageSources';
-import { activityStatus } from '../../../../shared/conversation/itemStatus';
 import { deriveDshRows } from './dshViewModel';
-import { itemReasoningSections, processCounts } from './remodexPresentation';
+import { itemReasoningSections } from './remodexPresentation';
+import { activityCategory, processActivityStatus, processEntries } from './officialActivity';
 import type { Thread } from '../../../../shared/conversation/types';
 
 it('keeps reasoning text deltas separate from summary deltas and honors both indices', () => {
@@ -51,13 +51,30 @@ it('explicit retry bypasses a decoded-bad image cache while retaining thread iso
   expect(request).toHaveBeenCalledTimes(4);
 });
 
-it('normalizes failed and cancelled executions, preserving summary outcomes without fake tool counts', () => {
-  expect(activityStatus({ id: 'failure', type: 'commandExecution', status: 'completed', exitCode: 1 })).toBe('failed');
-  expect(activityStatus({ id: 'stop', type: 'mcpToolCall', status: 'cancelled' })).toBe('interrupted');
-  expect(processCounts([{ id: 'summary', type: 'processSummary', activityCount: 12,
-    processActivityMetrics: { commands: 3, tools: 2, failed: 1, stopped: 1 } }]))
-    .toEqual({ commands: 3, tools: 2, failed: 1, stopped: 1 });
-  expect(processCounts([{ id: 'legacy', type: 'processSummary', activityCount: 12 }]).tools).toBe(0);
+it('keeps command and projected tool failures distinct from cancelled or stale activities', () => {
+  expect(processActivityStatus({ id: 'failure', type: 'commandExecution', status: 'completed', exitCode: 1 }, true)).toBe('failed');
+  expect(processActivityStatus({ id: 'projected', type: 'dynamicToolCall', success: false }, false)).toBe('failed');
+  expect(processActivityStatus({ id: 'stop', type: 'mcpToolCall', status: 'cancelled' }, false)).toBe('interrupted');
+  expect(processActivityStatus({ id: 'cached', type: 'commandExecution', status: 'inProgress' }, false)).toBeUndefined();
+});
+
+it('uses structured exploration types and breaks groups at standalone activity boundaries', () => {
+  const items = [
+    { id: 'list', type: 'commandExecution', commandActions: [{ type: 'list_files' }] },
+    { id: 'search', type: 'commandExecution', commandActions: [{ type: 'search' }] },
+    { id: 'mixed-command', type: 'commandExecution', commandActions: [{ type: 'read' }, { type: 'unknown' }] },
+    { id: 'worker', type: 'subAgentActivity', kind: 'started' },
+    { id: 'integration', type: 'mcpToolCall', server: 'example' },
+    { id: 'compaction', type: 'contextCompaction' },
+    { id: 'future', type: 'unrecognizedEvent' },
+  ];
+  expect(items.map(activityCategory)).toEqual(['list', 'search', 'command', 'agent', 'integration', 'context', 'other']);
+  const entries = processEntries(items);
+  expect(entries.map(({ id, kind }) => [id, kind])).toEqual([
+    ['list', 'group'], ['worker', 'standalone'], ['integration', 'group'], ['compaction', 'standalone'], ['future', 'standalone'],
+  ]);
+  expect(entries[0].kind === 'group' && entries[0].items.map(item => item.id))
+    .toEqual(['list', 'search', 'mixed-command']);
 });
 
 it('retains process identity and timing when earlier work is prepended to the same turn', () => {

@@ -14,13 +14,13 @@ function interacting(node: HTMLElement) {
 }
 
 /** Start older rows as slots: mounting every rich row once can exhaust a phone before recycling starts. */
-export function DshHistoryViewport({ children, initiallyVisible, enabled = true }: {
-  children: () => ReactNode; initiallyVisible: boolean; enabled?: boolean;
+export function DshHistoryViewport({ children, initiallyVisible, enabled = true, estimatedHeight = ROW_ESTIMATE_PX }: {
+  children: () => ReactNode; initiallyVisible: boolean; enabled?: boolean; estimatedHeight?: number;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const supported = typeof IntersectionObserver !== 'undefined';
   const [visible, setVisible] = useState(initiallyVisible || !supported);
-  const measuredHeight = useRef(ROW_ESTIMATE_PX);
+  const measuredHeight = useRef(estimatedHeight);
   const anchor = useRef<VirtualScrollAnchor | null>(null);
   const mounted = visible || !enabled || !supported;
   useLayoutEffect(() => {

@@ -24,7 +24,6 @@ export function RemodexUsage({ props, settings }: { props: ComposerProps; settin
         <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="2" opacity=".2" />
         {percent != null && <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="2"
           pathLength="100" strokeDasharray={percent + ' 100'} strokeLinecap="round" transform="rotate(-90 10 10)" />}
-        {percent == null && <circle cx="10" cy="10" r="1.4" fill="currentColor" />}
       </svg>
     </FocusPreservingButton>
     {open && <RemodexDialog label={t('client.chat.conversationContext')} close={() => setOpen(false)} anchor={trigger.current}

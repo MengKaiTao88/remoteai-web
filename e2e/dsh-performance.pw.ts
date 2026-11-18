@@ -22,7 +22,7 @@ test('keeps long live conversations interactive during sustained updates', async
     ...((window as unknown as { dshPerformance: Record<string, number> }).dshPerformance),
     rows: document.querySelectorAll('[data-dsh-row]').length,
     markdownNodes: document.querySelectorAll('.chat-markdown').length,
-    activityNodes: document.querySelectorAll('.chat-activity').length,
+    activityNodes: document.querySelectorAll('.official-activity-line').length,
   }));
   await info.attach('performance', { body: JSON.stringify({ ...result, latencies }, null, 2), contentType: 'application/json' });
   await expect(page.getByRole('textbox', { name: '聊天消息' })).toBeInViewport();

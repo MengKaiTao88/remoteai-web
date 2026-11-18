@@ -19,8 +19,7 @@ it('folds only completed process and keeps final answer outside the disclosure',
 });
 it('keeps a stopped process readable and preserves unchanged row identities during another turn', () => {
   const stopped = derive({ ...thread, turns: [{ ...turn, status: 'interrupted' }] }).rows;
-  expect(stopped.some(row => row.kind === 'process')).toBe(false);
-  expect(stopped.some(row => row.item?.id === 'c')).toBe(true);
+  expect(stopped.find(row => row.kind === 'process')?.items?.map(item => item.id)).toEqual(['a', 'c']);
   const before = derive(thread);
   const next = derive({ ...thread, turns: [turn, { id: 'live', status: 'inProgress',
     items: [{ id: 'new', type: 'agentMessage', text: 'stream' }] }] });
@@ -43,16 +42,23 @@ it('groups three live tools without swallowing a user interruption or final repl
   const result = derive({ ...thread, turns: [{ id: 'live', status: 'inProgress',
     items: [...tools, { id: 'steer', type: 'userMessage', text: 'wait' },
       { id: 'reply', type: 'agentMessage', text: 'yes', phase: 'final_answer' }] }] });
-  expect(result.rows.map(row => row.kind)).toEqual(['tool-group', 'user', 'assistant']);
+  expect(result.rows.map(row => row.kind)).toEqual(['process', 'user', 'assistant']);
 });
 
-it('keeps failed commands visible even when their enclosing turn completed', () => {
+it('keeps failed commands in chronological order even when their enclosing turn completed', () => {
   const result = derive({ ...thread, turns: [{ ...turn, items: [
     ...turn.items.slice(0, 3), { id: 'failed-command', type: 'commandExecution', command: 'false',
       status: 'completed', exitCode: 1 }, turn.items[3],
   ] }] });
-  expect(result.rows.find(row => row.item?.id === 'failed-command')?.kind).toBe('error');
+  expect(result.rows.find(row => row.kind === 'process')?.items?.map(item => item.id))
+    .toEqual(['a', 'c', 'failed-command']);
   expect(result.rows.at(-1)?.item?.id).toBe('f');
+});
+
+it('keeps the process key when a streamed answer arrives and the turn completes', () => {
+  const live = { ...turn, status: 'inProgress', items: turn.items.slice(0, -1) };
+  expect(derive({ ...thread, turns: [live] }).rows.find(row => row.kind === 'process')?.key)
+    .toBe(derive(thread).rows.find(row => row.kind === 'process')?.key);
 });
 
 it('does not show cached offline work as a running turn and restores live state on reconnect', () => {

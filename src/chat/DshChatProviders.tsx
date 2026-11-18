@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { ToolDetailsContext } from '../../../../shared/chat/DeferredToolDetails';
 import { ProcessDetailsContext } from '../../../../shared/chat/DeferredProcessDetails';
 import { DesktopUsageContext } from '../../../../shared/chat/DesktopUsageContext';
@@ -27,9 +27,22 @@ export function DshChatProviders({ controller, state, active, children }: {
   const usage = useVisibleChatUsage(controller.readUsage, enabled);
   const threadId = state.selected?.id ?? null;
   const cacheScope = useDraftCacheScope({ threadId, draftScope: state.draftScope });
+  const loadProcess = useCallback<typeof controller.processDetails>(async target => {
+    const result = await controller.processDetails(target);
+    if (!Array.isArray(result?.items) || !result.items.length || !result.items.every(item => item && typeof item.id === 'string'
+      && typeof item.type === 'string')) throw new Error('Invalid process detail response');
+    return result;
+  }, [controller]);
+  const loadTool = useCallback<typeof controller.toolDetails>(async target => {
+    const result = await controller.toolDetails(target);
+    if (result?.item?.id !== target.itemId || typeof result.item.type !== 'string') {
+      throw new Error('Invalid activity detail response');
+    }
+    return result;
+  }, [controller]);
   return <ChatPresentation.Provider value={{ taskCards: true }}>
-    <ToolDetailsContext.Provider value={{ load: controller.toolDetails, active: enabled }}>
-    <ProcessDetailsContext.Provider value={{ load: controller.processDetails, active: enabled }}>
+    <ToolDetailsContext.Provider value={{ load: loadTool, active: enabled }}>
+    <ProcessDetailsContext.Provider value={{ load: loadProcess, active: enabled }}>
     <DesktopUsageContext.Provider value={usage}>
     <ImageAiContext.Provider value={{ enabled: enabled && !state.selectedArchived
       && !state.sending && !state.settingsBusy && !state.workspaceBusy && !state.compacting,

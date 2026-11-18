@@ -9,7 +9,8 @@ export function boundedHistoryRequest(request: Request): Request {
   return <T>(method: Parameters<Request>[0], body?: unknown): Promise<T> => {
     const operation = body && typeof body === 'object' && 'operation' in body ? body.operation : undefined;
     const deadline = operation === 'viewThread' ? VIEW_TIMEOUT_MS
-      : operation === 'syncHistory' || operation === 'read' ? HISTORY_TIMEOUT_MS : undefined;
+      : operation === 'syncHistory' || operation === 'read'
+        || operation === 'processDetails' || operation === 'toolDetails' ? HISTORY_TIMEOUT_MS : undefined;
     if (!deadline) return request<T>(method, body);
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('client.projectBrowser.theRequestTimedOutPleaseTryAgain')), deadline);

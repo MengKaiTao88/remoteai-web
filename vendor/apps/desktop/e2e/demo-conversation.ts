@@ -155,6 +155,15 @@ function threadOperation(thread: Thread, input: Record<string, unknown>, link: D
     throw new Error('New threads have no persisted rollout before the first turn');
   }
   if (input.operation === 'read') return { thread };
+  if (input.operation === 'processDetails' || input.operation === 'toolDetails') {
+    const items = thread.turns?.find(turn => turn.id === input.turnId)?.items ?? [];
+    const start = items.findIndex(item => item.id === input.itemId);
+    if (start < 0) throw new Error('Unknown demo activity');
+    if (input.operation === 'toolDetails') return { item: images.prepare(items[start], thread.id) };
+    const end = items.findIndex(item => item.id === input.endItemId);
+    if (end < start) throw new Error('Invalid demo activity range');
+    return { items: images.prepare(items.slice(start, end + 1), thread.id) };
+  }
   if (input.operation === 'resume') return {};
   if (input.operation === 'compact') {
     setTimeout(() => notify(link, { method: 'thread/compacted', params: { threadId: thread.id } }), 500);

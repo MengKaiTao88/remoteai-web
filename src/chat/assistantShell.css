@@ -1,6 +1,6 @@
 .dsh-workspace {
   --dsh-ink:#0d0d0d; --dsh-muted:#65656b; --dsh-line:#e5e5e5; --dsh-solid:#fff;
-  --dsh-sheet:#f7f7f8; --dsh-card:#f7f7f8; --dsh-user:#0d0d0d; --dsh-user-ink:#fff;
+  --dsh-sheet:#f7f7f8; --dsh-card:#f7f7f8; --dsh-user:#f1f1f1; --dsh-user-ink:#202124;
   --dsh-glass:#ffffffed; --dsh-accent:#0d0d0d; --dsh-control:#f0f0f0; --dsh-selected:#ececec;
   --chat-green:var(--dsh-accent); --chat-ink:var(--dsh-ink); --chat-muted:var(--dsh-muted);
   --chat-border:var(--dsh-line); --chat-background:var(--dsh-solid); --chat-pale:var(--dsh-sheet);
@@ -11,7 +11,7 @@
 }
 .dsh-workspace[data-theme=dark] {
   --dsh-ink:#ececec; --dsh-muted:#afafaf; --dsh-line:#383838; --dsh-solid:#000;
-  --dsh-sheet:#171717; --dsh-card:#171717; --dsh-user:#ececec; --dsh-user-ink:#0d0d0d;
+  --dsh-sheet:#171717; --dsh-card:#171717; --dsh-user:#262626; --dsh-user-ink:#ececec;
   --dsh-glass:#151515ed; --dsh-accent:#ececec; --dsh-control:#252525; --dsh-selected:#303030;
 }
 .dsh-workspace > .chat-diff-workspace { flex:1; min-width:0; min-height:0; }
@@ -52,12 +52,6 @@
 .dsh-mobile-links { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; flex-shrink:0; padding:8px 0; }
 .dsh-mobile-links button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
   min-height:56px; padding:8px 4px; border:0; border-radius:12px; background:none; color:inherit; font-size:.85em; cursor:pointer; }
-.remodex-sidebar-actions { display:flex; justify-content:space-between; gap:10px; padding:8px 0 16px; }
-.remodex-sidebar-actions > button { display:flex; flex:1; flex-direction:column; align-items:center; gap:7px;
-  border:0; padding:0; background:none; color:inherit; font-size:.8em; cursor:pointer; }
-.remodex-sidebar-actions > button > span { display:grid; place-items:center; width:48px; height:48px;
-  background:var(--dsh-control); border-radius:50%; }
-.remodex-sidebar-actions > button:disabled { opacity:.4; }
 .dsh-chat-shell[data-overlay] .dsh-sidebar { position:absolute; inset:0 auto 0 0; width:min(320px,88%);
   border-radius:0 22px 22px 0; box-shadow:8px 0 30px #0002; background:var(--dsh-sheet); }
 .dsh-sidebar-scrim { position:absolute; inset:0; z-index:6; border:0; background:#0005; cursor:pointer; }

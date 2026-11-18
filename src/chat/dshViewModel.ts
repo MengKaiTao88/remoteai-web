@@ -2,7 +2,7 @@ import type { GuiEvent, Item, Thread, Turn } from '../../../../shared/conversati
 import type { QueueMessage } from '../../../../shared/remote-chat/queue';
 import { conversationEntries } from '../../../../shared/chat/turnPresentation';
 
-export type DshRowKind = 'user' | 'assistant' | 'tool' | 'tool-group' | 'process' | 'approval'
+export type DshRowKind = 'user' | 'assistant' | 'tool' | 'process' | 'approval'
   | 'question' | 'commentary' | 'change' | 'artifact' | 'pending' | 'summary' | 'duration' | 'error';
 export interface DshRow {
   key: string; kind: DshRowKind; turn?: Turn; item?: Item; items?: Item[];
@@ -26,57 +26,46 @@ function itemKind(item: Item): DshRowKind {
   return item.processRef ? 'process' : 'tool';
 }
 
-function groupTools(rows: DshRow[]): DshRow[] {
-  const grouped: DshRow[] = [];
-  for (let index = 0; index < rows.length;) {
-    let end = index;
-    while (end < rows.length && rows[end].kind === 'tool') end++;
-    if (end - index >= 3) grouped.push({
-      key: 'tools:' + rows[index].turn?.id + ':' + (rows[end]?.key ?? 'tail'),
-      kind: 'tool-group', turn: rows[index].turn,
-      items: rows.slice(index, end).map(row => row.item!),
-    });
-    else grouped.push(...rows.slice(index, Math.max(index + 1, end)));
-    index = Math.max(index + 1, end);
-  }
-  return grouped;
-}
-
 function turnRows(turn: Turn, previous?: Turn): DshRow[] {
   const continuation = previous?.status === 'interrupted' || previous?.status === 'failed';
   const cached = turnCache.get(turn)?.get(continuation);
   if (cached) return cached;
-  const entries = conversationEntries(previous ? [previous, turn] : [turn]).filter(entry => entry.turn === turn);
+  const entries = conversationEntries(previous ? [previous, turn] : [turn], new Map([[turn.id, false]]))
+    .filter(entry => entry.turn === turn);
   const rows: DshRow[] = [];
-  for (const [position, entry] of entries.entries()) {
+  let boundary = 'head';
+  let segment = 0;
+  for (const entry of entries) {
     if (entry.kind === 'work') {
-      if (!entry.inline) {
-        let pending: Item[] = [];
-        let timed = entry.timed;
-        let segment = 0;
-        const boundary = entries.slice(position + 1).find(next => next.kind === 'message')?.id ?? 'tail';
-        const flush = () => {
-          if (pending.length) rows.push({ key: `${turn.id}:process:${boundary}:${segment++}`,
-            kind: 'process', turn, items: pending, timed });
-          timed = false;
-          pending = [];
-        };
-        for (const item of entry.items) {
-          if (itemKind(item) === 'error') {
-            flush(); rows.push({ key: turn.id + ':message:' + item.id, kind: 'error', turn, item });
-          } else pending.push(item);
-        }
-        flush();
+      let pending: Item[] = [];
+      let timed = entry.timed || !rows.some(row => row.kind === 'process' || row.kind === 'duration');
+      const flush = () => {
+        if (!pending.length) return;
+        rows.push({ key: `${turn.id}:process:${boundary}:${segment++}`,
+          kind: 'process', turn, items: pending, timed });
+        timed = false;
+        pending = [];
+      };
+      for (const item of entry.items) {
+        const kind = itemKind(item);
+        // A command failure is a status of that operation, so it stays with its neighboring tools.
+        if (kind === 'question' || item.type === 'error') {
+          flush();
+          rows.push({ key: turn.id + ':message:' + item.id, kind, turn, item });
+        } else pending.push(item);
       }
+      flush();
     } else if (entry.kind === 'summary' || entry.kind === 'duration') {
       rows.push({ key: entry.id, kind: entry.kind, turn });
-    } else rows.push({ key: entry.id, kind: itemKind(entry.item), turn, item: entry.item });
+    } else {
+      rows.push({ key: entry.id, kind: itemKind(entry.item), turn, item: entry.item });
+      if (entry.item.type === 'userMessage') { boundary = entry.item.id; segment = 0; }
+    }
   }
-  const grouped = groupTools(rows);
   const cache = turnCache.get(turn) ?? new Map<boolean, DshRow[]>();
-  cache.set(continuation, grouped);
+  cache.set(continuation, rows);
   turnCache.set(turn, cache);
-  return grouped;
+  return rows;
 }
 
 export function deriveDshRows(input: {

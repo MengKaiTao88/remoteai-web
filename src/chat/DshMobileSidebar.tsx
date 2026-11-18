@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronDown, Compass, FolderPlus, LayoutDashboard, LoaderCircle, Plus, RefreshCw, Search, Settings, SquarePen } from 'lucide-react';
+import { ChevronDown, Compass, LayoutDashboard, LoaderCircle, Plus, RefreshCw, Search, Settings } from 'lucide-react';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import type { ChatController, ChatProject, ChatState, Thread } from '../../../../shared/remote-chat/views/types';
 import { BrowserGroups } from '../../../../shared/chat/groups/BrowserGroups';
@@ -18,7 +18,6 @@ import { ChatProjectActions } from '../../../../shared/remote-chat/views/ChatPro
 import { useCliGui } from '../../../../shared/cli-gui/context';
 import { useCliSidebar } from '../../../../shared/cli-gui/useCliSidebar';
 import { CliThreadRow } from '../../../../shared/cli-gui/CliThreadRow';
-import { ChatProjectPicker } from '../../../../shared/remote-chat/views/ChatProjectPicker';
 
 interface Props {
   state: ChatState; controller: ChatController; close: () => void; search: () => void;
@@ -38,7 +37,6 @@ function SidebarContent({ state, controller, close, search, newChat, ...pages }:
   useLanguage();
   const cli = useCliGui();
   const [recent, setRecent] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const sidebar = useCliSidebar({ threads: state.threads, archived: state.archived });
   const groups = useMemo(() => flattenGroupingTree(groupingTree(
@@ -64,13 +62,6 @@ function SidebarContent({ state, controller, close, search, newChat, ...pages }:
       onOpenProject={cwd ? () => openProject(cwd) : undefined} />;
   };
   return <>
-    <div className="remodex-sidebar-actions">
-      <button type="button" disabled={state.sending || cli?.state.busy} onClick={() => newChat()}>
-        <span><SquarePen size={22} /></span>{t('client.chat.newChat')}</button>
-      <button type="button" onClick={search}><span><Search size={22} /></span>{t('client.chat.searchChats')}</button>
-      <button type="button" disabled={!state.ready || state.sending || cli?.state.busy} onClick={() => setCreating(true)}>
-        <span><FolderPlus size={22} /></span>{t('client.conversation.newProject')}</button>
-    </div>
     <button type="button" className="dsh-list-mode" aria-pressed={recent} onClick={() => {
       setRecent(value => !value);
       if (pagination.list.current) pagination.list.current.scrollTop = 0;
@@ -123,11 +114,6 @@ function SidebarContent({ state, controller, close, search, newChat, ...pages }:
     </nav>
     <ChatThreadActions actions={actions} />
     <ChatProjectActions actions={projects} />
-    {creating && <ChatProjectPicker cwd={state.draftProject?.cwd ?? ''}
-      projects={groups.filter(group => group.cwd).map(group => ({ cwd: group.cwd, label: group.label }))}
-      title={t('client.conversation.newProject')} mutate={controller.guiTools.projectBrowser.mutate}
-      load={controller.loadProjectDirectories} close={() => setCreating(false)}
-      choose={project => { setCreating(false); newChat(project); }} />}
     {projectFolderDialog}
   </>;
 }
