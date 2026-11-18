@@ -45,6 +45,7 @@ const imageThread: Thread = { id: 'fixture', cwd: '/workspace', preview: '', upd
 const stress = new URLSearchParams(location.search).has('stress');
 const deferred = new URLSearchParams(location.search).has('deferred');
 const sequence = new URLSearchParams(location.search).has('sequence');
+const longProcess = new URLSearchParams(location.search).has('long-process');
 const metrics = { updates: 0, commits: 0, renderTotal: 0, renderMax: 0, pulse: 0,
   mountDuration: 0, initialMarkdown: 0, initialActivities: 0 };
 Object.assign(window, { dshPerformance: metrics });
@@ -67,7 +68,8 @@ const base: Thread = { id: 'fixture', preview: '', cwd: '/workspace', updatedAt:
     { id: 'user', type: 'userMessage', text: '源码调研完成后再修改。' },
     ...(sequence ? [{ id: 'before-tools', type: 'reasoning', summary: ['**Before tools**\nInitial check.'] }] : []),
     ...(deferred ? [{ id: 'deferred-summary', type: 'processSummary', activityCount: 4,
-      processRef: { threadId: 'fixture', turnId: 'complete', itemId: 'one', endItemId: 'three' } }] : tools),
+      processRef: { threadId: 'fixture', turnId: 'complete', itemId: 'one', endItemId: 'three' } }]
+      : longProcess ? Array.from({ length: 80 }, (_, index) => ({ ...tools[0], id: `operation-${index}` })) : tools),
     ...(sequence ? [{ id: 'after-tools', type: 'reasoning', summary: ['**After tools**\nSubsequent check.'] },
       { id: 'commentary-sequence', type: 'agentMessage', phase: 'commentary' as const, text: 'Narrative after execution.' }] : []),
     { id: 'answer', type: 'agentMessage', phase: 'final_answer', text: '已读取源码。最终回答保持展开。' },

@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { lastUserMessage } from '../../../../shared/chat/latestUserMessage';
+import { captureVirtualScroll, restoreVirtualScroll } from '../../../../shared/chat/virtualScroll';
 import { ArrowDown, Terminal } from 'lucide-react';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { ChatMessage } from '../../../../shared/remote-chat/views/ChatMessage';
@@ -103,7 +104,13 @@ export function DshMessages({ state, controller, view, active }: Props) {
   const rows = useMemo(() => view.rows.filter(row => row.kind !== 'pending'), [view.rows]);
   const latestUser = useMemo(() => lastUserMessage(state.selected
     ? { turns: state.selected.turns ?? [] } : undefined), [state.selected]);
-  const pause = useCallback(() => { scroll.following.current = false; }, [scroll.following]);
+  const pause = useCallback(() => {
+    if (!scroll.following.current) return;
+    scroll.following.current = false;
+    // Refresh the resize observer's anchor before opening a disclosure changes its height.
+    const anchor = captureVirtualScroll(scroll.list.current, false);
+    if (anchor) restoreVirtualScroll(anchor);
+  }, [scroll.following, scroll.list]);
   const currentDetail = detail?.threadId === state.selected?.id ? detail : undefined;
   const detailItem = currentDetail?.itemId ? state.selected?.turns?.map(turn =>
     turn.items.find(item => item.id === currentDetail.itemId)).find(Boolean) : undefined;

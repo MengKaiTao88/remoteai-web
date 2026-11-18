@@ -44,6 +44,21 @@ test('deferred historical processes use the same reasoning sections and load onl
   await expect(page.locator('.remodex-reasoning')).toHaveCount(0);
 });
 
+test('opening a long activity group keeps its header in view', async ({ page }, info) => {
+  test.skip(!['phone-light', 'iphone-webkit', 'desktop-wide'].includes(info.project.name));
+  await page.goto('e2e/dsh-messages-harness.html?long-process=1', { waitUntil: 'commit' });
+  const process = page.locator('.dsh-process-trigger').first();
+  await process.click();
+  const group = page.locator('.official-activity-group > button');
+  await group.scrollIntoViewIfNeeded();
+  const before = (await group.boundingBox())!.y;
+  await group.click();
+  await expect(page.locator('[data-process-item="operation-0"]')).toBeInViewport();
+  await expect(group).toBeInViewport();
+  await expect.poll(async () => Math.abs((await group.boundingBox())!.y - before)).toBeLessThan(3);
+  await screenshot(page, info, 'long-activity-opened');
+});
+
 test('process cards remain inspectable, failed tools stay visible and approvals settle', async ({ page }, info) => {
   const errors: string[] = [];
   page.on('pageerror', value => errors.push(value.message));

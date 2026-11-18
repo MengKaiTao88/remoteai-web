@@ -1,5 +1,5 @@
 import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { observeViewport } from '../../../../shared/chat/viewportObserver';
+import { observeMobileHistory } from '../../../../shared/remote-chat/views/mobileHistoryObserver';
 import { restoreVirtualScroll, type VirtualScrollAnchor } from '../../../../shared/chat/virtualScroll';
 
 const ROW_ESTIMATE_PX = 96;
@@ -29,7 +29,7 @@ export function DshHistoryViewport({ children, initiallyVisible, enabled = true,
     const node = root.current;
     if (!node || !active || !enabled || !supported) return;
     let observing = true;
-    const stop = observeViewport(node, (next, snapshot) => {
+    const stop = observeMobileHistory(node, (next, snapshot) => {
       if (!observing || (!next && interacting(node))) return;
       anchor.current = snapshot;
       setVisible(next);

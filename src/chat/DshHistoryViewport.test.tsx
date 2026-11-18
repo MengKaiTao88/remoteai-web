@@ -5,8 +5,8 @@ import { expect, test, vi } from 'vitest';
 import type { VirtualScrollAnchor } from '../../../../shared/chat/virtualScroll';
 const listener = vi.hoisted(() => ({ current: undefined as undefined
   | ((visible: boolean, anchor: VirtualScrollAnchor | null) => void) }));
-vi.mock('../../../../shared/chat/viewportObserver', () => ({
-  observeViewport: (_node: Element, callback: typeof listener.current) => {
+vi.mock('../../../../shared/remote-chat/views/mobileHistoryObserver', () => ({
+  observeMobileHistory: (_node: Element, callback: typeof listener.current) => {
     listener.current = callback;
     return () => { listener.current = undefined; };
   },

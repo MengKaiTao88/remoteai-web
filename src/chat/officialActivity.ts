@@ -21,7 +21,10 @@ export function activityCategory(item: Item, official = false): ActivityCategory
     }
     case 'fileChange': return 'files';
     case 'webSearch': return 'web';
-    case 'mcpToolCall': return item.server ? 'integration' : 'tool';
+    case 'mcpToolCall': {
+      if (official && item.server === 'codex_app' && item.tool === 'list_threads') return 'chats';
+      return item.server ? 'integration' : 'tool';
+    }
     case 'dynamicToolCall': {
       // Older Desktop bridges send these activities with only their gateway title.
       if (official && item.tool === '文件变更') return 'files';
