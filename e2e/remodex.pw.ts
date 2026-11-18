@@ -125,7 +125,9 @@ test('personal chat preserves real usage, live commentary, plan and composer ide
   else await page.getByRole('dialog').getByRole('button', { name: '关闭', exact: true }).click();
   await expect(page.getByText('正在检查输入框和消息区。', { exact: true })).toBeVisible();
   await expect(page.getByText('检查布局', { exact: true })).toHaveCount(0);
-  await expect(page.locator('[data-process-item="remodex-wait"] > button')).toHaveText('等待');
+  // Codex Desktop keeps sleep in the turn data but does not render a separate
+  // wait row in the visible process timeline.
+  await expect(page.locator('[data-process-item="remodex-wait"]')).toHaveCount(0);
   await screenshot(page, info, 'live-commentary');
   await emit('turn/completed', { threadId: 'demo-chat', turn: { ...turn, status: 'completed' } });
   await expect(page.getByText('界面验证完成。', { exact: true })).toBeVisible();
