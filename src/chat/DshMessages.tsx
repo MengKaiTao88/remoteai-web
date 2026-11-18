@@ -13,7 +13,7 @@ import { ChatTurnTiming } from '../../../../shared/remote-chat/views/ChatTurnTim
 import { ChatApproval } from '../../../../shared/remote-chat/views/ChatApproval';
 import { ConversationImageGallery } from '../../../../shared/chat/ImageGallery';
 import { ChatSelectionQuote } from '../../../../shared/remote-chat/views/ChatSelectionQuote';
-import { DshHistoryViewport } from './DshHistoryViewport';
+import { DshHistoryActiveContext, DshHistoryViewport } from './DshHistoryViewport';
 import { useHistoryScroll } from '../../../../shared/remote-chat/views/useHistoryScroll';
 import { useMobileHistoryAnchor } from '../../../../shared/remote-chat/views/useMobileHistoryAnchor';
 import type { ChatController, ChatState, Item, Turn } from '../../../../shared/remote-chat/views/types';
@@ -36,7 +36,7 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
     <ChatTurnTiming turn={row.turn} /></p>;
   if (row.kind === 'summary' && row.turn) return <ChatTurnSummary turn={row.turn}
     onOpen={panel => openTurn(row.turn!, panel)} />;
-  if (row.kind === 'process') return <RemodexProcess row={row} />;
+  if (row.kind === 'process') return <RemodexProcess row={row} active={active} />;
   if (!row.item) return null;
   if (row.item.type === 'reasoning' && !row.item.processRef) return <RemodexReasoning item={row.item} />;
   if (row.kind === 'commentary') return <div className="remodex-commentary">
@@ -110,6 +110,7 @@ export function DshMessages({ state, controller, view, active }: Props) {
   const projectGallery = useMemo(createDshGalleryProjector, [state.selected?.id]);
   const galleryTurns = useMemo(() => projectGallery(state.selected?.turns ?? []), [projectGallery, state.selected?.turns]);
   return <ConversationImageGallery turns={galleryTurns}>
+    <DshHistoryActiveContext.Provider value={active}>
     <div className="chat-message-region dsh-message-region">
       <ChatSelectionQuote root={scroll.content} selected={state.selected?.id ?? null} enabled />
       <div className="chat-scroll chat-messages" aria-label={t('client.chat.chatHistory')}
@@ -137,6 +138,7 @@ export function DshMessages({ state, controller, view, active }: Props) {
       {scroll.showBottom && <button type="button" className="chat-scroll-bottom" onClick={scroll.toBottom}
         aria-label={t('client.chat.scrollToBottom')}><ArrowDown size={18} /></button>}
     </div>
+    </DshHistoryActiveContext.Provider>
     {detailItem && <ChatToolDetails item={detailItem} onClose={() => setDetail(undefined)} />}
     {detailTurn && currentDetail?.panel && <ChatTurnDetails turn={detailTurn}
       panel={currentDetail.panel} onClose={() => setDetail(undefined)} />}

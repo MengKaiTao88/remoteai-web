@@ -16,6 +16,9 @@ test('hidden streaming does not repaint chat or block navigation and resumes wit
     { id: 'background-answer', type: 'agentMessage', text: 'BEFORE_BACKGROUND ', phase: 'commentary' },
   ] } });
   await expect(page.locator('.chat-markdown')).toContainText(['BEFORE_BACKGROUND']);
+  const timer = page.locator('.remodex-process[data-turn-status="inProgress"] .dsh-process-trigger');
+  await expect(timer).toBeVisible();
+  const visibleTime = await timer.innerText();
   const input = page.getByRole('textbox', { name: '聊天消息' });
   await input.fill('retained navigation draft');
   await navigate(page, '账号');
@@ -32,12 +35,14 @@ test('hidden streaming does not repaint chat or block navigation and resumes wit
   for (let index = 0; index < 20; index++) await emit('item/agentMessage/delta', {
     threadId: 'demo-chat', turnId: 'background-turn', itemId: 'background-answer', delta: 'BACKGROUND_UPDATE ',
   });
-  await page.waitForTimeout(300);
+  // Cross a wall-clock tick as well as the streaming debounce. A hidden live timer must not repaint either.
+  await page.waitForTimeout(1_200);
   expect(await page.evaluate(() => (window as unknown as { hiddenChatMutations: number }).hiddenChatMutations)).toBe(0);
   await navigate(page, '设置');
   await screenshot(page, info, 'navigation-during-background-stream');
   await navigate(page, 'Agent Hub');
   await expect(page.locator('.chat-markdown')).toContainText(['BACKGROUND_UPDATE']);
+  await expect(timer).not.toHaveText(visibleTime);
   await expect(input).toHaveValue('retained navigation draft');
   await expect(input).toBeInViewport();
   await screenshot(page, info, 'resumed-background-stream');

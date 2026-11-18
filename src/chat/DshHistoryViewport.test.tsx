@@ -11,7 +11,7 @@ vi.mock('../../../../shared/chat/viewportObserver', () => ({
     return () => { listener.current = undefined; };
   },
 }));
-import { DshHistoryViewport } from './DshHistoryViewport';
+import { DshHistoryActiveContext, DshHistoryViewport } from './DshHistoryViewport';
 
 test('deferred rows do not render rich content until approached', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -51,4 +51,27 @@ test('hiding a page cannot overwrite a measured row height with zero', async () 
     await act(async () => root.unmount());
     bounds.mockRestore(); vi.unstubAllGlobals();
   }
+});
+
+test('keeps a mounted row in place while the workspace is hidden and ignores a late visibility callback', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  vi.stubGlobal('IntersectionObserver', class {});
+  vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  const render = (active: boolean) => <DshHistoryActiveContext.Provider value={active}>
+    <DshHistoryViewport initiallyVisible>{() => <p>Message</p>}</DshHistoryViewport>
+  </DshHistoryActiveContext.Provider>;
+  try {
+    await act(async () => root.render(render(true)));
+    const staleCallback = listener.current!;
+    const message = host.querySelector('p');
+    await act(async () => root.render(render(false)));
+    expect(listener.current).toBeUndefined();
+    await act(async () => staleCallback(false, null));
+    expect(host.querySelector('p')).toBe(message);
+    await act(async () => root.render(render(true)));
+    expect(listener.current).toBeDefined();
+    expect(host.querySelector('p')).toBe(message);
+  } finally { await act(async () => root.unmount()); vi.unstubAllGlobals(); }
 });
