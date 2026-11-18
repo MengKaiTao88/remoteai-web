@@ -19,7 +19,7 @@ import { visibleChatError } from '../../../../shared/remote-chat/chatError';
 import { threadPresentation } from '../../../../shared/remote-chat/sidebar';
 import { queueProps } from '../../../../shared/remote-chat/client/queueProps';
 import { ChatTerminalLayout } from '../../../../shared/remote-chat/views/ChatTerminalLayout';
-import { deriveDshRows, isOfficialThread } from './dshViewModel';
+import { deriveDshRows } from './dshViewModel';
 import { useDshLayout } from './useDshLayout';
 import { useDshDrawerGesture } from './useDshDrawerGesture';
 import { useSidebarModal } from './useSidebarModal';
@@ -71,11 +71,9 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
     : selected?.cwd ?? state.draftProject?.cwd ?? '';
   const enabled = active && foreground;
   const queue = queueProps(state, controller);
-  const official = isOfficialThread(selected) || Boolean(selected
-    && isOfficialThread(state.threads.find(thread => thread.id === selected.id)));
   const view = useMemo(() => deriveDshRows({ thread: selected, approvals: state.approvals,
-    queue: queue.messages, offline: !state.ready, official }),
-    [selected, state.approvals, state.queue, state.localQueue, state.ready, official]);
+    queue: queue.messages, offline: !state.ready }),
+    [selected, state.approvals, state.queue, state.localQueue, state.ready]);
   const title = selected ? threadPresentation(selected, state.sidebar, displayText).title : t('client.chat.newChat');
   const error = visibleChatError(state.error, state);
   const listOpen = layout.left === 'sidebar' || drawer;

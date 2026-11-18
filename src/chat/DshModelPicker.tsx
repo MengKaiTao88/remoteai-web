@@ -9,7 +9,7 @@ import { FocusPreservingButton } from '../../../../shared/chat/FocusPreservingBu
 
 interface Props {
   models: Model[]; selection: ComposerSettings; ready: boolean; settingsBusy: boolean;
-  settingsError?: string; scope?: string | null; variant?: 'header' | 'footer'; active?: boolean;
+  settingsError?: string; scope?: string | null; variant?: 'header' | 'footer'; active?: boolean; modelOnly?: boolean;
   updateSettings: (patch: Partial<ComposerSettings>) => Promise<void>;
   refreshModels: () => Promise<void>; beforeOpen?: () => void;
 }
@@ -61,11 +61,12 @@ export function DshModelPicker(props: Props) {
         if (props.active === false) return;
         props.beforeOpen?.(); setQuery(''); setOpen(true);
         if (!props.models.length && props.ready) void props.refreshModels();
-      }}><span className="dsh-model-chip-name">{name}</span>
-      {!!effort && <span className="dsh-model-chip-effort">{effort}</span>}
-      {props.selection.speed && props.selection.speed !== 'normal' && <Zap size={13}
+      }}><span className="dsh-model-chip-name" title={name}>{name}</span>
+      {!props.modelOnly && !!effort && <span className="dsh-model-chip-effort">{effort}</span>}
+      {!props.modelOnly && props.selection.speed && props.selection.speed !== 'normal' && <Zap size={13}
         aria-label={t(props.selection.speed === 'ultrafast' ? 'client.chat.ultrafastMode' : 'client.chat.fastMode.6e02d1')}
-        fill={props.selection.speed === 'ultrafast' ? 'currentColor' : 'none'} />}<ChevronRight size={12} /></FocusPreservingButton>
+        fill={props.selection.speed === 'ultrafast' ? 'currentColor' : 'none'} />}
+      {!props.modelOnly && <ChevronRight size={12} />}</FocusPreservingButton>
     {open && <RemodexDialog label={t('client.shared.chooseModel')} close={close} anchor={trigger.current}
       className={'dsh-model-sheet remodex-runtime ' + (listing ? 'is-listing' : '')}>
       {listing ? <>

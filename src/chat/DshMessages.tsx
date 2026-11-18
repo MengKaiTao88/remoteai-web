@@ -5,7 +5,7 @@ import { ArrowDown, Terminal } from 'lucide-react';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { ChatMessage } from '../../../../shared/remote-chat/views/ChatMessage';
 import { PersonalUserMessage } from './PersonalUserMessage';
-import { RemodexProcess, RemodexReasoning } from './RemodexProcess';
+import { RemodexProcess } from './RemodexProcess';
 import { RemodexAssistant } from './RemodexAssistant';
 import { ChatTurnSummary, type TurnPanel } from '../../../../shared/remote-chat/views/ChatTurnSummary';
 import { ChatTurnDetails } from '../../../../shared/remote-chat/views/ChatTurnDetails';
@@ -39,7 +39,6 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
     onOpen={panel => openTurn(row.turn!, panel)} />;
   if (row.kind === 'process') return <RemodexProcess row={row} active={active} />;
   if (!row.item) return null;
-  if (row.item.type === 'reasoning' && !row.item.processRef) return <RemodexReasoning item={row.item} />;
   if (row.kind === 'commentary') return <div className="remodex-commentary">
     <ChatMessage item={row.item} process desktop onOpen={() => undefined} /></div>;
   if (row.kind === 'user') return <PersonalUserMessage item={row.item} turn={row.turn}
@@ -52,8 +51,7 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
 
 function sameContent(before: DshRow, after: DshRow) {
   if (before === after) return true;
-  if (before.key !== after.key || before.kind !== after.kind || before.timed !== after.timed
-    || before.official !== after.official) return false;
+  if (before.key !== after.key || before.kind !== after.kind || before.timed !== after.timed) return false;
   if (before.timed && (before.turn?.durationMs !== after.turn?.durationMs
     || before.turn?.startedAt !== after.turn?.startedAt || before.turn?.completedAt !== after.turn?.completedAt)) return false;
   if (before.event || after.event) return before.event === after.event;

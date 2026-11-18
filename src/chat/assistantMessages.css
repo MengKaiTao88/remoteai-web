@@ -40,7 +40,6 @@
 .dsh-process-trigger svg { flex-shrink:0; }
 .dsh-process-trigger[aria-expanded=false] svg { transform:rotate(-90deg); }
 .remodex-process-records { display:flex; flex-direction:column; gap:9px; padding-top:8px; }
-.remodex-reasoning { color:var(--dsh-muted); font-size:.94em; margin:0; }
 .remodex-commentary { color:var(--dsh-ink); font:inherit; margin:0; }
 .official-activity,.official-activity-group,.official-process-standalone { min-width:0; }
 .official-activity-line { display:flex; align-items:center; gap:8px; max-width:100%; min-height:30px;
@@ -58,12 +57,6 @@ button.official-activity-line:hover,.dsh-process-trigger:hover { background:var(
 .official-activity-group[data-status=inProgress] > .official-activity-line { color:var(--dsh-ink); }
 .official-activity[data-activity-category=agent] > .official-activity-line > svg:first-child { color:var(--danger,#c24047); }
 .official-activity-detail { margin:4px 0 8px; overflow-wrap:anywhere; min-width:0; }
-.remodex-reasoning summary { display:flex; align-items:center; gap:6px; min-height:36px; padding:3px 0;
-  cursor:pointer; list-style:none; font-weight:500; }
-.remodex-reasoning summary::-webkit-details-marker { display:none; }
-.remodex-reasoning details[open] > summary svg { transform:rotate(90deg); }
-.remodex-reasoning > p { margin:3px 0; line-height:1.65; }
-.remodex-reasoning-detail { padding:4px 0 8px 12px; margin:0 0 4px 2px; border-left:1px solid var(--dsh-line); }
 .dsh-workspace .chat-inline-activity { margin:0; }
 .dsh-workspace .chat-activity { min-height:36px; padding:4px 0; border:0; border-radius:0; background:none;
   color:var(--dsh-muted); gap:8px; line-height:1.5; }

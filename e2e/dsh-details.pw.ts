@@ -6,42 +6,39 @@ test.beforeEach(async ({ page }, info) => {
     info.project.name.includes('dark'));
 });
 
-test('thinking and commentary retain their chronological position around grouped tools', async ({ page }) => {
+test('visible commentary stays in order while internal summaries do not split the timeline', async ({ page }) => {
   await page.goto('e2e/dsh-messages-harness.html?sequence=1');
   const process = page.locator('.dsh-process-trigger').first();
   const sequence = page.locator('.remodex-process').first().locator('.remodex-process-records');
   await expect(sequence).toHaveCount(0);
   await process.click();
-  await expect(sequence.locator('.remodex-reasoning summary')).toHaveText(['Before tools', 'After tools']);
-  await expect(sequence.locator('.remodex-reasoning-detail')).toHaveCount(0);
+  await expect(sequence.getByText('Before tools')).toHaveCount(0);
+  await expect(sequence.getByText('After tools')).toHaveCount(0);
   await expect(sequence.locator('.dsh-process-trigger')).toHaveCount(0);
   const group = sequence.locator('.official-activity-group');
   const summary = group.locator(':scope > button');
   await expect(summary).toHaveAttribute('aria-expanded', 'false');
   expect(await sequence.evaluate(node => [...node.children].map(child => child.firstElementChild?.className)))
-    .toEqual(['official-process-standalone', 'official-activity-group',
-      'official-process-standalone', 'official-process-standalone']);
+    .toEqual(['official-activity-group', 'official-process-standalone']);
   await summary.click();
   await expect(group.locator('.official-activity-children .official-activity')).toHaveCount(3);
-  await sequence.locator('.remodex-reasoning summary').last().click();
-  await expect(sequence.getByText('Subsequent check.', { exact: true })).toBeVisible();
-  await expect(sequence.getByText('Initial check.', { exact: true })).toHaveCount(0);
+  await expect(sequence.getByText('Narrative after execution.', { exact: true })).toBeVisible();
 });
 
-test('deferred historical processes use the same reasoning sections and load only when opened', async ({ page }, info) => {
+test('deferred historical processes load activity only when opened', async ({ page }, info) => {
   await page.goto('e2e/dsh-messages-harness.html?deferred=1');
   await expect(page.getByText('已读取源码。最终回答保持展开。')).toBeVisible();
   await expect(page.locator('body')).not.toHaveAttribute('data-process-reads');
-  await expect(page.locator('.remodex-reasoning')).toHaveCount(0);
+  await expect(page.locator('.official-activity-group')).toHaveCount(0);
   const process = page.locator('.dsh-process-trigger').first();
   await process.click();
   await expect(page.locator('body')).toHaveAttribute('data-process-reads', '1');
-  await expect(page.locator('.remodex-reasoning details')).toHaveCount(2);
-  await page.locator('.remodex-reasoning summary').first().click();
-  await expect(page.getByText('Read real details.', { exact: true })).toBeVisible();
-  await screenshot(page, info, 'deferred-reasoning');
+  await expect(page.getByText('Read real details.', { exact: true })).toHaveCount(0);
+  await page.locator('.official-activity-group > button').click();
+  await expect(page.getByRole('button', { name: 'echo one', exact: true })).toBeVisible();
+  await screenshot(page, info, 'deferred-activity');
   await process.click();
-  await expect(page.locator('.remodex-reasoning')).toHaveCount(0);
+  await expect(page.locator('.official-activity-group')).toHaveCount(0);
 });
 
 test('opening a long activity group keeps its header in view', async ({ page }, info) => {

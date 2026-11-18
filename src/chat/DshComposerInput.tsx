@@ -231,7 +231,7 @@ export function DshComposerInput(props: ComposerProps) {
         <div className="dsh-input-trailing">
             <RemodexUsage props={props} settings={showSettings} />
             <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
-              scope={threadId ?? props.draftScope} selection={selection} variant="footer"
+              scope={threadId ?? props.draftScope} selection={selection} variant="footer" modelOnly={!desktop}
               updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
             {props.dictation && <ComposerDictation key={`dictation:${threadId}:${cwd}`} client={props.dictation}
               buttonClassName="dsh-input-key dsh-input-voice"

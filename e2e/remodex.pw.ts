@@ -36,7 +36,9 @@ test('runtime slider commits the final drag position and fast mode to the host',
   await login(page);
   await navigate(page, 'Agent Hub');
   await page.getByRole('textbox', { name: '聊天消息' }).fill('保留草稿');
-  await page.locator('.dsh-model-chip-footer').tap();
+  const modelButton = page.locator('.dsh-model-chip-footer');
+  await expect(modelButton).toHaveText('测试模型');
+  await modelButton.tap();
   const slider = page.getByRole('slider', { name: '推理强度', exact: true });
   const box = (await slider.boundingBox())!;
   await page.mouse.move(box.x + 22, box.y + box.height / 2);
@@ -57,6 +59,7 @@ test('runtime slider commits the final drag position and fast mode to the host',
   await expect(fast).toHaveAttribute('aria-pressed', 'false');
   await expect.poll(async () => (await state(request)).composer.settings.speed).toBe('normal');
   await page.getByRole('dialog', { name: '选择模型', exact: true }).getByRole('button', { name: '关闭', exact: true }).click();
+  await expect(modelButton).toHaveText('测试模型');
   await expect(page.getByRole('textbox', { name: '聊天消息' })).toHaveValue('保留草稿');
   await page.locator('.dsh-title-pill').click();
   await page.locator('.dsh-details-panel .dsh-model-chip').tap();
@@ -67,7 +70,7 @@ test('runtime slider commits the final drag position and fast mode to the host',
   await page.getByRole('textbox', { name: '聊天消息' }).click();
 });
 
-test('Remodex presentation preserves real usage, independent reasoning, plan and composer identity', async ({ page, request }, info) => {
+test('personal chat preserves real usage, live commentary, plan and composer identity', async ({ page, request }, info) => {
   const activate = (locator: Locator) => info.project.name.startsWith('desktop') ? locator.click() : locator.tap();
   await page.addInitScript(dark => localStorage.setItem('codex-switch.web.theme.v1', dark ? 'dark' : 'light'),
     info.project.name.includes('dark'));
@@ -108,6 +111,7 @@ test('Remodex presentation preserves real usage, independent reasoning, plan and
     plan: [{ step: '阅读源码', status: 'completed' }, { step: '验证手机页面', status: 'inProgress' }], items: [
       { id: 'remodex-user', type: 'userMessage', text: '检查手机聊天界面。' },
       { id: 'remodex-thinking', type: 'reasoning', summary: ['**检查布局**\n检查输入框和消息区。\n\n**验证交互**\n分别验证浮层和侧栏。'] },
+      { id: 'remodex-commentary', type: 'agentMessage', phase: 'commentary', text: '正在检查输入框和消息区。' },
       { id: 'remodex-answer', type: 'agentMessage', phase: 'final_answer', text: '界面验证完成。\n\n草稿、队列和远程连接继续使用原有逻辑。' },
     ] };
   await emit('turn/started', { threadId: 'demo-chat', turn });
@@ -118,15 +122,9 @@ test('Remodex presentation preserves real usage, independent reasoning, plan and
   const handle = page.getByRole('button', { name: '下拉关闭', exact: true });
   if (await handle.isVisible()) await handle.press('Enter');
   else await page.getByRole('dialog').getByRole('button', { name: '关闭', exact: true }).click();
-  const summaries = page.locator('.remodex-reasoning details');
-  await expect(summaries).toHaveCount(2);
-  await expect(page.locator('.remodex-reasoning-detail .chat-markdown')).toHaveCount(0);
-  await activate(summaries.first().locator('summary'));
-  await expect(page.locator('.remodex-reasoning-detail .chat-markdown')).toHaveCount(1);
-  await expect(summaries.first()).toHaveAttribute('open', '');
-  await expect(summaries.last()).not.toHaveAttribute('open');
-  await expect(page.getByText('检查输入框和消息区。', { exact: true })).toBeVisible();
-  await screenshot(page, info, 'reasoning-expanded');
+  await expect(page.getByText('正在检查输入框和消息区。', { exact: true })).toBeVisible();
+  await expect(page.getByText('检查布局', { exact: true })).toHaveCount(0);
+  await screenshot(page, info, 'live-commentary');
   await emit('turn/completed', { threadId: 'demo-chat', turn: { ...turn, status: 'completed' } });
   await expect(page.getByText('界面验证完成。', { exact: true })).toBeVisible();
   await expect(input).toBeInViewport();
@@ -150,9 +148,6 @@ test('a completed Codex timeline discloses mixed operations, independent events 
   await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
   await expect(page.getByText('你可以直接从手机继续这个任务。', { exact: true })).toBeVisible();
   const emit = (method: string, params: unknown) => request.post(fixtureUrl + '/test/chat-event', { data: { method, params } });
-  expect((await emit('thread/started', { thread: {
-    id: 'demo-chat', cwd: '/demo', preview: '', name: '移动端聊天体验', updatedAt: 0, officialSidebar: { pinned: false },
-  } })).ok()).toBe(true);
   const turn = { id: 'official-timeline', status: 'completed', durationMs: 150000, items: [
     { id: 'timeline-user', type: 'userMessage', text: '帮我核对目录和参考资料。' },
     { id: 'timeline-progress', type: 'agentMessage', phase: 'commentary', text: '先检查目录，再搜索资料。' },

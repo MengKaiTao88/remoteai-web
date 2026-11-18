@@ -26,6 +26,8 @@ function categoryLabel(category: ActivityCategory, item: Item, running = false):
     case 'web': return t('client.shared.searchTheWeb');
     case 'integration': return item.server || t('client.shared.useTool');
     case 'chats': return t('client.chat.chatList');
+    case 'wait': return displayText(messageLabel({ ...item, type: 'sleep' }));
+    case 'image': return displayText(messageLabel(item.tool === '图片预览' ? { ...item, type: 'imageView' } : item));
     case 'tool': return item.name || item.tool || displayText(messageLabel(item));
     case 'files': return running ? t('client.chat.editing') : t('client.shared.fileChanges');
     case 'error': return t('client.shared.error');
@@ -55,13 +57,13 @@ const statusText = (status?: string) => status === 'failed' ? t('client.taskRevi
   : status === 'interrupted' ? t('client.chat.stopped')
   : status === 'declined' ? t('client.chat.declined') : undefined;
 
-export const OfficialActivity = memo(function OfficialActivity({ item, live, nested = false, official = false }: {
-  item: Item; live: boolean; nested?: boolean; official?: boolean;
+export const OfficialActivity = memo(function OfficialActivity({ item, live, nested = false }: {
+  item: Item; live: boolean; nested?: boolean;
 }) {
   useLanguage();
   const id = useId();
   const [open, setOpen] = useState(false);
-  const category = activityCategory(item, official);
+  const category = activityCategory(item);
   const status = processActivityStatus(item, live);
   const label = summary(item, category, nested, status);
   const outcome = statusText(status);
@@ -79,21 +81,21 @@ export const OfficialActivity = memo(function OfficialActivity({ item, live, nes
   </div>;
 });
 
-export function OfficialActivityGroup({ items, live, official = false }: { items: Item[]; live: boolean; official?: boolean }) {
+export function OfficialActivityGroup({ items, live }: { items: Item[]; live: boolean }) {
   const language = useLanguage();
   const id = useId();
   const [open, setOpen] = useState(false);
-  if (items.length === 1) return <OfficialActivity item={items[0]} live={live} official={official} />;
+  if (items.length === 1) return <OfficialActivity item={items[0]} live={live} />;
   const labels = new Set<string>();
   let running: Item | undefined;
   for (const item of items) {
     const status = processActivityStatus(item, live);
     if (status === 'inProgress') running = item;
-    labels.add(categoryLabel(activityCategory(item, official), item, status === 'inProgress'));
+    labels.add(categoryLabel(activityCategory(item), item, status === 'inProgress'));
   }
-  const label = running ? summary(running, activityCategory(running, official), false, 'inProgress')
+  const label = running ? summary(running, activityCategory(running), false, 'inProgress')
     : new Intl.ListFormat(language, { style: 'short', type: 'unit' }).format([...labels]);
-  const category = activityCategory(running ?? items[0], official);
+  const category = activityCategory(running ?? items[0]);
   const Icon = ICONS[category];
   return <div className="official-activity-group" data-activity-category={category}
     data-status={running ? 'inProgress' : undefined}>
@@ -105,7 +107,7 @@ export function OfficialActivityGroup({ items, live, official = false }: { items
     <div className="official-activity-children" id={id} hidden={!open}>
       {open && items.map((item, index) => <DshHistoryViewport key={item.id}
         enabled={items.length > 32} estimatedHeight={31} initiallyVisible={index < 12}>
-        {() => <OfficialActivity item={item} live={live} official={official} nested />}
+        {() => <OfficialActivity item={item} live={live} nested />}
       </DshHistoryViewport>)}
     </div>
   </div>;

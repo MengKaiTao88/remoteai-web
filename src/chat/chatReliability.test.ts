@@ -3,7 +3,6 @@ import { updateThread } from '../../../../shared/remote-chat/client/events';
 import { ImageCache } from '../../../../shared/remote-chat/client/imageCache';
 import { itemImageSources } from '../../../../shared/chat/imageSources';
 import { deriveDshRows } from './dshViewModel';
-import { itemReasoningSections } from './remodexPresentation';
 import { activityCategory, processActivityStatus, processEntries } from './officialActivity';
 import type { Thread } from '../../../../shared/conversation/types';
 
@@ -21,7 +20,6 @@ it('keeps reasoning text deltas separate from summary deltas and honors both ind
   expect(result.summary).toEqual(['Overview', 'Next summary']);
   expect(result.content).toEqual(['First detail', 'Second detail expanded']);
   expect(initial.turns![0].items[0].content).toEqual(['First detail', 'Second detail']);
-  expect(itemReasoningSections(result).at(-1)?.detail).toContain('Second detail expanded');
 });
 
 it('recognizes supported sent and assistant image blocks without treating arbitrary content as images', () => {
@@ -68,16 +66,16 @@ it('keeps official commentary and mixed activity in order across saved reasoning
     { id: 'agent', type: 'subAgentActivity', kind: 'started' },
     { id: 'answer', type: 'agentMessage', phase: 'final_answer' as const, text: 'Complete.' },
   ];
-  const thread = { id: 'chat', cwd: '/', preview: '', updatedAt: 0, officialSidebar: {},
+  const thread = { id: 'chat', cwd: '/', preview: '', updatedAt: 0,
     turns: [{ id: 'turn', status: 'completed', durationMs: 12000, items }] };
   const rows = deriveDshRows({ thread, approvals: [], queue: [] }).rows;
   expect(rows.map(row => row.kind)).toEqual(['process', 'assistant']);
-  expect(rows[0]).toMatchObject({ official: true, timed: true });
-  const entries = processEntries(rows[0].items!, true);
+  expect(rows[0]).toMatchObject({ timed: true });
+  const entries = processEntries(rows[0].items!);
   expect(entries.map(entry => entry.id)).toEqual(['note', 'shell', 'agent']);
-  expect(entries[1].kind === 'group' && entries[1].items.map(item => activityCategory(item, true)))
+  expect(entries[1].kind === 'group' && entries[1].items.map(activityCategory))
     .toEqual(['command', 'chats', 'files']);
-  expect(processEntries(items).some(entry => entry.id === 'scratch')).toBe(true);
+  expect(processEntries(items).some(entry => entry.id === 'scratch')).toBe(false);
 });
 
 it('uses structured exploration types and breaks groups at standalone activity boundaries', () => {
