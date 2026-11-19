@@ -1,6 +1,6 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useLayoutEffect, useMemo, useState, type MutableRefObject } from 'react';
 import { lastUserMessage } from '../../../../shared/chat/latestUserMessage';
-import { captureVirtualScroll, restoreVirtualScroll } from '../../../../shared/chat/virtualScroll';
+import { captureVirtualScroll, restoreVirtualScroll, type VirtualScrollAnchor } from '../../../../shared/chat/virtualScroll';
 import { ArrowDown, Terminal } from 'lucide-react';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { ChatMessage } from '../../../../shared/remote-chat/views/ChatMessage';
@@ -24,7 +24,10 @@ import { DshHistoryStatus } from './DshHistoryStatus';
 import '../../../../shared/remote-chat/views/messages.css';
 import '../../../../shared/remote-chat/views/desktopMessages.css';
 
-interface Props { state: ChatState; controller: ChatController; view: DshChatViewModel; active: boolean }
+interface Props {
+  state: ChatState; controller: ChatController; view: DshChatViewModel; active: boolean;
+  retainedPosition?: MutableRefObject<{ threadId: string; anchor: VirtualScrollAnchor } | null>;
+}
 interface RowProps {
   row: DshRow; editState?: ChatState; ready: boolean; controller: ChatController; active: boolean;
   openItem: (item: Item) => void; openTurn: (turn: Turn, panel: TurnPanel) => void;
@@ -75,7 +78,7 @@ const HistoryRow = memo(function HistoryRow(props: RowProps & { pause: () => voi
   && before.openItem === after.openItem && before.openTurn === after.openTurn && before.pause === after.pause
   && before.editState === after.editState && before.active === after.active && before.ready === after.ready);
 
-export function DshMessages({ state, controller, view, active }: Props) {
+export function DshMessages({ state, controller, view, active, retainedPosition }: Props) {
   useLanguage();
   const [tail, setTail] = useState({ threadId: state.selected?.id, space: 0 });
   const tailSpace = tail.threadId === state.selected?.id ? tail.space : 0;
@@ -94,6 +97,17 @@ export function DshMessages({ state, controller, view, active }: Props) {
     } }, true);
   useMobileHistoryAnchor({ enabled: true, viewport: scroll.list, content: scroll.body,
     readingAnchor: scroll.readingAnchor, following: scroll.following });
+  useLayoutEffect(() => {
+    if (!active || !retainedPosition?.current) return;
+    const { threadId, anchor } = retainedPosition.current;
+    retainedPosition.current = null;
+    if (threadId !== state.selected?.id || anchor.root !== scroll.list.current) return;
+    scroll.following.current = anchor.bottom;
+    // Keep the same row anchored while earlier placeholders are measured again.
+    scroll.readingAnchor.current = anchor.anchor?.isConnected
+      ? { element: anchor.anchor, top: anchor.top } : undefined;
+    restoreVirtualScroll(anchor);
+  }, [active, retainedPosition, scroll.following, scroll.list, scroll.readingAnchor, state.selected?.id]);
   const [detail, setDetail] = useState<{ itemId?: string; turnId?: string; panel?: TurnPanel; threadId?: string }>();
   const openItem = useCallback((item: Item) => setDetail({ itemId: item.id,
     threadId: state.selected?.id }), [state.selected?.id]);

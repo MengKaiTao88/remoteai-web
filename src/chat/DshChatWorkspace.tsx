@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
 import { ChevronLeft, Ellipsis, PanelLeft, RefreshCw, SquarePen, X } from 'lucide-react';
 import { t, displayText, displayError, useLanguage } from '../../../../shared/localization/browserClient';
@@ -32,7 +32,7 @@ import { DshSideChats } from './DshSideChats';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { useThemeMode } from '../theme/preference';
 import { captureMobileHistory } from '../../../../shared/remote-chat/views/mobileHistoryObserver';
-import { restoreVirtualScroll, type VirtualScrollAnchor } from '../../../../shared/chat/virtualScroll';
+import type { VirtualScrollAnchor } from '../../../../shared/chat/virtualScroll';
 import '../../../../shared/remote-chat/views/chat.css';
 import './assistantChat.css';
 
@@ -115,17 +115,6 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
     readingPosition.current = selected && anchor ? { threadId: selected.id, anchor } : null;
     open?.();
   };
-  useLayoutEffect(() => {
-    const position = readingPosition.current;
-    if (!active || !position) return;
-    const frame = requestAnimationFrame(() => {
-      readingPosition.current = null;
-      if (position.threadId === selected?.id && position.anchor.root.isConnected) {
-        restoreVirtualScroll(position.anchor);
-      }
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [active, selected?.id]);
   const refreshChat = async () => {
     if (refreshing) return;
     if (!state.ready) { controller.connectNow(); return; }
@@ -189,7 +178,8 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
           <div className="dsh-notices"><ChatTaskStatus state={state} />
             {!!error && <p role="alert" className="chat-error">{displayError(error)}</p>}</div>
           <div className="dsh-codex-content" hidden={external}>
-            <DshMessages state={state} controller={controller} view={view} active={enabled && !external} />
+            <DshMessages state={state} controller={controller} view={view} active={enabled && !external}
+              retainedPosition={readingPosition} />
             <DshComposer {...props} chooseComputer={chooseComputer} active={active && !external} />
           </div>
           <CliConversationPane cwd={cwd} dictation={controller.dictation} remoteLayout
