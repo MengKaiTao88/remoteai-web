@@ -1,12 +1,13 @@
 import type { GuiEvent, Item, Thread, Turn } from '../../../../shared/conversation/types';
 import type { QueueMessage } from '../../../../shared/remote-chat/queue';
 import { conversationEntries } from '../../../../shared/chat/turnPresentation';
+import type { TurnRequestError } from '../../../../shared/conversation/turnRequestErrors';
 
 export type DshRowKind = 'user' | 'assistant' | 'tool' | 'process' | 'approval'
   | 'question' | 'commentary' | 'change' | 'artifact' | 'pending' | 'summary' | 'duration' | 'error';
 export interface DshRow {
   key: string; kind: DshRowKind; turn?: Turn; item?: Item; items?: Item[];
-  event?: GuiEvent; pending?: QueueMessage;
+  event?: GuiEvent; pending?: QueueMessage; requestError?: TurnRequestError;
   timed?: boolean;
 }
 export interface DshChatViewModel { rows: DshRow[]; approvals: GuiEvent[]; running: boolean }
@@ -61,6 +62,8 @@ function turnRows(turn: Turn, previous?: Turn): DshRow[] {
       flush();
     } else if (entry.kind === 'summary' || entry.kind === 'duration') {
       rows.push({ key: entry.id, kind: entry.kind, turn });
+    } else if (entry.kind === 'error') {
+      rows.push({ key: entry.id, kind: 'error', turn, requestError: entry.error });
     } else {
       rows.push({ key: entry.id, kind: itemKind(entry.item), turn, item: entry.item });
       if (entry.item.type === 'userMessage') { boundary = entry.item.id; segment = 0; }

@@ -33,6 +33,7 @@ import { ComposerConversationMenu } from '../../../../shared/remote-chat/views/C
 import { ComposerFileMenu } from '../../../../shared/remote-chat/views/ComposerFileMenu';
 import { ComposerSshMenu } from '../../../../shared/remote-chat/views/ComposerSshMenu';
 import { useComposerState } from '../../../../shared/remote-chat/views/useComposerState';
+import { useComposerAutoFocus } from '../../../../shared/chat/useComposerAutoFocus';
 import type { ComposerProps } from '../../../../shared/remote-chat/views/composerProps';
 import '../../../../shared/remote-chat/views/composer.css';
 import '../../../../shared/remote-chat/views/composerDesktop.css';
@@ -59,6 +60,7 @@ export function DshComposerInput(props: ComposerProps & {
   const { models, selection, settingsBusy, settingsError, updateSettings, readUsage, tokenUsage, queue,
     uploadProgress, threadId, active, ready, sending, goal, goalBusy, catalog, cwd, loadFiles, loadCatalog } = props;
   const state = useComposerState(props);
+  useComposerAutoFocus({ input: state.menu.input, active, disabled: !ready, scope: threadId });
   const { draft, attachments, menu, busy, action, actionDisabled, goalMode } = state;
   const [focused, setFocused] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
