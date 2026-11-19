@@ -43,7 +43,16 @@ export function boundedHistoryRequest(request: Request, fastFirstPage = false): 
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('client.projectBrowser.theRequestTimedOutPleaseTryAgain')), deadline);
       const first = fastFirstPage && method === 'request' && operation === 'syncHistory' && initialHistory(body as object);
-      (first ? readFirstPage<T>(request, first, body) : request<T>(method, body))
+      const paged = fastFirstPage && method === 'request' && operation === 'syncHistory'
+        && body && typeof body === 'object'
+        ? { ...body as Record<string, unknown>,
+          window: { ...((body as Record<string, unknown>).window as Record<string, unknown> | undefined),
+            pageSize: FIRST_PAGE_ITEMS } }
+        : body;
+      const read = first ? readFirstPage<T>(request, first, body)
+        : paged === body ? request<T>(method, body)
+          : request<T>(method, paged).catch(() => request<T>(method, body));
+      read
         .then(resolve, reject).finally(() => clearTimeout(timer));
     });
   };
