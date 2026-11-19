@@ -39,7 +39,8 @@ function createController(session: AuthSession, deviceId: string) {
     },
     createPeer: (options) => new RtcPeer(options, () => new RTCPeerConnection({ iceServers: options.iceServers })),
     });
-    const request = boundedHistoryRequest(connection.request.bind(connection));
+    const request = boundedHistoryRequest(connection.request.bind(connection),
+      import.meta.env.VITE_PERSONAL_WEB === 'true');
     return { request, start: () => connection.start(), stop: () => connection.stop(),
       retryNow: () => connection.retryNow(),
       confirmHostIdentity: fingerprint => connection.confirmHostIdentity(fingerprint),

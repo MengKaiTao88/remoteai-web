@@ -39,10 +39,13 @@ export function personalPwa(enabled: boolean, publicUrl?: string): Plugin {
         const output = bundle[name];
         if (!output) return;
         essential.add(name);
-        if (output.type === 'chunk') output.imports.forEach(visit);
+        if (output.type === 'chunk') {
+          output.imports.forEach(visit);
+          output.viteMetadata?.importedCss.forEach(visit);
+          output.viteMetadata?.importedAssets.forEach(visit);
+        }
       };
       Object.values(bundle).forEach(output => { if (output.type === 'chunk' && output.isEntry) visit(output.fileName); });
-      files.filter(name => /\.(css|png|webp)$/.test(name)).forEach(name => essential.add(name));
       const index = bundle['index.html'];
       const hash = createHash('sha256').update(files.join('|')
         + String(index?.type === 'asset' ? index.source : '')).digest('hex');

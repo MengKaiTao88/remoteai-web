@@ -19,7 +19,9 @@ export function DshHistoryStatus({ state, controller }: { state: ChatState; cont
     }
   }, [threadId, state.historyLoading, state.historyLoadingMore, state.historyLoad, state.error]);
   const current = failure?.threadId === threadId ? failure : undefined;
-  if (!state.historyLoading && !current) return null;
+  const hasMessages = state.selected?.turns?.some(turn => turn.items.length > 0);
+  const visibleLoad = state.historyLoading && (state.historyLoadingMore || !hasMessages);
+  if (!visibleLoad && !current) return null;
   return <div className="dsh-history-status" role={current ? 'alert' : 'status'}>
     <span>{current ? displayError(current.error) : t('client.chat.loadingChatHistory')}</span>
     {current && <button type="button" className="chat-text-action" disabled={state.historyLoading || !state.ready}

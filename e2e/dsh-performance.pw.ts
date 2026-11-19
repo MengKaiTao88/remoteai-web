@@ -5,7 +5,8 @@ test('keeps long live conversations interactive during sustained updates', async
   await page.addInitScript(() => localStorage.setItem('codex-switch.web.theme.v1', 'dark'));
   await page.goto('e2e/dsh-messages-harness.html?stress=1', { waitUntil: 'commit' });
   const pulse = page.getByTestId('performance-pulse');
-  await expect(pulse).toBeVisible({ timeout: 30000 });
+  // Vite can build the fixture on first navigation. Measure interaction after it mounts.
+  await expect(pulse).toBeVisible({ timeout: 75_000 });
   await page.waitForFunction(() => (window as unknown as { dshPerformance: { updates: number } }).dshPerformance.updates >= 30);
   const stableBlock = await page.locator('[data-message-id=stream] .chat-markdown').first().elementHandle();
   await page.waitForFunction(() => (window as unknown as { dshPerformance: { updates: number } }).dshPerformance.updates >= 50);

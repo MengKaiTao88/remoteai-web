@@ -41,7 +41,7 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1200,
       rollupOptions: {
         output: {
-          manualChunks: {
+          manualChunks: env.VITE_PERSONAL_WEB === 'true' ? undefined : {
             antd: ["antd", "antd-mobile"],
             icons: ["lucide-react"],
             redux: ["@reduxjs/toolkit", "react-redux"],

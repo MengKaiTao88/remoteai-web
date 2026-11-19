@@ -4,7 +4,9 @@ import { mergeRemoteModelState, remoteModelPath, type RemoteModelTarget } from '
 import { configureStore, createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
   apiJson,
+  fetchDashboardAccounts,
   fetchDashboardData,
+  fetchDashboardIdentity,
   getActiveSession,
   loadStoredSession,
   login,
@@ -39,6 +41,7 @@ interface DataState {
   profile: UserProfile | null;
   page: AppPage;
   loading: boolean;
+  accountStartupRequest: string | null;
   refreshing: boolean;
   consumingQuota: boolean;
   selectedChatDeviceId: string | null;
@@ -60,17 +63,28 @@ const messageOf = (error: unknown) => {
   return t("client.app.anUnexpectedErrorOccurred");
 };
 
-export const bootstrapApp = createAsyncThunk("auth/bootstrap", async () => {
+const loadStartupAccounts = createAsyncThunk("data/startupAccounts", async () => {
+  const owner = usageOwner();
+  const data = await fetchDashboardAccounts();
+  assertUsageOwner(owner);
+  return data;
+});
+
+export const bootstrapApp = createAsyncThunk("auth/bootstrap", async (_, { dispatch }) => {
   const session = loadStoredSession();
   if (!session) return { session: null, data: null };
   try {
-    const data = await fetchDashboardData();
+    const data = await fetchDashboardIdentity();
+    if (getActiveSession()) void dispatch(loadStartupAccounts());
     return { session: getActiveSession(), data };
   } catch (error) {
     if (!getActiveSession()) return { session: null, data: null };
     return { session: getActiveSession(), data: null, error: messageOf(error) };
   }
-});
+}, { condition: (_, { getState }) => {
+  const state = getState() as { auth: AuthState; data: DataState };
+  return !state.auth.initialized && !state.data.loading;
+} });
 
 export const signIn = createAsyncThunk(
   "auth/signIn",
@@ -219,7 +233,7 @@ const authSlice = createSlice({
 
 const initialDataState: DataState = {
   accounts: [], providers: [], devices: [], profile: null, page: "chat",
-  loading: false, refreshing: false, refreshingAccountId: null, deletingDeviceId: null,
+  loading: false, accountStartupRequest: null, refreshing: false, refreshingAccountId: null, deletingDeviceId: null,
   consumingQuota: false, selectedChatDeviceId: null,
   switchingAccountId: null, switchingProvider: null, switchingOpenAiAuth: null,
   restartingDeviceId: null, lastRefreshAt: null, error: null,
@@ -260,6 +274,20 @@ const dataSlice = createSlice({
       state.loading = false;
       state.error = messageOf(action.error);
     })
+    .addCase(loadStartupAccounts.pending, (state, action) => {
+      state.accountStartupRequest = action.meta.requestId;
+    })
+    .addCase(loadStartupAccounts.fulfilled, (state, action) => {
+      if (state.accountStartupRequest !== action.meta.requestId) return;
+      state.accountStartupRequest = null;
+      Object.assign(state, action.payload);
+      state.lastRefreshAt = usageUpdatedAt(state.accounts);
+    })
+    .addCase(loadStartupAccounts.rejected, (state, action) => {
+      if (state.accountStartupRequest !== action.meta.requestId) return;
+      state.accountStartupRequest = null;
+      state.error = messageOf(action.error);
+    })
     .addCase(signIn.pending, (state) => { state.loading = true; })
     .addCase(signIn.fulfilled, (state, action) => {
       state.loading = false;
@@ -271,7 +299,11 @@ const dataSlice = createSlice({
       state.error = messageOf(action.error);
     })
     .addCase(signOut.pending, () => initialDataState)
-    .addCase(refreshAll.pending, (state) => { state.refreshing = true; state.error = null; })
+    .addCase(refreshAll.pending, (state) => {
+      state.refreshing = true;
+      state.error = null;
+      state.accountStartupRequest = null;
+    })
     .addCase(refreshAll.fulfilled, (state, action) => {
       state.refreshing = false;
       Object.assign(state, action.payload);

@@ -25,7 +25,8 @@ const REFRESH_TEXT = { get pulling() { return t("client.accounts.pullToRefresh")
 export function AccountsPage({ session, personalMobile = false }: { session: AuthSession; personalMobile?: boolean }) {
   useLanguage();
   const dispatch = useAppDispatch();
-  const { accounts, devices, loading, refreshing, switchingAccountId, lastRefreshAt } = useAppSelector(s => s.data);
+  const { accounts, devices, loading, accountStartupRequest, refreshing, switchingAccountId, lastRefreshAt } =
+    useAppSelector(s => s.data);
   const { consumingQuota, refreshingAccountId, selectedChatDeviceId } = useAppSelector(s => s.data);
   const usageBusy = refreshing || consumingQuota || Boolean(refreshingAccountId);
   const promptRestart = useRemoteModelRestartPrompt();
@@ -76,7 +77,7 @@ export function AccountsPage({ session, personalMobile = false }: { session: Aut
           onRefresh={() => void refresh()} onAdd={source => source === 'codex' ? setAdding(true) : setAddingClaude(true)} />
         {personalMobile ? <MobileAccountAverages accounts={accounts} />
           : <Button size="small" onClick={() => setPriorityOpen(true)}>{t("client.resetPriority.title")}</Button>}
-        {loading ? <div className="page-loading"><SpinLoading /><span>{t("client.accounts.loadingAccounts")}</span></div>
+        {loading || accountStartupRequest ? <div className="page-loading"><SpinLoading /><span>{t("client.accounts.loadingAccounts")}</span></div>
           : !accounts.length ? <Empty description={t("client.accounts.noAccountsYetSelectAddAccountToGetStarted")} />
             : <div className="accounts-grid">{accounts.map(account => <AccountCard key={account.id}
               account={account} privateMode={privateMode} busy={Boolean(switchingAccountId)}

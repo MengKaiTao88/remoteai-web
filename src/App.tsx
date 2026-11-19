@@ -33,7 +33,6 @@ import { LoungeAvatar } from '../../../shared/lounge/LoungeAvatar';
 import { accountLabel } from '../../../shared/lounge/accountLabel';
 import { downloadOwner } from '../../../shared/downloads/manager';
 import { useSyncDownloadAccount } from '../../../shared/conversation/sync/useSyncDownloadAccount';
-import { WebSyncDownloads } from './chat/useWebSyncHosts';
 import { loadRefreshMinutes, REFRESH_INTERVAL_EVENT } from "./settings/refreshInterval";
 import { useTotpVault } from "./useTotpVault";
 import { PrimaryPagePager } from './navigation/PrimaryPagePager';
@@ -49,6 +48,8 @@ const SettingsPage = lazy(() => import('./settings/SettingsPage').then(module =>
 const TotpPage = lazy(() => import('./components/TotpPage').then(module => ({ default: module.TotpPage })));
 const DownloadManagerPage = lazy(() => import('./downloads/DownloadManagerPage')
   .then(module => ({ default: module.DownloadManagerPage })));
+const WebSyncDownloads = lazy(() => import('./chat/useWebSyncHosts')
+  .then(module => ({ default: module.WebSyncDownloads })));
 const LoungePage = lazy(() => import('../../../shared/lounge/LoungePage').then(module => ({ default: module.LoungePage })));
 
 function OpeningPage() {
@@ -393,9 +394,9 @@ function AppShell() {
     lounge: <PageContent><LoungePage controller={lounge.controller} mobile={!desktopLayout}
       onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
     discover: discoveryPage, 'token-summary': discoveryPage, ssh: null,
-    downloads: session && <><WebSyncDownloads session={session} devices={devices} />
-      <PageContent><DownloadManagerPage owner={downloadOwner(session)}
-        onBack={() => dispatch(pageChanged('discover'))} /></PageContent></>,
+    downloads: session && <PageContent><WebSyncDownloads session={session} devices={devices} />
+      <DownloadManagerPage owner={downloadOwner(session)}
+        onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
     accounts: session && <PageContent><AccountsPage session={session} personalMobile={personalMobile} /></PageContent>,
     devices: <DevicesPage />,
     totp: <PageContent><TotpPage manager={totpManager}

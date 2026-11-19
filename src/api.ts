@@ -218,19 +218,27 @@ export async function logout(options: Pick<DeadlineRequestInit, 'signal' | 'time
   }
 }
 
-export async function fetchDashboardData() {
-  const [{ accounts }, devicesPayload, { providers }, profile] = await Promise.all([
-    apiJson<{ accounts: AccountSummary[] }>("/sync/accounts/web-summary"),
+export async function fetchDashboardIdentity() {
+  const [{ devices }, profile] = await Promise.all([
     apiJson<{ devices: RemoteDevice[] }>("/devices"),
-    apiJson<{ providers: RemoteProviderSummary[] }>("/devices/providers?includeAggregates=true"),
     apiJson<UserProfile>("/auth/me"),
   ]);
-  const devices = devicesPayload.devices.map(normalizeRemoteDevice);
-  const normalizedProviders = providers.map((provider) => ({
-    ...provider,
-    group: typeof provider.group === "string" ? provider.group : "",
-  }));
-  return { accounts, devices, providers: normalizedProviders, profile };
+  return { devices: devices.map(normalizeRemoteDevice), profile };
+}
+
+export async function fetchDashboardAccounts() {
+  const [{ accounts }, { providers }] = await Promise.all([
+    apiJson<{ accounts: AccountSummary[] }>("/sync/accounts/web-summary"),
+    apiJson<{ providers: RemoteProviderSummary[] }>("/devices/providers?includeAggregates=true"),
+  ]);
+  return { accounts, providers: providers.map(provider => ({
+    ...provider, group: typeof provider.group === "string" ? provider.group : "",
+  })) };
+}
+
+export async function fetchDashboardData() {
+  const [identity, accounts] = await Promise.all([fetchDashboardIdentity(), fetchDashboardAccounts()]);
+  return { ...identity, ...accounts };
 }
 
 export function deviceStatusWebSocketUrl(baseUrl: string) {

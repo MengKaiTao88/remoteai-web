@@ -75,6 +75,31 @@ test('phone statistics use recorded desktop rounds and steps even with more visi
   await screenshot(page, info, 'desktop-counts');
 });
 
+test('restoring the chat waits for the computer list and leaves account loading in the background', async ({ page, request }, info) => {
+  test.skip(!['phone-light', 'iphone-webkit'].includes(info.project.name));
+  await request.post(fixtureUrl + '/test/reset');
+  await login(page);
+  let finish!: () => void;
+  let started!: () => void;
+  const accountRequest = new Promise<void>(resolve => { started = resolve; });
+  const accountResponse = new Promise<void>(resolve => { finish = resolve; });
+  await page.route('**/sync/accounts/web-summary', async route => {
+    started();
+    await accountResponse;
+    await route.continue();
+  });
+  try {
+    await page.reload({ waitUntil: 'commit' });
+    await accountRequest;
+    await page.locator('.dsh-chat-header').getByRole('button', { name: '打开聊天列表', exact: true }).click();
+    await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
+    await expect(page.getByText('你可以直接从手机继续这个任务。', { exact: true })).toBeVisible();
+    await screenshot(page, info, 'chat-before-accounts');
+  } finally {
+    finish();
+  }
+});
+
 test('empty composer remains stable after focus and all add-menu items fit a short viewport', async ({ page, request }, info) => {
   await openChat(page, request);
   const input = page.getByRole('textbox', { name: '聊天消息' });
