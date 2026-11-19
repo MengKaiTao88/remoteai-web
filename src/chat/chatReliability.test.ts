@@ -34,6 +34,13 @@ it('recognizes supported sent and assistant image blocks without treating arbitr
   }
 });
 
+it('recognizes scoped desktop bridge image references for preview loading', () => {
+  const source = 'codex-bridge-images/' + 'a'.repeat(64) + '.png';
+  expect(itemImageSources({ id: 'message', type: 'agentMessage', content: [
+    { type: 'localImage', path: source },
+  ] })).toEqual([source]);
+});
+
 it('explicit retry bypasses a decoded-bad image cache while retaining thread isolation and single-flight', async () => {
   const request = vi.fn().mockResolvedValueOnce({ url: 'data:image/png;base64,YmFk' })
     .mockResolvedValue({ url: 'data:image/png;base64,Z29vZA==' });

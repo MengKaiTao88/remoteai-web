@@ -3,13 +3,13 @@
   "revision": "4397ff4cb59f77011f00685b3f3c3a041456905f",
   "sharedSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-shared",
-    "revision": "cb8891c58ededf97344fea6b778067b2b77de429"
+    "revision": "8d2cb0ed55cb94bd35776b795f2936cf9e69004d"
   },
   "nativeSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-native",
     "revision": "2ef37cafe055ff7475f293a99e711f555d225ad8"
   },
-  "i18n": "https://github.com/MengKaiTao88/remoteai-i18n/releases/download/i18n-v0.1.18-custom.2/remoteai-i18n-0.1.18-custom.2.tgz",
+  "i18n": "https://github.com/MengKaiTao88/remoteai-i18n/releases/download/i18n-v0.1.18-custom.3/remoteai-i18n-0.1.18-custom.3.tgz",
   "files": {
     "scripts/test-browser.mjs": "456d5b867ac937a571630f4a01cd37ded9380d519bee3011e8807480c0739733",
     "scripts/test-browser.d.mts": "0f13ced709be8e097af7d4038400129b64e5d400f62e9bea2a0371125ec4f70f",
@@ -213,7 +213,7 @@
     "shared/conversation/remote/RemoteGuiTools.tsx": "1de63366289267bebd3ded4c7dc27030647247fa0c6e0d0c8604b85dcc6e126a",
     "shared/conversation/remote/RemoteGuiProject.tsx": "a808255c065f494ca0cb9857490456aa99107a51d30104c9d7699aba2a241a49",
     "shared/remote-chat/client/events.ts": "79aabf18aecba208ddbec7b5da860a65c3ffdd77b5412018ff67a9c5ad177b21",
-    "shared/chat/imageSources.ts": "a73869c60fa324534406a639b6c3d30f43e8e5aeab4cce7ccfd71e10d04f4a9f",
+    "shared/chat/imageSources.ts": "3fb16ed1abf7fa5a36db695ef2deab9b26f1d75043d4da9dbfc5c0a898ecc6b1",
     "shared/remote-chat/views/ChatTerminalLayout.tsx": "2e439c8492a21bf233ee9b887ef34a4eed9112e02f2fba7ff720714a7ad804c5",
     "shared/chat/PanelToggleButton.tsx": "bd5a3b33ec1ac443d8f646dcb6dca0df76aca14cfe2d51cd62763d95b92ffa76",
     "shared/remote-chat/terminalApi.ts": "5b3d8acb832ff1de39aca308b7286ffd420b324e0ee1d3af754816b3c73b5905",
