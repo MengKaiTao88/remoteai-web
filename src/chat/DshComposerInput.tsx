@@ -19,7 +19,7 @@ import { ComposerFooter } from '../../../../shared/remote-chat/views/ComposerFoo
 import { ComposerAccess } from '../../../../shared/remote-chat/views/ComposerDesktopControls';
 import { DesktopUsageContext } from '../../../../shared/chat/DesktopUsageContext';
 import { useConversationMetrics } from '../../../../shared/remote-chat/client/useConversationMetrics';
-import { formatConversationTps } from '../../../../shared/remote-chat/conversationMetrics';
+import { formatConversationTps, type ConversationMetrics } from '../../../../shared/remote-chat/conversationMetrics';
 import { ComposerGoal } from '../../../../shared/remote-chat/views/ComposerGoal';
 import { ChatAttachmentPreviews } from '../../../../shared/remote-chat/views/ChatAttachments';
 import { pickChatImages } from '../../../../shared/remote-chat/views/pickChatImages';
@@ -38,10 +38,12 @@ import '../../../../shared/remote-chat/views/composer.css';
 import '../../../../shared/remote-chat/views/composerDesktop.css';
 import '../../../../shared/remote-chat/views/composerReading.css';
 
+type ConversationCounts = { turns: number; steps: number };
+
 export function DshComposerInput(props: ComposerProps & {
   loadedTurns?: readonly import('../../../../shared/conversation/types').Turn[];
   countsArePartial?: boolean;
-  conversationCounts?: { turns: number; steps: number };
+  conversationCounts?: ConversationCounts;
 }) {
   useLanguage();
   const desktop = useDesktopLayout();
@@ -49,13 +51,16 @@ export function DshComposerInput(props: ComposerProps & {
     turns: props.loadedTurns.length,
     steps: props.loadedTurns.reduce((sum, turn) => sum + turn.items.length, 0),
   }, [props.loadedTurns]);
-  const reported = props.conversationCounts;
-  const totals = reported && (!loaded || reported.turns >= loaded.turns && reported.steps >= loaded.steps)
-    ? reported : undefined;
-  const counts = totals ?? loaded;
   const usageSnapshot = useContext(DesktopUsageContext);
   const metrics = useConversationMetrics(props.readConversationMetrics, props.threadId,
-    props.active && props.ready && usageSnapshot.visible);
+    props.active && props.ready && usageSnapshot.visible) as (ConversationMetrics & {
+      conversationCounts?: ConversationCounts;
+    }) | null;
+  const reported = props.conversationCounts;
+  // Desktop counts recorded model responses; loaded history counts display items.
+  const totals = metrics?.conversationCounts ?? (reported
+    && (!loaded || reported.turns >= loaded.turns && reported.steps >= loaded.steps) ? reported : undefined);
+  const counts = totals ?? loaded;
   const { models, selection, settingsBusy, settingsError, updateSettings, readUsage, tokenUsage, queue,
     uploadProgress, threadId, active, ready, sending, goal, goalBusy, catalog, cwd, loadFiles, loadCatalog } = props;
   const state = useComposerState(props);

@@ -67,6 +67,14 @@ test('sent and answer images render and an explicit retry fetches fresh pixels a
   await screenshot(page, info, 'sent-and-answer-images');
 });
 
+test('phone statistics use recorded desktop rounds and steps even with more visible activity items', async ({ page }, info) => {
+  test.skip(!['phone-light', 'iphone-webkit'].includes(info.project.name));
+  await page.goto('e2e/dsh-messages-harness.html?official-counts=1', { waitUntil: 'commit' });
+  const stats = page.locator('.dsh-mobile-chat-stats');
+  await expect(stats.locator('span')).toHaveText(['35.7 tok/s', '1 轮 3 步'], { timeout: 75_000 });
+  await screenshot(page, info, 'desktop-counts');
+});
+
 test('empty composer remains stable after focus and all add-menu items fit a short viewport', async ({ page, request }, info) => {
   await openChat(page, request);
   const input = page.getByRole('textbox', { name: '聊天消息' });
