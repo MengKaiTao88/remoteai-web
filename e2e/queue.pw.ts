@@ -29,7 +29,7 @@ test('shows local messages and clears the composer while acknowledgements are de
 });
 
 test('desktop web remembers the queue setting and sends directly while a task is running', async ({ page, request }, info) => {
-  test.skip(info.project.name !== 'desktop', 'The setting is in the desktop GUI settings.');
+  test.skip(info.project.name !== 'desktop', 'This case exercises the standard desktop Web composer.');
   await request.post(`${fixtureUrl}/test/reset`);
   await login(page);
   await connect(page);
@@ -37,14 +37,11 @@ test('desktop web remembers the queue setting and sends directly while a task is
   await page.getByRole('button', { name: '移动端聊天体验', exact: true }).click();
   await send(page, 'slow queue settings');
   await expect(page.getByRole('button', { name: '暂停生成' })).toBeVisible();
-  await page.getByRole('button', { name: 'Codex GUI 设置', exact: true }).click();
-  const toggle = page.getByRole('switch', { name: '待发送', exact: true });
-  await expect(toggle).toBeChecked();
-  await toggle.uncheck();
-  await expect(page.getByRole('dialog')).toHaveCSS('opacity', '1');
-  await expect(page.getByRole('dialog')).toHaveCSS('transform', 'none');
+  const toggle = page.getByRole('button', { name: '处理中发送方式', exact: true });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
   await page.screenshot({ path: info.outputPath('web-message-settings.png') });
-  await page.getByRole('button', { name: 'Close', exact: true }).click();
   const before = await operationCount(request, 'queueEnqueue');
   await send(page, '立即发送的 Web 消息');
   await expect.poll(async () => (await state(request)).operations
@@ -53,8 +50,8 @@ test('desktop web remembers the queue setting and sends directly while a task is
   expect(await operationCount(request, 'queueEnqueue')).toBe(before);
   await expect(page.getByRole('region', { name: '待发送消息', exact: true })).toHaveCount(0);
   await page.reload();
-  await page.getByRole('button', { name: 'Codex GUI 设置', exact: true }).click();
-  await expect(toggle).not.toBeChecked();
+  await connect(page);
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('queues supplements on the PC, sends one immediately and restores the rest after reconnecting',

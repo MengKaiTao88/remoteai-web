@@ -3,6 +3,7 @@ import { apiJson, getActiveSession, refreshSession } from '../api';
 import type { AuthSession } from '../types';
 import { ChatConnection } from '../../../../shared/remote-chat/client/connection';
 import { createBrowserPacketCompression } from '../../../../shared/remote-chat/browserPacketCompression';
+import { createBrowserHistoryVersions } from '../../../../shared/remote-chat/browserHistory';
 import { ChatController } from '../../../../shared/remote-chat/client/controller';
 import { RtcPeer } from '../../../../shared/remote-chat/rtcPeer';
 import { browserTrustStore, trustedHost, trustScope } from '../../../../shared/remote-chat/trustedHost';
@@ -44,7 +45,7 @@ function createController(session: AuthSession, deviceId: string) {
       confirmHostIdentity: fingerprint => connection.confirmHostIdentity(fingerprint),
       reportDiagnostic: diagnostic => connection.reportDiagnostic(diagnostic),
       downloadsBulk: connection.downloadsBulk, setBulkSupport: value => connection.setBulkSupport(value) };
-  }, undefined, undefined, createWebSshProfiles(session));
+  }, undefined, createBrowserHistoryVersions(), createWebSshProfiles(session));
   controller.deferToolDetails = true;
   controller.deferProcessDetails = true;
   controller.previewDownloads = createPreviewDownloads({ owner: downloadOwner(session), deviceId });

@@ -9,6 +9,7 @@ import { RemodexProcess } from './RemodexProcess';
 import { RemodexAssistant } from './RemodexAssistant';
 import { ChatTurnSummary, type TurnPanel } from '../../../../shared/remote-chat/views/ChatTurnSummary';
 import { ChatTurnDetails } from '../../../../shared/remote-chat/views/ChatTurnDetails';
+import { ChatRequestError } from '../../../../shared/remote-chat/views/ChatRequestError';
 import { ChatToolDetails } from '../../../../shared/remote-chat/views/ChatToolDetails';
 import { ChatTurnTiming } from '../../../../shared/remote-chat/views/ChatTurnTiming';
 import { ChatApproval } from '../../../../shared/remote-chat/views/ChatApproval';
@@ -30,7 +31,7 @@ interface Props {
 }
 interface RowProps {
   row: DshRow; editState?: ChatState; ready: boolean; controller: ChatController; active: boolean;
-  openItem: (item: Item) => void; openTurn: (turn: Turn, panel: TurnPanel) => void;
+  openItem: (item: Item) => void; openTurn: (turn: Turn, panel: TurnPanel, errorId?: string) => void;
 }
 function Row({ row, editState, ready, controller, active, openItem, openTurn }: RowProps) {
   const inspect = useCallback(() => { if (row.item) openItem(row.item); }, [row.item, openItem]);
@@ -40,6 +41,8 @@ function Row({ row, editState, ready, controller, active, openItem, openTurn }: 
     <ChatTurnTiming turn={row.turn} /></p>;
   if (row.kind === 'summary' && row.turn) return <ChatTurnSummary turn={row.turn}
     onOpen={panel => openTurn(row.turn!, panel)} />;
+  if (row.requestError && row.turn) return <ChatRequestError turn={row.turn} record={row.requestError}
+    onOpen={() => openTurn(row.turn!, 'error', row.requestError!.id)} />;
   if (row.kind === 'process') return <RemodexProcess row={row} active={active} />;
   if (!row.item) return null;
   if (row.kind === 'commentary') return <div className="remodex-commentary">
@@ -108,11 +111,11 @@ export function DshMessages({ state, controller, view, active, retainedPosition 
       ? { element: anchor.anchor, top: anchor.top } : undefined;
     restoreVirtualScroll(anchor);
   }, [active, retainedPosition, scroll.following, scroll.list, scroll.readingAnchor, state.selected?.id]);
-  const [detail, setDetail] = useState<{ itemId?: string; turnId?: string; panel?: TurnPanel; threadId?: string }>();
+  const [detail, setDetail] = useState<{ itemId?: string; turnId?: string; panel?: TurnPanel; threadId?: string; errorId?: string }>();
   const openItem = useCallback((item: Item) => setDetail({ itemId: item.id,
     threadId: state.selected?.id }), [state.selected?.id]);
-  const openTurn = useCallback((turn: Turn, panel: TurnPanel) =>
-    setDetail({ turnId: turn.id, panel, threadId: state.selected?.id }), [state.selected?.id]);
+  const openTurn = useCallback((turn: Turn, panel: TurnPanel, errorId?: string) =>
+    setDetail({ turnId: turn.id, panel, errorId, threadId: state.selected?.id }), [state.selected?.id]);
   const rows = useMemo(() => view.rows.filter(row => row.kind !== 'pending'), [view.rows]);
   const latestUser = useMemo(() => lastUserMessage(state.selected
     ? { turns: state.selected.turns ?? [] } : undefined), [state.selected]);
@@ -161,6 +164,6 @@ export function DshMessages({ state, controller, view, active, retainedPosition 
     </DshHistoryActiveContext.Provider>
     {detailItem && <ChatToolDetails item={detailItem} onClose={() => setDetail(undefined)} />}
     {detailTurn && currentDetail?.panel && <ChatTurnDetails turn={detailTurn}
-      panel={currentDetail.panel} onClose={() => setDetail(undefined)} />}
+      panel={currentDetail.panel} errorId={currentDetail.errorId} onClose={() => setDetail(undefined)} />}
   </ConversationImageGallery>;
 }
