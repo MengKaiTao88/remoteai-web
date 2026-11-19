@@ -7,7 +7,7 @@ import { ComposerSuggestion } from '../../../../shared/remote-chat/views/Compose
 import { ComposerInput } from '../../../../shared/remote-chat/views/ComposerInput';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
-import { ArrowUp, ChevronRight, ListOrdered, Play, Plus, Square } from 'lucide-react';
+import { ArrowUp, ChevronRight, Gauge, ListFilter, ListOrdered, Play, Plus, Square } from 'lucide-react';
 import { COMPOSER_ACTION_LABELS } from '../../../../shared/remote-chat/composerAction';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { DshModelPicker } from './DshModelPicker';
@@ -19,6 +19,7 @@ import { ComposerFooter } from '../../../../shared/remote-chat/views/ComposerFoo
 import { ComposerAccess } from '../../../../shared/remote-chat/views/ComposerDesktopControls';
 import { DesktopUsageContext } from '../../../../shared/chat/DesktopUsageContext';
 import { useConversationMetrics } from '../../../../shared/remote-chat/client/useConversationMetrics';
+import { formatConversationTps } from '../../../../shared/remote-chat/conversationMetrics';
 import { ComposerGoal } from '../../../../shared/remote-chat/views/ComposerGoal';
 import { ChatAttachmentPreviews } from '../../../../shared/remote-chat/views/ChatAttachments';
 import { pickChatImages } from '../../../../shared/remote-chat/views/pickChatImages';
@@ -37,12 +38,16 @@ import '../../../../shared/remote-chat/views/composer.css';
 import '../../../../shared/remote-chat/views/composerDesktop.css';
 import '../../../../shared/remote-chat/views/composerReading.css';
 
-export function DshComposerInput(props: ComposerProps) {
+export function DshComposerInput(props: ComposerProps & {
+  loadedTurns?: readonly import('../../../../shared/conversation/types').Turn[];
+  historyHasMore?: boolean;
+  conversationCounts?: { turns: number; steps: number };
+}) {
   useLanguage();
   const desktop = useDesktopLayout();
   const usageSnapshot = useContext(DesktopUsageContext);
   const metrics = useConversationMetrics(props.readConversationMetrics, props.threadId,
-    desktop && props.active && props.ready && usageSnapshot.visible);
+    props.active && props.ready && usageSnapshot.visible);
   const { models, selection, settingsBusy, settingsError, updateSettings, readUsage, tokenUsage, queue,
     uploadProgress, threadId, active, ready, sending, goal, goalBusy, catalog, cwd, loadFiles, loadCatalog } = props;
   const state = useComposerState(props);
@@ -250,6 +255,14 @@ export function DshComposerInput(props: ComposerProps) {
     {desktop && <ComposerFooter desktop={desktop} cliVersion={props.cliVersion} threadId={props.threadId}
       readServiceStatus={props.readServiceStatus} statusActive={active} statusConnected={props.serviceStatusConnected}
       usage={usageSnapshot.usage} metrics={metrics} />}
+    {!desktop && threadId && <div className="dsh-mobile-chat-stats">
+      <span><Gauge size={13} aria-hidden="true" />{formatConversationTps(metrics)} tok/s</span>
+      {props.loadedTurns && <span><ListFilter size={13} aria-hidden="true" />{t(props.historyHasMore && !props.conversationCounts
+        ? 'client.mobileChat.loadedTurnAndStepCount' : 'client.mobileChat.turnAndStepCount', {
+        turns: Math.max(props.conversationCounts?.turns ?? 0, props.loadedTurns.length),
+        steps: Math.max(props.conversationCounts?.steps ?? 0, props.loadedTurns.reduce((sum, turn) => sum + turn.items.length, 0)),
+      })}</span>}
+    </div>}
     {active && !busy && editing && <ChatImageEditor key={editing.id} image={editing}
       save={url => draft.replaceImage(editing, url)} close={() => setEditingId(null)} />}
     {projectFiles && <ComposerProjectFiles imagesOnly={projectFiles === 'photos'} threadId={threadId} cwd={cwd}

@@ -30,6 +30,7 @@ export async function navigate(page: Page, label: string) {
   const personal = await page.locator('html[data-pocket-web]').count() > 0;
   if (mobile && personal) await expect(page.locator('.personal-mobile-shell')).toBeVisible();
   if (mobile && personal) {
+    if (await page.locator('.personal-management-heading').isVisible()) await swipeBackToChat(page);
     const back = page.locator('.personal-mobile-navigation button');
     if (await back.isVisible()) await click(back);
     if (label === testText('client.agentHub.title', {}, language)) return;
@@ -46,6 +47,23 @@ export async function navigate(page: Page, label: string) {
   await click(page.locator(mobile ? '.mobile-tabbar' : '.desktop-sidebar nav')
     .getByText(discoveryChild ? testText('client.discovery.title', {}, language) : label, { exact: true }));
   if (discoveryChild) await click(page.locator('.discovery-list').getByRole('button', { name: label, exact: true }));
+}
+export async function swipeBackToChat(page: Page) {
+  await page.locator('.primary-page-pane:not([hidden])').evaluate(node => {
+    const y = node.getBoundingClientRect().top + 20;
+    const fire = (type: string, x: number) => {
+      const touch = { identifier: 1, target: node, clientX: x, clientY: y };
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        touches: { value: type === 'touchend' ? [] : [touch] }, changedTouches: { value: [touch] },
+      });
+      node.dispatchEvent(event);
+    };
+    fire('touchstart', 12);
+    fire('touchmove', 50);
+    fire('touchend', 155);
+  });
+  await expect(page.locator('.dsh-chat-header')).toBeVisible();
 }
 export async function openChatList(page: Page) {
   const toggle = page.getByRole('button', { name: '打开聊天列表', exact: true });

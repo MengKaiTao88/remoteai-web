@@ -38,4 +38,68 @@
   .primary-page-track.is-swiping { will-change: transform; }
   .primary-page-pane.is-preview { pointer-events: none; }
   .primary-page-pane .discovery-page { min-height: 100%; }
+  .personal-management {
+    --management-canvas: #f8faf9; --management-surface: #fff; --management-line: #e3e7e4;
+    --management-ink: #212422; --management-muted: #56615b; --management-accent: #356554;
+    --management-soft: #edf2ee; --management-active: #eef6f1; --management-highlight: #8caf9f;
+    --management-progress: #729588;
+  }
+  :root[data-theme=dark] .personal-management {
+    --management-canvas: #101211; --management-surface: #171a18; --management-line: #323832;
+    --management-ink: #ecefec; --management-muted: #aab5ae; --management-accent: #a5d2bb;
+    --management-soft: #242c27; --management-active: #1c2a22; --management-highlight: #6d9a82;
+    --management-progress: #86b69f;
+  }
+  .personal-management .content-shell, .personal-management .primary-page-pane:not([data-primary-page=chat]),
+  .personal-management .discovery-page, .personal-management .settings-page,
+  .personal-management .accounts-page { background: var(--management-canvas); font-family: inherit; }
+  .personal-management-heading {
+    display: flex; flex: none; align-items: center; min-height: 64px;
+    padding: env(safe-area-inset-top, 0px) 17px 0; color: var(--management-ink);
+  }
+  .personal-management-heading h1 { margin: 0; font-size: 20px; line-height: 1.35; font-weight: 650; }
+  .personal-management .desktop-topbar, .personal-management .discovery-header { display: none; }
+  .personal-management .page-body, .personal-management .discovery-list {
+    padding: 7px 17px max(22px, env(safe-area-inset-bottom)); color: var(--management-ink);
+  }
+  .personal-management.discovery-active .main-content { min-height: 0; }
+  .personal-management .discovery-list, .personal-management .settings-layout {
+    width: 100%; max-width: none;
+  }
+  .personal-management .discovery-list { margin: 7px 17px 18px; width: auto; padding: 0; }
+  .personal-management .discovery-list, .personal-management .settings-group {
+    border: 1px solid var(--management-line); border-radius: 16px; overflow: hidden;
+    background: var(--management-surface);
+  }
+  .personal-management .discovery-row {
+    min-height: 55px; padding: 10px 13px; margin: 0; gap: 10px;
+    color: var(--management-ink); background: var(--management-surface);
+  }
+  .personal-management .discovery-row + .discovery-row,
+  .personal-management .settings-row + .settings-row { border-top: 1px solid var(--management-line); }
+  .personal-management .discovery-row > span { font-size: 14px; }
+  .personal-management .discovery-row > svg, .personal-management .discovery-row > .lounge-nav-icon,
+  .personal-management .discovery-downloads > .download-count-icon { color: var(--management-muted); }
+  .personal-management .discovery-row > svg, .personal-management .discovery-row > .lounge-nav-icon svg,
+  .personal-management .discovery-downloads > .download-count-icon svg { width: 18px; height: 18px; }
+  .personal-management .settings-group { margin-bottom: 12px; }
+  .personal-management .settings-row, .personal-management .settings-profile {
+    min-height: 48px; padding: 7px 13px; gap: 10px;
+  }
+  .personal-management .settings-profile { min-height: 67px; }
+  .personal-management .settings-profile .account-avatar-edit { border-radius: 50%; }
+  .personal-management .settings-profile .lounge-avatar {
+    width: 38px; height: 38px; font-size: 15px; color: var(--management-accent); background: var(--management-soft);
+  }
+  .personal-management .settings-profile strong, .personal-management .settings-row-label { font-size: 14px; color: var(--management-ink); }
+  .personal-management .settings-row-value, .personal-management .settings-profile small { font-size: 12px; color: var(--management-muted); }
+  .personal-management .settings-row .settings-row-icon {
+    width: 20px; height: 20px; color: var(--management-muted); background: none;
+  }
+  .personal-management .settings-row-icon svg { width: 18px; height: 18px; }
+  .personal-management .settings-logout.adm-button {
+    margin: 0 auto; min-height: 44px; font-size: 14px; border-radius: 12px;
+    border-color: var(--management-line); background: var(--management-surface); color: #9a4242;
+  }
+  :root[data-theme=dark] .personal-management .settings-logout.adm-button { color: #ffa5a5; }
 }

@@ -314,6 +314,7 @@ function AppShell() {
   useSyncDownloadAccount(session ? downloadOwner(session) : '');
   const desktopLayout = useDesktopLayout();
   const personalMobile = import.meta.env.VITE_PERSONAL_WEB === 'true' && !desktopLayout;
+  const personalManagement = personalMobile && (page === 'accounts' || page === 'discover' || page === 'settings');
   useChatViewport(page === 'lounge' && !desktopLayout);
   const lastRefreshRef = useRef(Date.now());
   const totpManager = useTotpVault(session);
@@ -395,7 +396,7 @@ function AppShell() {
     downloads: session && <><WebSyncDownloads session={session} devices={devices} />
       <PageContent><DownloadManagerPage owner={downloadOwner(session)}
         onBack={() => dispatch(pageChanged('discover'))} /></PageContent></>,
-    accounts: session && <PageContent><AccountsPage session={session} /></PageContent>,
+    accounts: session && <PageContent><AccountsPage session={session} personalMobile={personalMobile} /></PageContent>,
     devices: <DevicesPage />,
     totp: <PageContent><TotpPage manager={totpManager}
       onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
@@ -408,6 +409,7 @@ function AppShell() {
     page === 'lounge' && 'lounge-active',
     (page === 'discover' || page === 'token-summary') && 'discovery-active',
     personalMobile && 'personal-mobile-shell',
+    personalManagement && 'personal-management',
     !menuVisible && 'main-menu-collapsed'].filter(Boolean).join(' ');
   const MenuToggleIcon = menuVisible ? PanelLeftClose : PanelLeftOpen;
   return <div className={shellClass}>
@@ -457,7 +459,8 @@ function AppShell() {
       </Tooltip>
     </aside>
     <div className="content-shell">
-      {personalMobile && page !== 'chat' && page !== 'ssh' && <nav className="personal-mobile-navigation">
+      {personalManagement && <header className="personal-management-heading"><h1>{pageTitle}</h1></header>}
+      {personalMobile && !personalManagement && page !== 'chat' && page !== 'ssh' && <nav className="personal-mobile-navigation">
         <button type="button" onClick={() => changePrimaryPage('chat')}>
           <PanelLeftOpen size={20} />{t('client.mobile.backToChat')}</button>
         <span>{pageTitle}</span>
@@ -474,7 +477,7 @@ function AppShell() {
           <span className="topbar-date">{new Intl.DateTimeFormat(getLocale(),
             { month: "long", day: "numeric", weekday: "short" }).format(new Date())}</span></div></header>}
       <main className="main-content">
-        <PrimaryPagePager page={page} onChange={changePrimaryPage} pages={{
+        <PrimaryPagePager page={page} onChange={changePrimaryPage} returnToChat={personalManagement} pages={{
           chat: session && <PageContent key={session.baseUrl + session.email}><ChatPage session={session} devices={devices}
             openAccounts={openAccounts} openDiscover={openDiscover} openSettings={openSettings}
             active={page === 'chat' || page === 'ssh'} tokenSummary={page === 'token-summary'}

@@ -2,6 +2,13 @@
   padding:4px 12px max(12px,env(safe-area-inset-bottom)); background:var(--dsh-solid); }
 .dsh-composer-dock > * { max-width:768px; margin-inline:auto; }
 .dsh-input-host { position:relative; min-width:0; width:100%; }
+.dsh-mobile-chat-stats {
+  position: absolute; inset: calc(100% - 2px) 0 auto; height: 14px; display: flex;
+  align-items: center; justify-content: center; gap: 14px; color: var(--dsh-muted);
+  font-size: .78em; line-height: 1;
+}
+.dsh-mobile-chat-stats span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.dsh-mobile-chat-stats svg { flex-shrink: 0; }
 .dsh-workspace .dsh-input { position:relative; width:100%; margin:0; padding:6px; border:1px solid var(--dsh-line);
   border-radius:28px; color:var(--dsh-ink); background:var(--dsh-glass); box-shadow:0 2px 12px #00000005; }
 .dsh-input:focus-within { border-color:var(--dsh-muted); }

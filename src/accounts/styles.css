@@ -178,3 +178,52 @@ button.account-info-row { cursor: pointer; }
 .claude-accounts-section { margin-top: 24px; padding: 20px; border-radius: 16px;
   background: var(--app-surface); min-width: 0; }
 .account-row-identity > small { color: var(--app-muted); font-weight: normal; }
+.personal-management .accounts-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.mobile-accounts-toolbar, .mobile-accounts-toolbar > div, .mobile-accounts-toolbar > span,
+.mobile-accounts-toolbar button, .mobile-account-credits, .mobile-account-current {
+  display: flex; align-items: center; gap: 5px;
+}
+.mobile-accounts-toolbar { justify-content: space-between; gap: 6px; }
+.mobile-accounts-toolbar > span { color: var(--management-muted); font-size: 12px; min-width: 0; }
+.mobile-accounts-toolbar svg { flex-shrink: 0; }
+.mobile-accounts-toolbar button {
+  min-height: 38px; padding: 5px 9px; font-size: 12px; font-weight: 650; white-space: nowrap;
+  color: var(--management-ink); border: 1px solid var(--management-line);
+  background: var(--management-surface); border-radius: 10px; cursor: pointer;
+}
+.mobile-accounts-toolbar button:disabled { opacity: .6; cursor: default; }
+.mobile-accounts-toolbar .mobile-account-add { background: #356554; border-color: #356554; color: #fff; }
+.mobile-account-averages {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;
+  margin: 12px 0 10px; padding: 9px 12px; border-radius: 10px; background: var(--management-soft);
+}
+.mobile-account-averages div { display: flex; align-items: baseline; justify-content: space-between; gap: 5px; flex-wrap: wrap; }
+.mobile-account-averages dt { color: var(--management-muted); font-size: 12px; }
+.mobile-account-averages dd { margin: 0; color: var(--management-accent); font-size: 14px; font-weight: 650; }
+.personal-management .account-row {
+  padding: 12px; border-radius: 16px; box-shadow: none; border-color: var(--management-line);
+  background: var(--management-surface); --quota-color: var(--management-progress);
+}
+.personal-management .account-row[data-mobile-current] {
+  border-color: var(--management-highlight); background: var(--management-active);
+  --quota-color: var(--management-accent);
+}
+.personal-management .account-row-identity {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+  min-height: 24px; gap: 6px;
+}
+.personal-management .account-row-identity strong { min-width: 0; font-size: 13px; color: var(--management-ink); }
+.personal-management .account-row .plan-badge, .mobile-account-weekly, .mobile-account-current {
+  color: var(--management-accent); background: var(--management-soft); padding: 3px 6px;
+  border-radius: 5px; font-size: 11px; font-weight: 650; white-space: nowrap;
+}
+.personal-management .account-row-identity small { color: var(--management-muted); font-size: 11px; }
+.personal-management .account-row-meter { margin-top: 9px; gap: 8px; }
+.personal-management .quota-track { height: 5px; background: var(--management-soft); }
+.personal-management .account-row-meter b { min-width: 36px; font-size: 13px; color: var(--management-accent); }
+.personal-management .account-row-reset { margin-top: 7px; color: var(--management-muted); }
+.mobile-account-credits { white-space: nowrap; margin-left: auto; }
+@media (max-width: 380px) {
+  .personal-management .account-row-identity { grid-template-columns: max-content minmax(0, 1fr) max-content; }
+  .personal-management .account-row-identity > :last-child { grid-column: 2 / -1; justify-self: end; }
+}

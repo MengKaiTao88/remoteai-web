@@ -11,6 +11,7 @@ import { compactUnavailableReason } from '../../../../shared/remote-chat/client/
 import { useChatCatalog } from '../../../../shared/remote-chat/views/useChatCatalog';
 import { currentRunningTurn } from '../../../../shared/chat/runningTurn';
 import { t } from '../../../../shared/localization/browserClient';
+import type { Thread } from '../../../../shared/conversation/types';
 import type { DshChatWorkspaceProps } from './DshChatWorkspace';
 
 export function DshComposer({ chat, device, active, scope, chooseComputer, cliVersion }: DshChatWorkspaceProps & {
@@ -20,6 +21,8 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
   const cwd = state.selected?.cwd ?? state.draftProject?.cwd ?? '';
   const catalog = useChatCatalog(controller, cwd, state.ready);
   const runningTurn = currentRunningTurn(state.selected?.turns);
+  const counts = (state.selected as (Thread & { conversationCounts?: { turns: number; steps: number } }) | null)
+    ?.conversationCounts;
   const enabled = active && chat.foreground;
   const [planOpen, setPlanOpen] = useState(false);
   const planTurn = state.selected?.turns?.at(-1);
@@ -58,6 +61,7 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
       uploadProgress={state.upload} threadId={state.selected?.id ?? null} draftScope={state.draftScope}
       models={state.models} selection={state.settings} readUsage={controller.readUsage} tokenUsage={state.selected?.tokenUsage}
       readConversationMetrics={controller.readConversationMetrics}
+      loadedTurns={state.selected?.turns} historyHasMore={state.historyHasMore} conversationCounts={counts}
       settingsBusy={state.settingsBusy || !!state.workspaceBusy} settingsError={state.settingsError}
       accessUpdate={state.accessUpdate} updateSettings={patch => controller.setSettings(patch)}
       refreshModels={controller.refreshModels} active={enabled} ready={state.ready && !state.selectedArchived}

@@ -47,7 +47,8 @@ test('personal phone sidebar groups chats, dismisses outside and owns management
   await screenshot(page, info, 'new-chat-context');
   for (const label of ['发现', '设置', '账号']) {
     await navigate(page, label);
-    await expect(page.locator('.personal-mobile-navigation button')).toHaveText('返回聊天');
+    await expect(page.locator('.personal-management-heading')).toHaveText(label);
+    await expect(page.locator('.personal-mobile-navigation button')).toHaveCount(0);
     await screenshot(page, info, `navigation-${label}`);
     await navigate(page, 'Agent Hub');
     await expect(page.getByRole('textbox', { name: '聊天消息' })).toBeVisible();

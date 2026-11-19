@@ -6,6 +6,20 @@
 .remodex-dialog-close { position:absolute; right:8px; top:8px; display:grid; place-items:center; width:44px; height:44px;
   padding:0; border:0; border-radius:50%; color:var(--dsh-muted); background:transparent; cursor:pointer; }
 .remodex-dialog h2 { font-size:1.1em; line-height:1.4; margin:0 36px 20px 0; font-weight:650; }
+.remodex-dialog.dsh-side-chats {
+  position: fixed; inset: max(65px, calc(env(safe-area-inset-top) + 60px)) 12px auto auto;
+  margin: 0; max-width: min(360px, calc(100vw - 24px)); padding: 18px 12px 12px;
+}
+.dsh-side-chats h2, .dsh-side-chats p { padding-inline: 7px; }
+.dsh-side-chats p { color: var(--dsh-muted); }
+.dsh-side-chats ul { list-style: none; padding: 0; margin: 0; }
+.dsh-side-chats li button {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; width: 100%; padding: 8px;
+  background: none; border: 0; border-radius: 10px; color: inherit; text-align: left; cursor: pointer;
+}
+.dsh-side-chats li button[aria-current] { background: var(--dsh-selected); }
+.dsh-side-chats li span { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.dsh-side-chats li svg { flex-shrink: 0; }
 .dsh-model-sheet.remodex-runtime { width:min(480px,calc(100vw - 24px)); padding:44px 20px 24px;
   background:var(--dsh-solid); color:var(--dsh-ink); }
 .remodex-runtime-heading { display:flex; align-items:center; justify-content:center; gap:8px; }

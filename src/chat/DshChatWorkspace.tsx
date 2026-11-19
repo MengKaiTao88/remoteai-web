@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
-import { ChevronLeft, Ellipsis, PanelLeft, SquarePen, X } from 'lucide-react';
+import { ChevronLeft, Ellipsis, PanelLeft, RefreshCw, SquarePen, X } from 'lucide-react';
 import { t, displayText, displayError, useLanguage } from '../../../../shared/localization/browserClient';
 import type { ChatComputer } from '../../../../shared/remote-chat/devices';
 import type { ComputerListRefresh } from '../../../../shared/remote-chat/ComputerSearchBar';
@@ -28,6 +28,7 @@ import { DshComposer } from './DshComposer';
 import { DshMessages } from './DshMessages';
 import { DshDetails } from './DshDetails';
 import { DshMobileSidebar } from './DshMobileSidebar';
+import { DshSideChats } from './DshSideChats';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { useThemeMode } from '../theme/preference';
 import '../../../../shared/remote-chat/views/chat.css';
@@ -62,6 +63,8 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   const [sidebar, setSidebar] = useState(true);
   const [drawer, setDrawer] = useState(false);
   const [details, setDetails] = useState(false);
+  const [sideChats, setSideChats] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [searching, setSearching] = useState(false);
   const [pickingDevice, setPickingDevice] = useState(false);
   const { host, layout } = useDshLayout(sidebar, details);
@@ -79,7 +82,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   const listOpen = layout.left === 'sidebar' || drawer;
   const overlay = listOpen && layout.left !== 'sidebar';
   useSidebarModal(host, overlay);
-  useDshDrawerGesture({ host, enabled: active && layout.left !== 'sidebar' && !details && !searching
+  useDshDrawerGesture({ host, enabled: active && layout.left !== 'sidebar' && !details && !sideChats && !searching
     && !pickingDevice, open: drawer, onChange: setDrawer });
   const closeList = () => { setDrawer(false); if (layout.left === 'sidebar') setSidebar(false); };
   const chooseComputer = () => setPickingDevice(true);
@@ -96,11 +99,19 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   };
   useEffect(() => { props.onWorkspaceChange?.(cwd); }, [cwd, props.onWorkspaceChange]);
   useEffect(() => {
-    controller.setViewing(enabled && !external && !overlay && !searching && !pickingDevice);
-  }, [controller, enabled, external, overlay, searching, pickingDevice]);
+    controller.setViewing(enabled && !external && !overlay && !sideChats && !searching && !pickingDevice);
+  }, [controller, enabled, external, overlay, sideChats, searching, pickingDevice]);
   useEffect(() => {
     if (!active) { setDrawer(false); setSearching(false); setPickingDevice(false); setDetails(false); }
-  }, [active]);
+    if (!active || desktop) setSideChats(false);
+  }, [active, desktop]);
+  const refreshChat = async () => {
+    if (refreshing) return;
+    if (!state.ready) { controller.connectNow(); return; }
+    setRefreshing(true);
+    try { await Promise.all([controller.list(), controller.refreshSelected()]); }
+    finally { setRefreshing(false); }
+  };
   const profile = <ChatProfileMenu client={controller.guiAccounts} deviceName={device?.name ?? ''}
     email={props.email} ready={state.ready} guiTools={controller.guiTools} active={enabled}
     running={view.running || state.sending} chooseDevice={chooseComputer} />;
@@ -143,8 +154,15 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
                 {cwd && <small>· {cwd.split(/[\\/]/).filter(Boolean).at(-1)}</small>}</span>
             </button>
             <div className="remodex-header-actions">
-              <button className="dsh-icon-button" aria-label={t('client.chat.chatSettings.1e06eb')}
-                onClick={() => setDetails(value => !value)} aria-expanded={details}><Ellipsis size={21} /></button>
+              {!desktop && !external && <button type="button" className="dsh-icon-button"
+                aria-label={t('client.mobileChat.refresh')} disabled={refreshing || state.connecting || !device}
+                aria-busy={refreshing} onClick={() => void refreshChat()}>
+                <RefreshCw size={19} className={refreshing ? 'spin' : undefined} />
+              </button>}
+              <button className="dsh-icon-button" aria-label={t(desktop || external
+                ? 'client.chat.chatSettings.1e06eb' : 'client.mobileChat.sideChats')}
+                onClick={() => desktop || external ? setDetails(value => !value) : setSideChats(true)}
+                aria-expanded={desktop || external ? details : sideChats}><Ellipsis size={21} /></button>
             </div>
           </header>
           <div className="dsh-notices"><ChatTaskStatus state={state} />
@@ -163,6 +181,10 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
         </main>
         <DshDetails {...props} open={details} presentation={layout.detail} close={() => setDetails(false)}
           chooseComputer={chooseComputer} />
+        {sideChats && !desktop && <DshSideChats state={state} close={() => setSideChats(false)} select={thread => {
+          setSideChats(false);
+          if (thread.id !== selected?.id) void controller.select(thread);
+        }} />}
         {searching && <ChatSearch state={state} controller={controller} onClose={() => setSearching(false)}
           select={thread => { cli?.controller.showCodex(); setSearching(false); setDrawer(false);
             void controller.select(thread); }} />}

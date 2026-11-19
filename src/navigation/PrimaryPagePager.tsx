@@ -9,10 +9,11 @@ import { RetainedView } from '../../../../shared/RetainedView';
 
 interface Props {
   page: string; onChange: (page: PrimaryPage) => void;
+  returnToChat?: boolean;
   pages: Record<PrimaryPage, ReactNode>; children?: ReactNode;
 }
 
-export function PrimaryPagePager({ page, onChange, pages, children }: Props) {
+export function PrimaryPagePager({ page, onChange, pages, children, returnToChat }: Props) {
   const track = useRef<HTMLDivElement>(null);
   const desktop = useDesktopLayout();
   const [width, setWidth] = useState(0);
@@ -41,7 +42,7 @@ export function PrimaryPagePager({ page, onChange, pages, children }: Props) {
     return () => observer.disconnect();
   }, []);
   const { preview, progress, navigate } = usePageTransition({ page, width: desktop ? 0 : width, onChange, animation });
-  usePrimaryPageSwipe(page, navigate, progress);
+  usePrimaryPageSwipe(page, returnToChat ? onChange : navigate, returnToChat ? undefined : progress, returnToChat);
   const onNext = useCallback(() => navigate('accounts'), [navigate]);
   const chatSwipe = useMemo(() => ({ ...progress, onNext }), [progress, onNext]);
   const displayedPage = page === 'ssh' ? 'chat' : page;

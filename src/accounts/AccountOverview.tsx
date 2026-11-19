@@ -2,16 +2,30 @@ import { AddOfficialAccountButton } from '../../../../shared/accounts/AddOfficia
 import type { OfficialAccountSource } from '../../../../shared/accounts/source';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { Button } from 'antd-mobile';
-import { Clock3, Eye, EyeOff, Laptop, RefreshCw, Users, Zap } from 'lucide-react';
+import { Clock3, Eye, EyeOff, Laptop, Plus, RefreshCw, Users, Zap } from 'lucide-react';
 import { displayDate } from './formatters';
 
-export function AccountOverview({ count, online, privateMode, refreshing, consuming, busy,
+export function AccountOverview({ personalMobile, count, online, privateMode, refreshing, consuming, busy,
   updatedAt, onPrivacy, onRefresh, onConsume, onAdd }: {
+  personalMobile: boolean;
   count: number; online: number; privateMode: boolean; refreshing: boolean; updatedAt: number | null;
   consuming: boolean; busy: boolean;
   onPrivacy: () => void; onRefresh: () => void; onConsume: () => void; onAdd: (source: OfficialAccountSource) => void;
 }) {
   useLanguage();
+  const updated = updatedAt ? displayDate(new Date(updatedAt).toISOString()) : t("client.accounts.notRefreshed");
+  if (personalMobile) return <div className="mobile-accounts-toolbar">
+    <span><Clock3 size={14} aria-hidden="true" />{t("client.mobileAccount.updated", { time: updated })}</span>
+    <div>
+      <button type="button" disabled={busy || !count} onClick={onRefresh}
+        aria-busy={refreshing} aria-label={t("client.accounts.refreshAllUsage")}>
+        <RefreshCw size={15} className={refreshing ? 'spin' : undefined} aria-hidden="true" />{t("client.chat.refresh")}
+      </button>
+      <button type="button" className="mobile-account-add" onClick={() => onAdd('codex')}>
+        <Plus size={16} aria-hidden="true" />{t("client.accounts.addAccount")}
+      </button>
+    </div>
+  </div>;
   return <>
     <section className="accounts-overview">
       <header><h1>{t("client.accounts.accounts")}</h1><button className="icon-button" type="button" onClick={onPrivacy}
@@ -29,7 +43,7 @@ export function AccountOverview({ count, online, privateMode, refreshing, consum
         </div>
       </div>
     </section>
-    <div className="accounts-toolbar"><span><Clock3 size={16} />{t("client.accounts.usageUpdated")}{updatedAt ? displayDate(new Date(updatedAt).toISOString()) : t("client.accounts.notRefreshed")}</span>
+    <div className="accounts-toolbar"><span><Clock3 size={16} />{t("client.accounts.usageUpdated")}{updated}</span>
       <AddOfficialAccountButton className="official-account-add" label={t("client.accounts.addAccount")} onSelect={onAdd} />
     </div>
   </>;

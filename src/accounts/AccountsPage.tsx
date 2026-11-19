@@ -17,11 +17,12 @@ import { AccountDetails } from './AccountDetails';
 import { QuotaConsumptionSheet } from './QuotaConsumptionSheet';
 import { selectUsageDevice, usageDevice } from './remoteUsage';
 import { maskEmail } from './formatters';
+import { MobileAccountAverages, useMobileResetCredits } from './MobileAccountSummary';
 import './styles.css';
 
 const REFRESH_TEXT = { get pulling() { return t("client.accounts.pullToRefresh"); }, get canRelease() { return t("client.accounts.releaseToRefresh"); }, get refreshing() { return t("client.accounts.refreshing"); }, get complete() { return t("client.accounts.refreshed"); } };
 
-export function AccountsPage({ session }: { session: AuthSession }) {
+export function AccountsPage({ session, personalMobile = false }: { session: AuthSession; personalMobile?: boolean }) {
   useLanguage();
   const dispatch = useAppDispatch();
   const { accounts, devices, loading, refreshing, switchingAccountId, lastRefreshAt } = useAppSelector(s => s.data);
@@ -35,13 +36,22 @@ export function AccountsPage({ session }: { session: AuthSession }) {
   const [adding, setAdding] = useState(false);
   const [addingClaude, setAddingClaude] = useState(false);
   const [consumeDeviceName, setConsumeDeviceName] = useState<string | null>(null);
+  const [creditRevision, setCreditRevision] = useState(0);
+  const mobileCredits = useMobileResetCredits(personalMobile, session, accounts, creditRevision);
   const detail = accounts.find(account => account.id === detailId);
   const target = accounts.find(account => account.id === switchId);
   const online = devices.filter(device => device.online);
+  const currentComputer = devices.find(device => device.deviceId === selectedChatDeviceId)
+    ?? online[0];
+  const activeId = currentComputer?.guiProviderId ? null : currentComputer?.guiAccountId
+    ?? (currentComputer?.activeProviderId ? null : currentComputer?.activeAccountId);
   const refresh = useCallback(async () => {
-    try { await dispatch(refreshAll()).unwrap(); }
+    try {
+      await dispatch(refreshAll()).unwrap();
+      if (personalMobile) setCreditRevision(value => value + 1);
+    }
     catch { /* The global toast reports the failure. */ }
-  }, [dispatch]);
+  }, [dispatch, personalMobile]);
   const openConsumption = () => {
     try { setConsumeDeviceName(usageDevice(devices, selectedChatDeviceId).name); }
     catch (error) { Toast.show({ icon: 'fail', content: error instanceof Error ? error.message : t("client.mobile.tryAgainLater") }); }
@@ -60,19 +70,21 @@ export function AccountsPage({ session }: { session: AuthSession }) {
   return <>
     <PullToRefresh onRefresh={refresh} renderText={status => REFRESH_TEXT[status]}>
       <div className="page-body accounts-page">
-        <AccountOverview count={accounts.length} online={online.length} privateMode={privateMode}
+        <AccountOverview personalMobile={personalMobile} count={accounts.length} online={online.length} privateMode={privateMode}
           refreshing={refreshing} consuming={consumingQuota} busy={usageBusy} onConsume={openConsumption}
           updatedAt={lastRefreshAt} onPrivacy={() => setPrivateMode(value => !value)}
           onRefresh={() => void refresh()} onAdd={source => source === 'codex' ? setAdding(true) : setAddingClaude(true)} />
-        <Button size="small" onClick={() => setPriorityOpen(true)}>{t("client.resetPriority.title")}</Button>
+        {personalMobile ? <MobileAccountAverages accounts={accounts} />
+          : <Button size="small" onClick={() => setPriorityOpen(true)}>{t("client.resetPriority.title")}</Button>}
         {loading ? <div className="page-loading"><SpinLoading /><span>{t("client.accounts.loadingAccounts")}</span></div>
           : !accounts.length ? <Empty description={t("client.accounts.noAccountsYetSelectAddAccountToGetStarted")} />
             : <div className="accounts-grid">{accounts.map(account => <AccountCard key={account.id}
               account={account} privateMode={privateMode} busy={Boolean(switchingAccountId)}
+              mobile={personalMobile ? { current: activeId === account.id, credits: mobileCredits[account.id] } : undefined}
               switching={switchingAccountId === account.id} onOpen={() => setDetailId(account.id)}
               onSwitch={() => setSwitchId(account.id)} />)}</div>}
-        <ClaudeAccounts session={session} devices={devices} preferredDevice={selectedChatDeviceId}
-          privacyMode={privateMode} add={addingClaude} onAdded={() => setAddingClaude(false)} />
+        {!personalMobile && <ClaudeAccounts session={session} devices={devices} preferredDevice={selectedChatDeviceId}
+          privacyMode={privateMode} add={addingClaude} onAdded={() => setAddingClaude(false)} />}
       </div>
     </PullToRefresh>
     {priorityOpen && <ResetPrioritySettings devices={devices} accounts={accounts}
