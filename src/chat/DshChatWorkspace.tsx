@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
 import { ChevronLeft, Ellipsis, PanelLeft, RefreshCw, SquarePen, X } from 'lucide-react';
 import { t, displayText, displayError, useLanguage } from '../../../../shared/localization/browserClient';
@@ -31,6 +31,8 @@ import { DshMobileSidebar } from './DshMobileSidebar';
 import { DshSideChats } from './DshSideChats';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { useThemeMode } from '../theme/preference';
+import { captureMobileHistory } from '../../../../shared/remote-chat/views/mobileHistoryObserver';
+import { restoreVirtualScroll, type VirtualScrollAnchor } from '../../../../shared/chat/virtualScroll';
 import '../../../../shared/remote-chat/views/chat.css';
 import './assistantChat.css';
 
@@ -68,6 +70,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   const [searching, setSearching] = useState(false);
   const [pickingDevice, setPickingDevice] = useState(false);
   const { host, layout } = useDshLayout(sidebar, details);
+  const readingPosition = useRef<{ threadId: string; anchor: VirtualScrollAnchor } | null>(null);
   const preference = useThemeMode();
   const selected = state.selected;
   const cwd = external && cli ? cli.state.selected?.cwd ?? cli.state.cwd
@@ -105,6 +108,23 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
     if (!active) { setDrawer(false); setSearching(false); setPickingDevice(false); setDetails(false); }
     if (!active || desktop) setSideChats(false);
   }, [active, desktop]);
+  const openManagement = (open?: () => void) => {
+    const root = host.current?.querySelector('.dsh-message-region .chat-messages');
+    const anchor = root && captureMobileHistory(root);
+    readingPosition.current = selected && anchor ? { threadId: selected.id, anchor } : null;
+    open?.();
+  };
+  useLayoutEffect(() => {
+    const position = readingPosition.current;
+    if (!active || !position) return;
+    const frame = requestAnimationFrame(() => {
+      readingPosition.current = null;
+      if (position.threadId === selected?.id && position.anchor.root.isConnected) {
+        restoreVirtualScroll(position.anchor);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [active, selected?.id]);
   const refreshChat = async () => {
     if (refreshing) return;
     if (!state.ready) { controller.connectNow(); return; }
@@ -138,8 +158,8 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
           <ChatThreads state={state} controller={controller} newChat={newChat}
             onClose={() => setDrawer(false)} openSearch={() => setSearching(true)} profile={profile} /></>
             : <DshMobileSidebar state={state} controller={controller} newChat={newChat} close={() => setDrawer(false)}
-                search={() => setSearching(true)} openAccounts={props.openAccounts}
-                openDiscover={props.openDiscover} openSettings={props.openSettings} />}
+                search={() => setSearching(true)} openAccounts={() => openManagement(props.openAccounts)}
+                openDiscover={() => openManagement(props.openDiscover)} openSettings={() => openManagement(props.openSettings)} />}
         </aside>
         {overlay && <button className="dsh-sidebar-scrim" aria-label={t('client.chat.collapseChatList')} onClick={closeList} />}
         <main className="dsh-chat-main">

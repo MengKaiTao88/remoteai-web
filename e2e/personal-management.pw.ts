@@ -51,7 +51,7 @@ test('personal mobile management shows account quotas and returns to the same ch
       }
     });
   });
-  await login(page);
+  await login(page, 45_000);
   await page.getByRole('button', { name: '打开聊天列表', exact: true }).click();
   await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
   const input = page.getByRole('textbox', { name: '聊天消息' });
@@ -72,6 +72,31 @@ test('personal mobile management shows account quotas and returns to the same ch
   await expect(page.getByRole('dialog', { name: '侧边聊天' })).toBeVisible();
   await screenshot(page, info, 'side-chats');
   await page.getByRole('dialog', { name: '侧边聊天' }).getByRole('button', { name: '关闭', exact: true }).click();
+  for (let index = 0; index < 14; index++) {
+    const response = await request.post(fixtureUrl + '/test/chat-event', { data: {
+      method: 'turn/completed', params: { threadId: 'demo-chat', turn: {
+        id: `reading-turn-${index}`, status: 'completed', items: [
+          { id: `reading-question-${index}`, type: 'userMessage', content: [{ type: 'text', text: `读到第 ${index} 段` }] },
+          { id: `reading-answer-${index}`, type: 'agentMessage', text: '检查从管理页面返回后，聊天仍在离开时读到的位置。' },
+        ],
+      } },
+    } });
+    expect(response.ok()).toBe(true);
+  }
+  await expect(stats).toContainText(/15 轮 30 步/);
+  const viewport = page.locator('.dsh-message-region .chat-messages');
+  const firstVisible = () => viewport.evaluate(node => {
+    const viewportTop = node.getBoundingClientRect().top;
+    const row = Array.from(node.querySelectorAll<HTMLElement>('[data-message-id]'))
+      .find(item => item.getBoundingClientRect().bottom > viewportTop);
+    return { id: row?.dataset.messageId, top: row?.getBoundingClientRect().top ?? 0 };
+  });
+  await viewport.evaluate(node => { node.scrollTop = 306; });
+  await expect.poll(async () => (await firstVisible()).id).toMatch(/reading-|answer/);
+  await page.evaluate(async () => {
+    for (let frame = 0; frame < 6; frame++) await new Promise(requestAnimationFrame);
+  });
+  const readingPosition = await firstVisible();
   for (const [label, name] of [['账号', 'accounts'], ['发现', 'discover'], ['设置', 'settings']]) {
     await navigate(page, label);
     await expect(page.locator('.personal-management-heading h1')).toHaveText(label);
@@ -95,5 +120,7 @@ test('personal mobile management shows account quotas and returns to the same ch
     await swipeBackToChat(page);
     await expect(chatTitle).toHaveText('移动端聊天体验');
     await expect(input).toHaveValue('保持这条草稿');
+    await expect.poll(async () => (await firstVisible()).id).toBe(readingPosition.id);
+    await expect.poll(async () => Math.abs((await firstVisible()).top - readingPosition.top)).toBeLessThanOrEqual(3);
   }
 });

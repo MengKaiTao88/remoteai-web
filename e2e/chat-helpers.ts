@@ -112,7 +112,7 @@ export async function screenshot(page: Page, info: TestInfo, name: string) {
   await info.attach(name, { path, contentType: 'image/png' });
 }
 
-export async function login(page: Page) {
+export async function login(page: Page, chatTimeout?: number) {
   await page.goto('/web/', { waitUntil: 'commit' });
   await page.getByPlaceholder('name@example.com').fill('mobile-test@example.test');
   await page.getByPlaceholder('输入登录密码').fill('local-test');
@@ -128,7 +128,7 @@ export async function login(page: Page) {
   expect((await authenticated).ok()).toBe(true);
   await expect(page.locator('.app-shell')).toBeVisible();
   if (await page.locator('html[data-pocket-web]').count()) {
-    await expect(page.getByRole('region', { name: 'Codex 聊天' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Codex 聊天' })).toBeVisible({ timeout: chatTimeout });
   }
 }
 
