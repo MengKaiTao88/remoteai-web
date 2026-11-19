@@ -112,6 +112,8 @@ test('personal mobile management shows account quotas and returns to the same ch
   for (const [label, name] of [['账号', 'accounts'], ['发现', 'discover'], ['设置', 'settings']]) {
     await navigate(page, label);
     await expect(page.locator('.personal-management-heading h1')).toHaveText(label);
+    await expect(viewport).toBeHidden();
+    expect(await viewport.evaluate(node => node.clientHeight)).toBeGreaterThan(0);
     await expect(page.getByRole('button', { name: '返回聊天', exact: true })).toHaveCount(0);
     if (name === 'accounts') {
       await expect(page.locator('.mobile-account-averages dd')).toHaveText(['91.4%', '71.8%']);

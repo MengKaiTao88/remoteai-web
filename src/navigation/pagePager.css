@@ -35,6 +35,11 @@
     background: var(--app-canvas, #ededed);
   }
   .is-primary > .primary-page-track > [data-primary-page="chat"] { overflow: hidden; }
+  /* Keep the retained chat scroller measurable while its page is offscreen. */
+  .is-primary > .primary-page-track > .is-chat-retained {
+    position:fixed; inset:var(--chat-top,0) 0 auto; height:var(--chat-height,100dvh);
+    visibility:hidden; pointer-events:none;
+  }
   .primary-page-track.is-swiping { will-change: transform; }
   .primary-page-pane.is-preview { pointer-events: none; }
   .primary-page-pane .discovery-page { min-height: 100%; }

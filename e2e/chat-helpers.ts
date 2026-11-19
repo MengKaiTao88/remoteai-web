@@ -49,7 +49,7 @@ export async function navigate(page: Page, label: string) {
   if (discoveryChild) await click(page.locator('.discovery-list').getByRole('button', { name: label, exact: true }));
 }
 export async function swipeBackToChat(page: Page) {
-  await page.locator('.primary-page-pane:not([hidden])').evaluate(node => {
+  await page.locator('.primary-page-pane[aria-hidden="false"]').evaluate(node => {
     const y = node.getBoundingClientRect().top + 20;
     const fire = (type: string, x: number) => {
       const touch = { identifier: 1, target: node, clientX: x, clientY: y };

@@ -55,9 +55,11 @@ export function PrimaryPagePager({ page, onChange, pages, children, returnToChat
             const active = key === displayedPage;
             const incoming = key === preview?.page;
             const visible = active || incoming;
+            const retainedChat = !visible && key === 'chat' && returnToChat;
             const position = { '--primary-page-left': `${index * 100}%` } as CSSProperties;
             return <div key={key} data-primary-page={key}
-              className={`primary-page-pane${incoming ? ' is-preview' : ''}`} hidden={!visible}
+              className={`primary-page-pane${incoming ? ' is-preview' : ''}${retainedChat ? ' is-chat-retained' : ''}`}
+              hidden={!visible && !retainedChat}
               aria-hidden={!active} {...(!active ? { inert: '' } : {})} style={position}>
               <RetainedView active={visible || key === 'chat'} retain={desktop || key === 'chat'}>
                 {pages[key]}

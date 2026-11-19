@@ -5,6 +5,7 @@ import { itemImageSources } from '../../../../shared/chat/imageSources';
 import { deriveDshRows } from './dshViewModel';
 import { activityCategory, processActivityStatus, processEntries } from './officialActivity';
 import type { Thread } from '../../../../shared/conversation/types';
+import { loadChatImage } from './loadChatImage';
 
 it('keeps reasoning text deltas separate from summary deltas and honors both indices', () => {
   const initial: Thread = { id: 'chat', cwd: '/', preview: '', updatedAt: 0, turns: [
@@ -39,6 +40,21 @@ it('recognizes scoped desktop bridge image references for preview loading', () =
   expect(itemImageSources({ id: 'message', type: 'agentMessage', content: [
     { type: 'localImage', path: source },
   ] })).toEqual([source]);
+});
+
+it('retries an old bridge thumbnail via the bounded original transfer in the same chat', async () => {
+  const source = 'codex-bridge-images/' + 'a'.repeat(64) + '.png';
+  const load = vi.fn(async (_threadId: string, _source: string, original?: boolean) => {
+    if (!original) throw new Error('Thumbnail unavailable');
+    return 'data:image/png;base64,YWJj';
+  });
+  await expect(loadChatImage(load, true, 'chat', source, false)).rejects.toThrow('Thumbnail unavailable');
+  expect(load).toHaveBeenCalledTimes(1);
+  const retry = { refresh: true };
+  await expect(loadChatImage(load, false, 'chat', source, false, retry)).rejects.toThrow('Thumbnail unavailable');
+  expect(load).toHaveBeenCalledTimes(2);
+  await expect(loadChatImage(load, true, 'chat', source, false, retry)).resolves.toBe('data:image/png;base64,YWJj');
+  expect(load).toHaveBeenLastCalledWith('chat', source, true, retry);
 });
 
 it('explicit retry bypasses a decoded-bad image cache while retaining thread isolation and single-flight', async () => {

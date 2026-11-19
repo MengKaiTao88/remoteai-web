@@ -480,6 +480,7 @@ function AppShell() {
         <PrimaryPagePager page={page} onChange={changePrimaryPage} returnToChat={personalManagement} pages={{
           chat: session && <PageContent key={session.baseUrl + session.email}><ChatPage session={session} devices={devices}
             openAccounts={openAccounts} openDiscover={openDiscover} openSettings={openSettings}
+            retainLayout={personalManagement}
             active={page === 'chat' || page === 'ssh'} tokenSummary={page === 'token-summary'}
             sshDiscovery={page === 'ssh'} closeSshDiscovery={() => dispatch(pageChanged('discover'))}
             closeTokenSummary={() => dispatch(pageChanged('discover'))} /></PageContent>,

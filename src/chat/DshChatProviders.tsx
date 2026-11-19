@@ -19,6 +19,7 @@ import { TaskReviewProvider } from '../../../../shared/remote-chat/TaskReviewCon
 import { ChatRetryProvider } from '../../../../shared/remote-chat/ChatRetryProvider';
 import { ChatPresentation } from '../../../../shared/remote-chat/views/ChatPresentation';
 import type { ChatController, ChatState } from '../../../../shared/remote-chat/views/types';
+import { loadChatImage } from './loadChatImage';
 
 export function DshChatProviders({ controller, state, active, children }: {
   controller: ChatController; state: ChatState; active: boolean; children: ReactNode;
@@ -26,7 +27,10 @@ export function DshChatProviders({ controller, state, active, children }: {
   const enabled = active && state.ready;
   const usage = useVisibleChatUsage(controller.readUsage, enabled);
   const threadId = state.selected?.id ?? null;
+  const bridge = !!(state.selected as (typeof state.selected & { officialSidebar?: object }))?.officialSidebar;
   const cacheScope = useDraftCacheScope({ threadId, draftScope: state.draftScope });
+  const loadImage = useCallback<typeof controller.imagePreview>((...request) =>
+    loadChatImage(controller.imagePreview, bridge && !controller.managedPreviews, ...request), [controller, bridge]);
   const loadProcess = useCallback<typeof controller.processDetails>(async target => {
     const result = await controller.processDetails(target);
     if (!Array.isArray(result?.items) || !result.items.length || !result.items.every(item => item && typeof item.id === 'string'
@@ -47,7 +51,7 @@ export function DshChatProviders({ controller, state, active, children }: {
     <ImageAiContext.Provider value={{ enabled: enabled && !state.selectedArchived
       && !state.sending && !state.settingsBusy && !state.workspaceBusy && !state.compacting,
       send: imageAiSender(controller, prepareImageEdit) }}>
-    <ChatImageContext.Provider value={{ threadId, ready: state.ready, load: controller.imagePreview,
+    <ChatImageContext.Provider value={{ threadId, ready: state.ready, load: loadImage,
       save: controller.managedPreviews ? controller.savePreviewImage : undefined }}>
     <ChatFileContext.Provider value={{ threadId, ready: state.ready,
       client: controller.files, load: controller.textPreview }}>

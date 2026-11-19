@@ -38,10 +38,11 @@ interface Props {
   session: AuthSession; devices: RemoteDevice[]; active: boolean; openAccounts?: () => void;
   openDiscover?: () => void; openSettings?: () => void;
   tokenSummary: boolean; closeTokenSummary: () => void;
+  retainLayout?: boolean;
   sshDiscovery?: boolean; closeSshDiscovery?: () => void;
 }
 
-export function ChatPage({ session, devices, active, openAccounts, openDiscover, openSettings,
+export function ChatPage({ session, devices, active, openAccounts, openDiscover, openSettings, retainLayout,
   tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery }: Props) {
   useLanguage();
   const preview = usePagePreview() === 'chat';
@@ -65,7 +66,7 @@ export function ChatPage({ session, devices, active, openAccounts, openDiscover,
   const chooseDevice = (id: string) => {
     setDeviceId(id);
   };
-  return <section className="chat-page" hidden={!active && !preview} aria-label={t("client.chat.codexChat")}>
+  return <section className="chat-page" hidden={!active && !preview && !retainLayout} aria-label={t("client.chat.codexChat")}>
     {chats.map(chatDevice => {
       const selected = chatDevice?.deviceId === device?.deviceId;
       return <div className="chat-device-session" hidden={!selected}
