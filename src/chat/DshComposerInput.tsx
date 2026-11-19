@@ -6,7 +6,7 @@ import { useComposerSuggestion } from '../../../../shared/chat/useComposerSugges
 import { ComposerSuggestion } from '../../../../shared/remote-chat/views/ComposerSuggestion';
 import { ComposerInput } from '../../../../shared/remote-chat/views/ComposerInput';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ArrowUp, ChevronRight, Gauge, ListFilter, ListOrdered, Play, Plus, Square } from 'lucide-react';
 import { COMPOSER_ACTION_LABELS } from '../../../../shared/remote-chat/composerAction';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
@@ -40,11 +40,19 @@ import '../../../../shared/remote-chat/views/composerReading.css';
 
 export function DshComposerInput(props: ComposerProps & {
   loadedTurns?: readonly import('../../../../shared/conversation/types').Turn[];
-  historyHasMore?: boolean;
+  countsArePartial?: boolean;
   conversationCounts?: { turns: number; steps: number };
 }) {
   useLanguage();
   const desktop = useDesktopLayout();
+  const loaded = useMemo(() => props.loadedTurns && {
+    turns: props.loadedTurns.length,
+    steps: props.loadedTurns.reduce((sum, turn) => sum + turn.items.length, 0),
+  }, [props.loadedTurns]);
+  const reported = props.conversationCounts;
+  const totals = reported && (!loaded || reported.turns >= loaded.turns && reported.steps >= loaded.steps)
+    ? reported : undefined;
+  const counts = totals ?? loaded;
   const usageSnapshot = useContext(DesktopUsageContext);
   const metrics = useConversationMetrics(props.readConversationMetrics, props.threadId,
     props.active && props.ready && usageSnapshot.visible);
@@ -257,11 +265,8 @@ export function DshComposerInput(props: ComposerProps & {
       usage={usageSnapshot.usage} metrics={metrics} />}
     {!desktop && threadId && <div className="dsh-mobile-chat-stats">
       <span><Gauge size={13} aria-hidden="true" />{formatConversationTps(metrics)} tok/s</span>
-      {props.loadedTurns && <span><ListFilter size={13} aria-hidden="true" />{t(props.historyHasMore && !props.conversationCounts
-        ? 'client.mobileChat.loadedTurnAndStepCount' : 'client.mobileChat.turnAndStepCount', {
-        turns: Math.max(props.conversationCounts?.turns ?? 0, props.loadedTurns.length),
-        steps: Math.max(props.conversationCounts?.steps ?? 0, props.loadedTurns.reduce((sum, turn) => sum + turn.items.length, 0)),
-      })}</span>}
+      {counts && <span><ListFilter size={13} aria-hidden="true" />{t(!totals && (props.countsArePartial || reported)
+        ? 'client.mobileChat.loadedTurnAndStepCount' : 'client.mobileChat.turnAndStepCount', counts)}</span>}
     </div>}
     {active && !busy && editing && <ChatImageEditor key={editing.id} image={editing}
       save={url => draft.replaceImage(editing, url)} close={() => setEditingId(null)} />}

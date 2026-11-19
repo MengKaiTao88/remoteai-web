@@ -1,14 +1,14 @@
 import { useLayoutEffect, type RefObject } from 'react';
 
 /** Match assistant-ui's mobile sheet boundary without replacing Remote AI's retained workspace. */
-export function useSidebarModal(host: RefObject<HTMLElement>, open: boolean) {
+export function useSidebarModal(host: RefObject<HTMLElement>, open: boolean, panel = '.dsh-sidebar') {
   useLayoutEffect(() => {
     const root = host.current;
-    const sidebar = root?.querySelector<HTMLElement>('.dsh-sidebar');
+    const sidebar = root?.querySelector<HTMLElement>(panel);
     if (!root || !sidebar || !open) return;
     const previous = document.activeElement;
     const background = [...root.children].filter((node): node is HTMLElement => node instanceof HTMLElement
-      && node !== sidebar && !node.classList.contains('dsh-sidebar-scrim'));
+      && !node.contains(sidebar) && !node.classList.contains('dsh-sidebar-scrim'));
     const saved = background.map(node => ({ node, inert: node.inert, hidden: node.getAttribute('aria-hidden') }));
     for (const { node } of saved) { node.inert = true; node.setAttribute('aria-hidden', 'true'); }
     const buttons = () => [...sidebar.querySelectorAll<HTMLElement>(
@@ -32,5 +32,5 @@ export function useSidebarModal(host: RefObject<HTMLElement>, open: boolean) {
       }
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
     };
-  }, [host, open]);
+  }, [host, open, panel]);
 }

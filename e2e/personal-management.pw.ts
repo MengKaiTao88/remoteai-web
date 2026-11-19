@@ -63,15 +63,27 @@ test('personal mobile management shows account quotas and returns to the same ch
   await expect(stats).toContainText('tok/s');
   await expect(stats).toContainText(/轮 .*步/);
   await expect(stats).not.toContainText('|');
+  const inputBox = await page.locator('.dsh-input').boundingBox();
+  const statsBox = await stats.boundingBox();
+  expect(statsBox!.y).toBeGreaterThan(inputBox!.y + inputBox!.height);
+  expect(statsBox!.y + statsBox!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   await screenshot(page, info, 'chat-stats');
   const refresh = page.getByRole('button', { name: '刷新对话', exact: true });
   await expect(refresh).toBeEnabled();
   await refresh.click();
   await expect(refresh).toBeEnabled();
-  await page.getByRole('button', { name: '侧边聊天', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: '侧边聊天' })).toBeVisible();
+  const sideChats = page.getByRole('button', { name: '侧边聊天', exact: true });
+  const panel = page.getByRole('dialog', { name: '侧边聊天' });
+  await sideChats.click();
+  await expect(panel).toBeVisible();
+  await expect(panel).toHaveCSS('background-color', info.project.name === 'phone-dark' ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)');
+  await expect(panel.getByRole('button', { name: '关闭', exact: true })).toBeFocused();
   await screenshot(page, info, 'side-chats');
-  await page.getByRole('dialog', { name: '侧边聊天' }).getByRole('button', { name: '关闭', exact: true }).click();
+  await page.locator('.dsh-side-chats-backdrop').click({ position: { x: 6, y: 240 } });
+  await expect(panel).toBeHidden();
+  await sideChats.click();
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
   for (let index = 0; index < 14; index++) {
     const response = await request.post(fixtureUrl + '/test/chat-event', { data: {
       method: 'turn/completed', params: { threadId: 'demo-chat', turn: {

@@ -85,6 +85,7 @@ function DshWorkspaceContent(props: DshChatWorkspaceProps) {
   const listOpen = layout.left === 'sidebar' || drawer;
   const overlay = listOpen && layout.left !== 'sidebar';
   useSidebarModal(host, overlay);
+  useSidebarModal(host, sideChats && !desktop, '.dsh-side-chats');
   useDshDrawerGesture({ host, enabled: active && layout.left !== 'sidebar' && !details && !sideChats && !searching
     && !pickingDevice, open: drawer, onChange: setDrawer });
   const closeList = () => { setDrawer(false); if (layout.left === 'sidebar') setSidebar(false); };

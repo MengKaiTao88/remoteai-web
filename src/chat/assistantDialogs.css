@@ -6,13 +6,22 @@
 .remodex-dialog-close { position:absolute; right:8px; top:8px; display:grid; place-items:center; width:44px; height:44px;
   padding:0; border:0; border-radius:50%; color:var(--dsh-muted); background:transparent; cursor:pointer; }
 .remodex-dialog h2 { font-size:1.1em; line-height:1.4; margin:0 36px 20px 0; font-weight:650; }
-.remodex-dialog.dsh-side-chats {
-  position: fixed; inset: max(65px, calc(env(safe-area-inset-top) + 60px)) 12px auto auto;
-  margin: 0; max-width: min(360px, calc(100vw - 24px)); padding: 18px 12px 12px;
+.dsh-side-chats-layer { position:absolute; inset:0; z-index:20; }
+.dsh-side-chats-backdrop { position:absolute; inset:0; width:100%; height:100%; border:0;
+  background:#0005; cursor:pointer; }
+.dsh-side-chats {
+  position:absolute; top:max(66px,env(safe-area-inset-top)); right:12px; width:min(360px, calc(100% - 24px));
+  max-height:min(calc(100% - max(66px,env(safe-area-inset-top)) - 12px), 560px);
+  box-sizing:border-box; margin:0; padding:14px 12px 12px; overflow:auto; overscroll-behavior:contain;
+  border:1px solid var(--dsh-line); border-radius:22px; color:var(--dsh-ink);
+  background:var(--dsh-solid); box-shadow:0 16px 60px #0004; outline:none;
 }
-.dsh-side-chats h2, .dsh-side-chats p { padding-inline: 7px; }
-.dsh-side-chats p { color: var(--dsh-muted); }
-.dsh-side-chats ul { list-style: none; padding: 0; margin: 0; }
+.dsh-side-chats header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 10px; }
+.dsh-side-chats h2 { margin:0; padding-inline:7px; font-size:1.1em; line-height:1.4; font-weight:650; }
+.dsh-side-chats-close { display:grid; place-items:center; width:36px; height:36px; border:0;
+  border-radius:50%; color:var(--dsh-muted); background:transparent; cursor:pointer; }
+.dsh-side-chats p { padding-inline:7px; color:var(--dsh-muted); }
+.dsh-side-chats ul { list-style:none; padding:0; margin:0; }
 .dsh-side-chats li button {
   display: flex; align-items: center; gap: 10px; min-height: 44px; width: 100%; padding: 8px;
   background: none; border: 0; border-radius: 10px; color: inherit; text-align: left; cursor: pointer;
