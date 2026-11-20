@@ -16,6 +16,7 @@ test('an earlier-history failure survives successful tail polling and retries th
   const render = (next: typeof state) => act(async () => root.render(<DshHistoryStatus state={next} controller={controller} />));
   try {
     await render(state);
+    expect(host.querySelector('[role=status]')).toBeNull();
     await render({ ...state, historyLoading: false, historyLoadingMore: false, error: 'History unavailable' });
     expect(host.querySelector('[role=alert]')?.textContent).toContain('History unavailable');
     await render({ ...state, historyLoadingMore: false, error: '' });
