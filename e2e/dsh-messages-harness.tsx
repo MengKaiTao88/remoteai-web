@@ -47,6 +47,7 @@ const stress = new URLSearchParams(location.search).has('stress');
 const deferred = new URLSearchParams(location.search).has('deferred');
 const sequence = new URLSearchParams(location.search).has('sequence');
 const longProcess = new URLSearchParams(location.search).has('long-process');
+const pagedProcess = new URLSearchParams(location.search).has('paged-process');
 const metrics = { updates: 0, commits: 0, renderTotal: 0, renderMax: 0, pulse: 0,
   mountDuration: 0, initialMarkdown: 0, initialActivities: 0 };
 Object.assign(window, { dshPerformance: metrics });
@@ -101,11 +102,18 @@ const stressThread: Thread = { ...base, turns: [
     { id: 'stream', type: 'agentMessage', phase: 'final_answer', text: '# Live response\n\nSettled paragraph.\n\nStreaming update 0' },
   ] },
 ] };
+const processPage: Item[] = Array.from({ length: 48 }, (_, index) => ({
+  ...tools[0], id: 'paged-operation-' + index, command: 'check page record ' + index,
+}));
 function Harness() {
   const theme = useThemeMode();
-  const [thread, setThread] = useState(imageRetry ? imageThread : stress ? stressThread : base);
-  const [hasMore, setHasMore] = useState(false);
-  const [approvals, setApprovals] = useState(imageRetry ? [] : [{ id: 1, method: 'item/commandExecution/requestApproval',
+  const [thread, setThread] = useState<Thread>(imageRetry ? imageThread : stress ? stressThread : pagedProcess
+    ? { ...base, turns: [{ id: 'paged-process', status: 'inProgress', items: [
+      ...processPage.slice(16), { id: 'steer', type: 'userMessage', text: 'Continue on the current task.' },
+      { ...tools[0], id: 'current-operation', command: 'run current task', status: 'inProgress' },
+    ] }] } : base);
+  const [hasMore, setHasMore] = useState(pagedProcess);
+  const [approvals, setApprovals] = useState(imageRetry || pagedProcess ? [] : [{ id: 1, method: 'item/commandExecution/requestApproval',
     params: { threadId: 'fixture', reason: '运行本地检查', command: 'npm test' } }]);
   const state = { ...initialChatState(), ready: true, selected: thread, approvals, historyHasMore: hasMore };
   useEffect(() => {
@@ -124,6 +132,12 @@ function Harness() {
   const controller = useMemo(() => ({
     loadOlder: async () => {
       setHasMore(false);
+      if (pagedProcess) {
+        setThread(current => ({ ...current, turns: [{ ...current.turns![0],
+          items: [{ id: 'paged-origin', type: 'userMessage', text: 'Original task.' },
+            ...processPage.slice(0, 16), ...current.turns![0].items] }] }));
+        return;
+      }
       setThread(current => ({ ...current, turns: [{ id: 'old', status: 'completed', items: Array.from({ length: 35 },
         (_, index) => ({ id: 'old-' + index, type: 'agentMessage', phase: 'final_answer' as const,
           text: '更早记录 ' + index + '\n\n' + '历史内容。'.repeat(15) })) }, ...current.turns!] }));
@@ -151,7 +165,7 @@ function Harness() {
       imageCache.load(thread, source, original, options?.refresh) }}>
     <ProcessDetailsContext.Provider value={{ active: true, load: async () => { document.body.dataset.processReads = String(Number(document.body.dataset.processReads ?? 0) + 1);
         return { items: deferred ? [{ id: 'deferred-thinking', type: 'reasoning', summary: ['**Inspect source**\nRead real details.\n\n**Verify behavior**\nCheck the result.'] }, ...tools] : tools }; } }}>
-      {stress || officialCounts ? <div className="dsh-chat-main"><header className="dsh-chat-header">Long conversation fixture</header>
+      {stress || officialCounts || pagedProcess ? <div className="dsh-chat-main"><header className="dsh-chat-header">Long conversation fixture</header>
         <div className="dsh-codex-content">{history}<div className="dsh-composer-dock">
           <p className="chat-processing-status">Streaming task</p>
           <DshComposerInput {...composer} loadedTurns={officialCounts ? thread.turns : undefined}

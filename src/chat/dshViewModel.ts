@@ -1,6 +1,7 @@
 import type { GuiEvent, Item, Thread, Turn } from '../../../../shared/conversation/types';
 import type { QueueMessage } from '../../../../shared/remote-chat/queue';
 import { conversationEntries } from '../../../../shared/chat/turnPresentation';
+import { currentRunningTurn } from '../../../../shared/chat/runningTurn';
 import type { TurnRequestError } from '../../../../shared/conversation/turnRequestErrors';
 
 export type DshRowKind = 'user' | 'assistant' | 'tool' | 'process' | 'approval'
@@ -9,6 +10,7 @@ export interface DshRow {
   key: string; kind: DshRowKind; turn?: Turn; item?: Item; items?: Item[];
   event?: GuiEvent; pending?: QueueMessage; requestError?: TurnRequestError;
   timed?: boolean;
+  liveProcess?: boolean;
 }
 export interface DshChatViewModel { rows: DshRow[]; approvals: GuiEvent[]; running: boolean }
 const turnCache = new WeakMap<Turn, Map<boolean, DshRow[]>>();
@@ -34,16 +36,13 @@ function turnRows(turn: Turn, previous?: Turn): DshRow[] {
   const entries = conversationEntries(previous ? [previous, turn] : [turn], new Map([[turn.id, false]]))
     .filter(entry => entry.turn === turn);
   const rows: DshRow[] = [];
-  let boundary = 'head';
-  let segment = 0;
   for (const entry of entries) {
     if (entry.kind === 'work') {
       let pending: Item[] = [];
       let timed = entry.timed || !rows.some(row => row.kind === 'process' || row.kind === 'duration');
       const flush = () => {
         if (!pending.length) return;
-        rows.push({ key: `${turn.id}:process:${boundary}:${segment++}`,
-          kind: 'process', turn, items: pending, timed });
+        rows.push({ key: entry.id, kind: 'process', turn, items: pending, timed });
         timed = false;
         pending = [];
       };
@@ -56,7 +55,7 @@ function turnRows(turn: Turn, previous?: Turn): DshRow[] {
           rows.push({ key: turn.id + ':message:' + item.id, kind, turn, item });
         } else pending.push(item);
       }
-      if (timed && !pending.length && entry.timed && segment === 0) {
+      if (timed && !pending.length && entry.timed) {
         rows.push({ key: `${turn.id}:duration`, kind: 'duration', turn });
       }
       flush();
@@ -66,8 +65,16 @@ function turnRows(turn: Turn, previous?: Turn): DshRow[] {
       rows.push({ key: entry.id, kind: 'error', turn, requestError: entry.error });
     } else {
       rows.push({ key: entry.id, kind: itemKind(entry.item), turn, item: entry.item });
-      if (entry.item.type === 'userMessage') { boundary = entry.item.id; segment = 0; }
     }
+  }
+  // An earlier page can prepend the user message introducing the existing process.
+  // Identify segments relative to their following steering boundary, not the loaded prefix.
+  let boundary = 'tail';
+  let segment = 0;
+  for (let index = rows.length - 1; index >= 0; index--) {
+    const row = rows[index];
+    if (row.kind === 'process') row.key = `${turn.id}:process:${boundary}:${segment++}`;
+    if (row.kind === 'user') { boundary = row.key; segment = 0; }
   }
   const cache = turnCache.get(turn) ?? new Map<boolean, DshRow[]>();
   cache.set(continuation, rows);
@@ -86,11 +93,15 @@ export function deriveDshRows(input: {
     if (!cached) { cached = { ...turn, status: 'cached' }; offlineCache.set(turn, cached); }
     return cached;
   });
+  const rows = turns.flatMap((turn, index) => turnRows(turn, turns[index - 1]));
+  const running = currentRunningTurn(turns);
+  const liveProcess = running && rows.findLastIndex(row => row.turn === running && row.kind === 'process');
+  if (liveProcess !== undefined && liveProcess >= 0) rows[liveProcess] = { ...rows[liveProcess], liveProcess: true };
   return { rows: [
-    ...turns.flatMap((turn, index) => turnRows(turn, turns[index - 1])),
+    ...rows,
     ...current.map(event => ({
       key: 'approval:' + thread!.id + ':' + String(event.id), kind: 'approval' as const, event,
     })),
     ...queue.map(pending => ({ key: 'pending:' + pending.id, kind: 'pending' as const, pending })),
-  ], approvals: current, running: Boolean(turns.some(turn => turn.status === 'inProgress')) };
+  ], approvals: current, running: Boolean(running) };
 }

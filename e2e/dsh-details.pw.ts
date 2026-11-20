@@ -56,6 +56,27 @@ test('opening a long activity group keeps its header in view', async ({ page }, 
   await screenshot(page, info, 'long-activity-opened');
 });
 
+test('prepending history inside the current process preserves the visible command and item order', async ({ page }, info) => {
+  test.skip(!['phone-light', 'iphone-webkit', 'desktop-wide'].includes(info.project.name));
+  await page.goto('e2e/dsh-messages-harness.html?paged-process=1', { waitUntil: 'commit' });
+  const scroller = page.locator('.chat-messages');
+  const firstGroup = page.locator('.official-activity-group > button').first();
+  await firstGroup.click();
+  const line = page.locator('[data-process-item="paged-operation-23"] > button');
+  await line.evaluate(element => element.scrollIntoView({ block: 'start' }));
+  await expect(line).toBeInViewport();
+  const before = (await line.boundingBox())!.y;
+  await scroller.getByRole('button', { name: '加载更早的消息' }).dispatchEvent('click');
+  await expect(firstGroup).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(async () => Math.abs((await line.boundingBox())!.y - before)).toBeLessThan(3);
+  const order = await scroller.locator('[data-process-item]').evaluateAll(nodes => nodes.map(node =>
+    node.getAttribute('data-process-item')!));
+  const numbers = order.filter(id => id.startsWith('paged-operation-')).map(id => Number(id.split('-').at(-1)));
+  expect(numbers).toEqual([...new Set(numbers)].sort((a, b) => a - b));
+  await expect(scroller.getByText('进行中', { exact: true })).toHaveCount(1);
+  await screenshot(page, info, 'history-within-active-process');
+});
+
 test('process cards remain inspectable, failed tools stay visible and approvals settle', async ({ page }, info) => {
   const errors: string[] = [];
   page.on('pageerror', value => errors.push(value.message));

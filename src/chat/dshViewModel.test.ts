@@ -61,6 +61,18 @@ it('keeps the process key when a streamed answer arrives and the turn completes'
     .toBe(derive(thread).rows.find(row => row.kind === 'process')?.key);
 });
 
+it('keeps process segments stable when history adds a prompt before a steering message', () => {
+  const steering = { id: 'steer', type: 'userMessage', text: 'Continue' };
+  const followup = { id: 'tool-2', type: 'commandExecution', command: 'npm test' };
+  const partial = { ...turn, status: 'inProgress', items: [turn.items[2], steering, followup] };
+  const before = derive({ ...thread, turns: [partial] }).rows.filter(row => row.kind === 'process');
+  const after = derive({ ...thread, turns: [{ ...partial, items: [...turn.items.slice(0, 2), ...partial.items] }] })
+    .rows.filter(row => row.kind === 'process');
+  expect(after.map(row => row.key)).toEqual(before.map(row => row.key));
+  expect(after.map(row => row.liveProcess)).toEqual([undefined, true]);
+  expect(after[0].items?.map(item => item.id)).toEqual(['a', 'c']);
+});
+
 it('does not show cached offline work as a running turn and restores live state on reconnect', () => {
   const live: Thread = { ...thread, turns: [{ ...turn, status: 'inProgress' }] };
   const offline = deriveDshRows({ thread: live, approvals: [], queue: [], offline: true });

@@ -57,8 +57,8 @@ const statusText = (status?: string) => status === 'failed' ? t('client.taskRevi
   : status === 'interrupted' ? t('client.chat.stopped')
   : status === 'declined' ? t('client.chat.declined') : undefined;
 
-export const OfficialActivity = memo(function OfficialActivity({ item, live, nested = false }: {
-  item: Item; live: boolean; nested?: boolean;
+export const OfficialActivity = memo(function OfficialActivity({ item, live, position, nested = false }: {
+  item: Item; live: boolean; position?: string; nested?: boolean;
 }) {
   useLanguage();
   const id = useId();
@@ -74,18 +74,22 @@ export const OfficialActivity = memo(function OfficialActivity({ item, live, nes
     {expandable && <ChevronDown className="official-activity-chevron" size={12} aria-hidden="true" />}</>;
   return <div className="official-activity" data-process-item={item.id} data-activity-category={category} data-status={status}>
     {expandable ? <button type="button" className="official-activity-line" aria-expanded={open} aria-controls={id}
-      onClick={() => setOpen(!open)}>{line}</button> : <span className="official-activity-line">{line}</span>}
+      data-history-position={position} onClick={() => setOpen(!open)}>{line}</button>
+      : <span className="official-activity-line" data-history-position={position}>{line}</span>}
     {expandable && <div className="official-activity-detail" id={id} hidden={!open}>
       {open && <ChatToolContent item={item} />}
     </div>}
   </div>;
 });
 
-export function OfficialActivityGroup({ items, live }: { items: Item[]; live: boolean }) {
+export function OfficialActivityGroup({ items, live, positionPrefix, groupKey }: {
+  items: Item[]; live: boolean; positionPrefix: string; groupKey: string;
+}) {
   const language = useLanguage();
   const id = useId();
   const [open, setOpen] = useState(false);
-  if (items.length === 1) return <OfficialActivity item={items[0]} live={live} />;
+  if (items.length === 1) return <OfficialActivity item={items[0]} live={live}
+    position={positionPrefix + items[0].id} />;
   const labels = new Set<string>();
   let running: Item | undefined;
   for (const item of items) {
@@ -100,6 +104,7 @@ export function OfficialActivityGroup({ items, live }: { items: Item[]; live: bo
   return <div className="official-activity-group" data-activity-category={category}
     data-status={running ? 'inProgress' : undefined}>
     <button type="button" className="official-activity-line" aria-expanded={open} aria-controls={id}
+      data-history-position={positionPrefix + 'group:' + groupKey}
       onClick={() => setOpen(!open)}>
       <Icon size={15} aria-hidden="true" /><span title={label}>{label}</span>
       <ChevronDown className="official-activity-chevron" size={12} aria-hidden="true" />
@@ -107,7 +112,7 @@ export function OfficialActivityGroup({ items, live }: { items: Item[]; live: bo
     <div className="official-activity-children" id={id} hidden={!open}>
       {open && items.map((item, index) => <DshHistoryViewport key={item.id}
         enabled={items.length > 32} estimatedHeight={31} initiallyVisible={index < 12}>
-        {() => <OfficialActivity item={item} live={live} nested />}
+        {() => <OfficialActivity item={item} live={live} position={positionPrefix + item.id} nested />}
       </DshHistoryViewport>)}
     </div>
   </div>;

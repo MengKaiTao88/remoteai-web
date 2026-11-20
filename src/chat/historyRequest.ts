@@ -5,7 +5,7 @@ import type { Thread } from '../../../../shared/remote-chat/client/types';
 
 const HISTORY_TIMEOUT_MS = 40_000;
 const VIEW_TIMEOUT_MS = 10_000;
-const FIRST_PAGE_ITEMS = 16;
+const HISTORY_PAGE_ITEMS = 16;
 type Request = ChatConnection['request'];
 type InitialHistory = { threadId: string; known: HistoryVersion; window?: HistoryWindow; deferToolDetails?: boolean };
 
@@ -20,7 +20,7 @@ async function readFirstPage<T>(request: Request, input: InitialHistory, body: u
   try {
     const { thread, page } = await request<{ thread?: Thread; page?: HistoryPage }>('request', {
       operation: 'read', threadId: input.threadId, deferToolDetails: true, includeToolDetails: false,
-      window: { pageSize: FIRST_PAGE_ITEMS },
+      window: { pageSize: HISTORY_PAGE_ITEMS },
     });
     if (thread?.id === input.threadId && typeof page?.hasMore === 'boolean'
       && (!page.hasMore || page.start)) {
@@ -47,9 +47,10 @@ export function boundedHistoryRequest(request: Request, fastFirstPage = false): 
         && body && typeof body === 'object'
         ? { ...body as Record<string, unknown>,
           window: { ...((body as Record<string, unknown>).window as Record<string, unknown> | undefined),
-            pageSize: FIRST_PAGE_ITEMS } }
+            // A live or interrupted process can contain hundreds of individual records.
+            deferProcesses: false, pageSize: HISTORY_PAGE_ITEMS } }
         : body;
-      const read = first ? readFirstPage<T>(request, first, body)
+      const read = first ? readFirstPage<T>(request, first, paged).catch(() => request<T>(method, body))
         : paged === body ? request<T>(method, body)
           : request<T>(method, paged).catch(() => request<T>(method, body));
       read

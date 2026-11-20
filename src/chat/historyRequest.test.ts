@@ -58,12 +58,13 @@ test('the first history request uses a bounded page and keeps its older-history 
   const older = { ...initial, known: historyVersion(thread), window: { ...initial.window, older: true, start: page.start } };
   await read('request', older);
   expect(request).toHaveBeenLastCalledWith('request', {
-    ...older, window: { ...older.window, pageSize: 16 },
+    ...older, window: { ...older.window, deferProcesses: false, pageSize: 16 },
   });
 });
 
 test('a host without a bounded history page can use its original history endpoint', async () => {
-  const request = vi.fn().mockResolvedValueOnce({ thread: { id: 'old' } }).mockResolvedValueOnce('original history');
+  const request = vi.fn().mockResolvedValueOnce({ thread: { id: 'old' } })
+    .mockRejectedValueOnce(new Error('unsupported window')).mockResolvedValueOnce('original history');
   const read = boundedHistoryRequest(request as unknown as ChatConnection['request'], true);
   const initial = { operation: 'syncHistory', threadId: 'old', deferToolDetails: true, known: { fields: {}, turns: [] } };
   await expect(read('request', initial)).resolves.toBe('original history');
@@ -82,7 +83,7 @@ test('older history pages request the same small batch and retry unchanged for o
   const read = boundedHistoryRequest(request as unknown as ChatConnection['request'], true);
   await expect(read('request', original)).resolves.toBe('legacy result');
   expect(request).toHaveBeenNthCalledWith(1, 'request', {
-    ...original, window: { ...original.window, pageSize: 16 },
+    ...original, window: { ...original.window, deferProcesses: false, pageSize: 16 },
   });
   expect(request).toHaveBeenNthCalledWith(2, 'request', original);
 });
