@@ -95,8 +95,14 @@ export function deriveDshRows(input: {
   });
   const rows = turns.flatMap((turn, index) => turnRows(turn, turns[index - 1]));
   const running = currentRunningTurn(turns);
-  const liveProcess = running && rows.findLastIndex(row => row.turn === running && row.kind === 'process');
-  if (liveProcess !== undefined && liveProcess >= 0) rows[liveProcess] = { ...rows[liveProcess], liveProcess: true };
+  for (let index = rows.length - 1; running && index >= 0; index--) {
+    const row = rows[index];
+    if (row.turn !== running) break;
+    if (row.kind === 'process') {
+      rows[index] = { ...row, liveProcess: true };
+      break;
+    }
+  }
   return { rows: [
     ...rows,
     ...current.map(event => ({
