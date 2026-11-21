@@ -4,8 +4,26 @@ import { activityStatus } from '../../../../shared/conversation/itemStatus';
 import { hasVisibleProcessContent } from '../../../../shared/chat/processContent';
 
 export type ActivityCategory =
-  | 'read' | 'list' | 'search' | 'command' | 'web' | 'integration' | 'chats' | 'tool' | 'files'
+  | 'read' | 'list' | 'search' | 'command' | 'web' | 'browser' | 'integration' | 'chats' | 'tool' | 'files'
   | 'agent' | 'plan' | 'image' | 'review' | 'context' | 'wait' | 'error' | 'other';
+
+export function integrationActivity(item: Item) {
+  if (item.type === 'mcpToolCall' && item.server) {
+    return { server: item.server, title: item.name || item.tool };
+  }
+  // The desktop gateway also sends integration labels as “server · tool”.
+  if (item.type === 'dynamicToolCall') {
+    const label = item.tool?.match(/^([a-z][\w-]*) · (.+)$/iu);
+    if (label) return { server: label[1], title: label[2] };
+  }
+}
+
+function integrationCategory(item: Item): ActivityCategory {
+  const tool = integrationActivity(item);
+  if (tool?.server === 'chrome' || tool?.server === 'browser') return 'browser';
+  if (tool?.server === 'codex_app' && (item.tool === 'list_threads' || tool.title === 'list_threads')) return 'chats';
+  return tool ? 'integration' : 'tool';
+}
 
 export function activityCategory(item: Item): ActivityCategory {
   if (isCollaborationActivity(item)) return 'agent';
@@ -21,18 +39,14 @@ export function activityCategory(item: Item): ActivityCategory {
     }
     case 'fileChange': return 'files';
     case 'webSearch': return 'web';
-    case 'mcpToolCall': {
-      if (item.server === 'codex_app' && item.tool === 'list_threads') return 'chats';
-      return item.server ? 'integration' : 'tool';
-    }
+    case 'mcpToolCall': return integrationCategory(item);
     case 'dynamicToolCall': {
       // Older Desktop bridges send these activities with only their gateway title.
       if (item.tool === '文件变更') return 'files';
       if (item.tool === '图片预览') return 'image';
       if (item.tool === 'sleep') return 'wait';
       if (item.tool === 'webSearch') return 'web';
-      if (item.tool === 'codex_app · list_threads') return 'chats';
-      return 'tool';
+      return integrationCategory(item);
     }
     case 'functionCallOutput': return 'tool';
     case 'plan': return 'plan';
@@ -51,7 +65,9 @@ export type ProcessEntry =
   | { kind: 'group'; id: string; items: Item[] }
   | { kind: 'standalone'; id: string; item: Item };
 
-const GROUPABLE = new Set<ActivityCategory>(['read', 'list', 'search', 'command', 'web', 'integration', 'chats', 'tool', 'files']);
+const GROUPABLE = new Set<ActivityCategory>([
+  'read', 'list', 'search', 'command', 'web', 'browser', 'integration', 'chats', 'tool', 'files',
+]);
 
 /** Activities can share a group across tool types. Explanations and independent events end that group. */
 export function processEntries(items: readonly Item[]): ProcessEntry[] {

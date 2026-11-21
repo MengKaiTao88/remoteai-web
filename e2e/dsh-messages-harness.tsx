@@ -46,6 +46,7 @@ const imageThread: Thread = { id: 'fixture', cwd: '/workspace', preview: '', upd
 const stress = new URLSearchParams(location.search).has('stress');
 const deferred = new URLSearchParams(location.search).has('deferred');
 const sequence = new URLSearchParams(location.search).has('sequence');
+const timeline = new URLSearchParams(location.search).has('timeline');
 const longProcess = new URLSearchParams(location.search).has('long-process');
 const pagedProcess = new URLSearchParams(location.search).has('paged-process');
 const metrics = { updates: 0, commits: 0, renderTotal: 0, renderMax: 0, pulse: 0,
@@ -69,13 +70,23 @@ const composer = {
 const tools: Item[] = ['one', 'two', 'three'].map(id => ({
   id, type: 'commandExecution', command: 'echo ' + id, status: 'completed', aggregatedOutput: 'OUTPUT_' + id,
 }));
+const recordedTimeline: Item[] = [
+  { id: 'first-progress', type: 'agentMessage', phase: 'commentary', text: '正在检查项目文件。' },
+  tools[0],
+  { id: 'browser-action', type: 'dynamicToolCall', tool: 'chrome · 找到对应的浏览器标签页', status: 'completed',
+    output: 'Opened the matching tab.' },
+  { id: 'second-progress', type: 'agentMessage', phase: 'commentary', text: '接下来核对网页里的结果。' },
+  { id: 'editor-action', type: 'dynamicToolCall', tool: 'node_repl · 检查编辑器状态', status: 'completed',
+    output: 'The editor is ready.' },
+];
 const base: Thread = { id: 'fixture', preview: '', cwd: '/workspace', updatedAt: 1, turns: [
   { id: 'complete', status: 'completed', items: [
     { id: 'user', type: 'userMessage', text: '源码调研完成后再修改。' },
     ...(sequence ? [{ id: 'before-tools', type: 'reasoning', summary: ['**Before tools**\nInitial check.'] }] : []),
     ...(deferred ? [{ id: 'deferred-summary', type: 'processSummary', activityCount: 4,
       processRef: { threadId: 'fixture', turnId: 'complete', itemId: 'one', endItemId: 'three' } }]
-      : longProcess ? Array.from({ length: 80 }, (_, index) => ({ ...tools[0], id: `operation-${index}` })) : tools),
+      : longProcess ? Array.from({ length: 80 }, (_, index) => ({ ...tools[0], id: `operation-${index}` }))
+      : timeline ? recordedTimeline : tools),
     ...(sequence ? [{ id: 'after-tools', type: 'reasoning', summary: ['**After tools**\nSubsequent check.'] },
       { id: 'commentary-sequence', type: 'agentMessage', phase: 'commentary' as const, text: 'Narrative after execution.' }] : []),
     { id: 'answer', type: 'agentMessage', phase: 'final_answer', text: '已读取源码。最终回答保持展开。' },
@@ -158,7 +169,7 @@ function Harness() {
   return <ConfigProvider><AntApp><div className="dsh-workspace remodex-workspace" data-theme={theme} style={{ height: '100dvh' }}>
     {stress && <button data-testid="performance-pulse" style={{ position: 'fixed', left: 4, top: 4, zIndex: 30 }}
       onClick={() => { metrics.pulse++; document.body.dataset.pulse = String(metrics.pulse); }}>Pulse</button>}
-    {!imageRetry && <button data-testid="enable-history" style={{ position: 'fixed', right: 4, top: 4, zIndex: 20 }}
+    {!imageRetry && !timeline && <button data-testid="enable-history" style={{ position: 'fixed', right: 4, top: 4, zIndex: 20 }}
       onClick={() => setHasMore(true)}>Enable fixture history</button>}
     <ChatPresentation.Provider value={{ taskCards: true }}>
     <ChatImageContext.Provider value={{ threadId: 'fixture', ready: true, load: (thread, source, original, options) =>

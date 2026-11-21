@@ -1,5 +1,5 @@
 import { memo, useId, useState } from 'react';
-import { AlertCircle, ChevronDown, ClipboardList, Columns2, FilePenLine, FileText, FolderOpen,
+import { AlertCircle, ChevronDown, Chrome, ClipboardList, Columns2, FilePenLine, FileText, FolderOpen, Globe,
   Hourglass, Image, ListTree, MessageCircle, ScanSearch, Search, SquareTerminal, Users, Waypoints, Wrench, type LucideIcon } from 'lucide-react';
 import { displayText, t, useLanguage } from '../../../../shared/localization/browserClient';
 import { commandPreview } from '../../../../shared/chat/commandPreview';
@@ -9,13 +9,18 @@ import { collaborationSummary } from '../../../../shared/conversation/collaborat
 import type { Item } from '../../../../shared/conversation/types';
 import { ChatToolContent } from '../../../../shared/remote-chat/views/ChatToolContent';
 import { DshHistoryViewport } from './DshHistoryViewport';
-import { activityCategory, canInspectActivity, processActivityStatus, type ActivityCategory } from './officialActivity';
+import { activityCategory, canInspectActivity, integrationActivity, processActivityStatus,
+  type ActivityCategory } from './officialActivity';
 
 const ICONS = {
-  read: FileText, list: FolderOpen, search: ScanSearch, command: SquareTerminal, web: Search,
+  read: FileText, list: FolderOpen, search: ScanSearch, command: SquareTerminal, web: Search, browser: Globe,
   integration: Waypoints, chats: MessageCircle, tool: Wrench, files: FilePenLine, agent: Users, plan: ClipboardList,
   image: Image, review: ListTree, context: Columns2, wait: Hourglass, error: AlertCircle, other: Wrench,
 } satisfies Record<ActivityCategory, LucideIcon>;
+
+function activityIcon(category: ActivityCategory, item: Item) {
+  return category === 'browser' && integrationActivity(item)?.server === 'chrome' ? Chrome : ICONS[category];
+}
 
 function categoryLabel(category: ActivityCategory, item: Item, running = false): string {
   switch (category) {
@@ -24,7 +29,8 @@ function categoryLabel(category: ActivityCategory, item: Item, running = false):
     case 'search': return t('client.chat.searchCode');
     case 'command': return t('client.chat.runCommand');
     case 'web': return t('client.shared.searchTheWeb');
-    case 'integration': return item.server || t('client.shared.useTool');
+    case 'browser': return integrationActivity(item)?.server === 'chrome' ? 'Chrome' : t('client.shared.useTool');
+    case 'integration': return integrationActivity(item)?.server || t('client.shared.useTool');
     case 'chats': return t('client.chat.chatList');
     case 'wait': return displayText(messageLabel({ ...item, type: 'sleep' }));
     case 'image': return displayText(messageLabel(item.tool === '图片预览' ? { ...item, type: 'imageView' } : item));
@@ -39,6 +45,7 @@ function summary(item: Item, category: ActivityCategory, nested: boolean, status
   const label = categoryLabel(category, item, status === 'inProgress');
   if (category === 'agent') return collaborationSummary(item, displayText);
   if (category === 'chats' || category === 'wait' || (category === 'image' && item.tool === '图片预览')) return label;
+  if (category === 'integration' || category === 'browser') return integrationActivity(item)?.title || label;
   if (category === 'command') {
     const text = commandPreview(item.commandPreview ?? item.command ?? '');
     return text ? (nested ? text : [t(status === 'inProgress' ? 'client.mobile.running' : 'client.mobile.ran'), text].join(' ')) : label;
@@ -46,10 +53,9 @@ function summary(item: Item, category: ActivityCategory, nested: boolean, status
   const action = item.commandActions?.[0];
   const detail = category === 'files' ? activityFileNames(item)
     : category === 'web' ? item.action?.query || item.action?.queries?.[0] || item.action?.url || item.query
-    : category === 'integration' ? item.tool : action?.name || action?.query || action?.path
+    : action?.name || action?.query || action?.path
       || item.tool || item.name || item.path || item.savedPath || item.query || item.failure?.message;
   if (!detail || detail === label) return label;
-  if (nested && category === 'integration') return detail;
   return t('client.interface.message.7c639b', { value1: label, value2: detail });
 }
 
@@ -67,7 +73,7 @@ export const OfficialActivity = memo(function OfficialActivity({ item, live, pos
   const status = processActivityStatus(item, live);
   const label = summary(item, category, nested, status);
   const outcome = statusText(status);
-  const Icon = ICONS[category];
+  const Icon = activityIcon(category, item);
   const expandable = canInspectActivity(item);
   const text = outcome ? t('client.interface.message.7c639b', { value1: outcome, value2: label }) : label;
   const line = <><Icon size={15} aria-hidden="true" /><span title={text}>{text}</span>
@@ -85,7 +91,7 @@ export const OfficialActivity = memo(function OfficialActivity({ item, live, pos
 export function OfficialActivityGroup({ items, live, positionPrefix, groupKey }: {
   items: Item[]; live: boolean; positionPrefix: string; groupKey: string;
 }) {
-  const language = useLanguage();
+  useLanguage();
   const id = useId();
   const [open, setOpen] = useState(false);
   if (items.length === 1) return <OfficialActivity item={items[0]} live={live}
@@ -98,9 +104,9 @@ export function OfficialActivityGroup({ items, live, positionPrefix, groupKey }:
     labels.add(categoryLabel(activityCategory(item), item, status === 'inProgress'));
   }
   const label = running ? summary(running, activityCategory(running), false, 'inProgress')
-    : new Intl.ListFormat(language, { style: 'short', type: 'unit' }).format([...labels]);
+    : [...labels].join(' · ');
   const category = activityCategory(running ?? items[0]);
-  const Icon = ICONS[category];
+  const Icon = activityIcon(category, running ?? items[0]);
   return <div className="official-activity-group" data-activity-category={category}
     data-status={running ? 'inProgress' : undefined}>
     <button type="button" className="official-activity-line" aria-expanded={open} aria-controls={id}

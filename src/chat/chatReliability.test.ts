@@ -7,6 +7,20 @@ import { activityCategory, processActivityStatus, processEntries } from './offic
 import type { Thread } from '../../../../shared/conversation/types';
 import { loadChatImage } from './loadChatImage';
 
+it('inserts a late event for an unloaded turn before the newer visible prompt', () => {
+  const olderTurn = '0198be00-0000-7000-8000-000000000000';
+  const newerTurn = '0198be00-0001-7000-8000-000000000000';
+  const thread: Thread = { id: 'chat', cwd: '/', preview: '', updatedAt: 0, turns: [{
+    id: newerTurn, status: 'inProgress', items: [{ id: 'prompt', type: 'userMessage', text: 'New prompt' }],
+  }] };
+  const updated = updateThread(thread, { method: 'item/completed', params: {
+    threadId: 'chat', turnId: olderTurn,
+    item: { id: 'old-note', type: 'agentMessage', phase: 'commentary', text: 'Earlier progress' },
+  } });
+  expect(updated.turns?.map(turn => [turn.id, turn.items[0].id]))
+    .toEqual([[olderTurn, 'old-note'], [newerTurn, 'prompt']]);
+});
+
 it('keeps reasoning text deltas separate from summary deltas and honors both indices', () => {
   const initial: Thread = { id: 'chat', cwd: '/', preview: '', updatedAt: 0, turns: [
     { id: 'turn', status: 'inProgress', items: [{ id: 'r', type: 'reasoning', summary: ['Overview'],

@@ -3,7 +3,7 @@
   "revision": "4397ff4cb59f77011f00685b3f3c3a041456905f",
   "sharedSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-shared",
-    "revision": "e35597caa0caf1e9232bc356c5fdece613ff7c6e"
+    "revision": "76b267ae16c4bbda6c6f5503144d413a2f08708d"
   },
   "nativeSource": {
     "repository": "https://github.com/MengKaiTao88/remoteai-native",
@@ -212,7 +212,7 @@
     "shared/terminal/TerminalWorkspaceProvider.tsx": "a19229596e8d0bfdda1d671403b65a925e497220744cde08e21a7d64d6780ab1",
     "shared/conversation/remote/RemoteGuiTools.tsx": "1de63366289267bebd3ded4c7dc27030647247fa0c6e0d0c8604b85dcc6e126a",
     "shared/conversation/remote/RemoteGuiProject.tsx": "a808255c065f494ca0cb9857490456aa99107a51d30104c9d7699aba2a241a49",
-    "shared/remote-chat/client/events.ts": "79aabf18aecba208ddbec7b5da860a65c3ffdd77b5412018ff67a9c5ad177b21",
+    "shared/remote-chat/client/events.ts": "3badf722c316d089887cd88e21d09d54abda812d480d591ee52850685447b268",
     "shared/chat/imageSources.ts": "3fb16ed1abf7fa5a36db695ef2deab9b26f1d75043d4da9dbfc5c0a898ecc6b1",
     "shared/remote-chat/views/ChatTerminalLayout.tsx": "2e439c8492a21bf233ee9b887ef34a4eed9112e02f2fba7ff720714a7ad804c5",
     "shared/chat/PanelToggleButton.tsx": "bd5a3b33ec1ac443d8f646dcb6dca0df76aca14cfe2d51cd62763d95b92ffa76",
@@ -475,7 +475,7 @@
     "shared/conversation/detailsContext.ts": "53a487b448b5460b7d7500c7c6edceb4161f6e8fed1d4c841af42f59008b1a14",
     "shared/chat/acknowledgedMessages.ts": "644b11c4a3731646bdcaa0e7c335abc42f1d8820db470af7c1d9f6a7b4d93005",
     "shared/chat/itemOrder.ts": "1b69bd6b678853be7d5315972175ef45bf0110d8e73b80b398c0f47cfaad5593",
-    "shared/remote-chat/client/turnOrder.ts": "f2ca00762d51b87bca514dd3ac1fa12f82974ca22f1dbf5592841700b571336f",
+    "shared/remote-chat/client/turnOrder.ts": "77e58ef31fb349ee036109c754366605a411946e59b5a081241000fb0cbc3f13",
     "shared/remote-chat/client/processHistory.ts": "241dc75df69bd25ac2ea6f5f0586268538f3e11ac1ab32cbfa5f491e5171286e",
     "shared/chat/threadOrder.ts": "37e19e39f47273d524c517365f69278c023057c654efcda7f7a788198eb44f07",
     "shared/chat/groups/model.ts": "7469034a76726f5f214d1396ec86f417c22919fc13f49aa7b74c3602dc5a8b1c",

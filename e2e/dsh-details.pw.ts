@@ -25,6 +25,28 @@ test('visible commentary stays in order while internal summaries do not split th
   await expect(sequence.getByText('Narrative after execution.', { exact: true })).toBeVisible();
 });
 
+test('recorded desktop activity keeps its title, type, and place in the Web timeline', async ({ page }, info) => {
+  await page.goto('e2e/dsh-messages-harness.html?timeline=1', { waitUntil: 'commit' });
+  const process = page.locator('.remodex-process').first();
+  await process.locator('.dsh-process-trigger').click();
+  const group = process.locator('.official-activity-group > button');
+  await expect(group).toContainText(/ · Chrome$/);
+  await group.click();
+  const title = process.getByRole('button', { name: '找到对应的浏览器标签页', exact: true });
+  const browser = process.locator('[data-process-item=browser-action]');
+  await expect(browser).toHaveAttribute('data-activity-category', 'browser');
+  await expect(browser.locator('svg.lucide-chrome')).toBeVisible();
+  const entries = process.locator('.remodex-commentary, [data-process-item]');
+  await expect(entries).toHaveText([
+    '正在检查项目文件。', 'echo one', '找到对应的浏览器标签页', '接下来核对网页里的结果。', '检查编辑器状态',
+  ]);
+  await title.click();
+  await expect(browser.getByText('Opened the matching tab.', { exact: true })).toBeVisible();
+  await expect(process.locator('[data-process-item=editor-action]')).toHaveAttribute('data-activity-category', 'integration');
+  await process.scrollIntoViewIfNeeded();
+  await screenshot(page, info, 'recorded-timeline');
+});
+
 test('deferred historical processes load activity only when opened', async ({ page }, info) => {
   await page.goto('e2e/dsh-messages-harness.html?deferred=1');
   await expect(page.getByText('已读取源码。最终回答保持展开。')).toBeVisible();
