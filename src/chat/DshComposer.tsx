@@ -70,6 +70,7 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
       refreshModels={controller.refreshModels} active={enabled} ready={state.ready && !state.selectedArchived}
       sending={state.sending} running={!!runningTurn}
       interrupted={state.selected?.turns?.at(-1)?.status === 'interrupted'}
+      continueInterrupted={controller.continueInterrupted}
       send={input => controller.enqueueMessage(input)} interrupt={() => controller.interrupt()} />
   </div>;
 }
