@@ -84,7 +84,7 @@
     "shared/remote-chat/views/ChatConnectionHealth.tsx": "4ac196f56a8def37b0b60c96bd2de650904d5a0c32afb992ca401828466b9b3c",
     "shared/remote-chat/views/ChatConnectionInfo.tsx": "221c8f381af1184daf9f2ca63ac75c37a955a9125d99a9755435343e181ad65a",
     "shared/remote-chat/views/ComposerFooter.tsx": "685abb04ea2500bb4dc9d5ad1559dba84d72e2086aaca3fcb51948e06698ba71",
-    "shared/remote-chat/client/controller.ts": "6392a6a4da386a976597098e657b37e8edb1539d0ae0e65fdacd2b51a27ddd32",
+    "shared/remote-chat/client/controller.ts": "f6a7baff63ae998e3706035ff4bad2db3dc8c034f8454c73bde71af9719d4d4b",
     "shared/remote-chat/trustedHost.ts": "0108ec06a394f6812d014a2536e574bb076730c77ff9d33f37dedc8abc3cb024",
     "shared/remote-chat/views/composer.css": "25f5293ffd8cd7985c4238cd656f2e86d304ff108765c7af84ca82f1bf142582",
     "shared/remote-chat/views/composerDesktop.css": "7fd6d35f224109b77f32a6b2a28c669c9f3d16119517597379009aa193bcd7ab",
@@ -1893,5 +1893,11 @@
     "shared/remote-chat/historyWork.ts": "5bf2ac2c080eafddba84dc27b131c62a5d090f93e306712562817fece5983930",
     "shared/remote-chat/history.worker.ts": "27339bbc3e9624b80139ff55c18671e704f15ee1027b3f896f9ebc0ab3f913f8",
     "shared/remote-chat/historyImages.ts": "ae489915758fd0ad0c7038048274993dd657ab4971d59ec2a89d7cec332af263"
+  },
+  "sourceOverlays": {
+    "shared/remote-chat/client/controller.ts": {
+      "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
+      "revision": "cdb13e10524d783536a70302f0acacb674fb0140"
+    }
   }
 }
