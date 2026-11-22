@@ -24,6 +24,20 @@ test('selects a plugin by typing slash and sends it with the existing draft', as
   await expect(plugin).toBeVisible();
   await expect(page.getByRole('menuitem', { name: '目标模式' })).toBeVisible();
   await screenshot(page, info, 'slash-plugins');
+  if (['phone-narrow-large', 'iphone-webkit'].includes(info.project.name)) {
+    await page.evaluate(() => {
+      const viewport = window.visualViewport!;
+      Object.defineProperty(viewport, 'height', { configurable: true, value: innerHeight - 300 });
+      viewport.dispatchEvent(new Event('resize'));
+    });
+    const popover = page.locator('.chat-composer-popover');
+    await expect.poll(() => popover.evaluate(node => {
+      const rect = node.getBoundingClientRect();
+      const { height, offsetTop } = window.visualViewport!;
+      return rect.top >= offsetTop && rect.bottom <= offsetTop + height;
+    })).toBe(true);
+    await screenshot(page, info, 'slash-plugins-keyboard');
+  }
   await input.fill('$git');
   await expect(plugin).toHaveCount(0);
 

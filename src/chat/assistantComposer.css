@@ -56,7 +56,8 @@
 .remodex-context-ring { display:grid; place-items:center; flex:0 0 36px; min-width:36px; height:44px;
   border:0; background:none; color:var(--dsh-muted); padding:0; cursor:pointer; touch-action:manipulation; }
 .dsh-workspace .chat-composer-popover { position:absolute; bottom:calc(100% + 8px); left:0;
-  width:min(280px,calc(100vw - 32px)); max-height:min(400px,55dvh); overflow:auto; overscroll-behavior:contain;
+  width:min(280px,calc(100vw - 32px)); max-height:min(400px,calc(var(--chat-height,100dvh) * .55));
+  overflow:auto; overscroll-behavior:contain;
   background:var(--dsh-solid); color:var(--dsh-ink); border:1px solid var(--dsh-line); border-radius:18px;
   padding:5px; box-shadow:0 8px 32px #0002; }
 .dsh-workspace .chat-add-menu { display:flex; flex-direction:column; gap:0; padding:0; }
