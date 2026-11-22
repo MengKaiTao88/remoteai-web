@@ -76,7 +76,7 @@
     "apps/desktop/e2e/model-availability-checks.ts": "956bfd145bb507265082a29d2c4340bea988b07436b258241d9d8a4ecb2a0414",
     "apps/desktop/e2e/project-reference-harness.tsx": "ceb0f47a7f1f418b56f604ba8261ba56fa80516e32a7445bccaf4e598b7c02fc",
     "shared/remote-chat/views/ChatComposer.tsx": "715c91a96da5b2cf431ffa549c6b1c2ce073da746e96ee3dcc3a0052e3e69860",
-    "shared/remote-chat/views/composerProps.ts": "9d8419febc15d1393d4d3bcc06cca256b893f44790454fc4804d76d5958a7b81",
+    "shared/remote-chat/views/composerProps.ts": "57468549fe7b7e67e42f30cc5a74ed7fbe01aba3825a13732ace1e5758e4e7e3",
     "shared/remote-chat/client/types.ts": "89386c7154a0c37a1e40d11d606b5802be98c55956aef8f787bd253e76c985fb",
     "shared/remote-chat/client/promptSuggestion.ts": "966b8023f9522f8e6edc05fe3a6e1be51e55cff1d0db54eeeabd78d82d24d818",
     "shared/conversation/testing/models.ts": "1c7e68c5405808f2e6749cdd8f3575a37c53f85867d1cd8e878ab62a14198b47",
@@ -84,7 +84,7 @@
     "shared/remote-chat/views/ChatConnectionHealth.tsx": "4ac196f56a8def37b0b60c96bd2de650904d5a0c32afb992ca401828466b9b3c",
     "shared/remote-chat/views/ChatConnectionInfo.tsx": "221c8f381af1184daf9f2ca63ac75c37a955a9125d99a9755435343e181ad65a",
     "shared/remote-chat/views/ComposerFooter.tsx": "685abb04ea2500bb4dc9d5ad1559dba84d72e2086aaca3fcb51948e06698ba71",
-    "shared/remote-chat/client/controller.ts": "29278bf3e35a2550ebdcf4904e3432971879c7db9c1a72a722df3a9420463c43",
+    "shared/remote-chat/client/controller.ts": "01bf65c2c5c2c09a36821e9f8be5aa38e6007c381f2306cd5c96184fc3b9c91f",
     "shared/remote-chat/trustedHost.ts": "0108ec06a394f6812d014a2536e574bb076730c77ff9d33f37dedc8abc3cb024",
     "shared/remote-chat/views/composer.css": "25f5293ffd8cd7985c4238cd656f2e86d304ff108765c7af84ca82f1bf142582",
     "shared/remote-chat/views/composerDesktop.css": "7fd6d35f224109b77f32a6b2a28c669c9f3d16119517597379009aa193bcd7ab",
@@ -109,7 +109,7 @@
     "shared/remote-chat/policy.ts": "165e938c60cb2cffcfd28f36739f62ed03fdcbaa26be630aa7aa60a356a5c6bd",
     "shared/remote-chat/views/messages.css": "e6c24fcace131a92fccc15987942fd241bcd5263d816df570e4eac31040346b7",
     "shared/remote-chat/archiveDownload.ts": "914943659ffedf572fa92244a21c2e1e5158c6e0e6c60dd37b97e4035f4b7948",
-    "shared/conversation/types.ts": "3e69fa0b40d54f023715b3d6ca5f118dd9d364ecd375a711d5e00a90773c703b",
+    "shared/conversation/types.ts": "11dc0fa24d6fc8a9c7a8de37542ab2c79ba91da2ac54c6970d3424f510417335",
     "shared/remote-chat/views/ChatPresentation.ts": "eebc1ceb50d436fb4e06752a78ccac37a1cf14772a85f8dbbf8b3601a7a9bd54",
     "shared/remote-chat/views/ChatImage.tsx": "2194b567f78fcc2cc1fcc5103033b0b86132312373f5d7b81e7cd14a6b7502ed",
     "shared/remote-chat/client/imageCache.ts": "a3266e1f66d67832889359bb2a9659ac5f1f608f1ace61e778a348e7cae56543",
@@ -203,7 +203,7 @@
     "shared/legal/AgreementConsent.tsx": "7f81c1bafb923942ae9ec23b70c7ad19fb6d79e10628887f91099e983c3f3e72",
     "shared/legal/useAgreementConsent.ts": "27e80e0c8b705249e25bc04a3c0a9280b7ab44cbf01f566d46769f9fe65eefd1",
     "shared/navigation/PageSwipeContext.ts": "7c84446bb0864d68c94d559cad8dfd686299b9a888a9827e385161130c7fca83",
-    "shared/remote-chat/views/ConnectedChat.tsx": "054d6024f87cd78ae27b8be6e1a753f3377ad490fdbc7006bad9c12eb0ef325e",
+    "shared/remote-chat/views/ConnectedChat.tsx": "54c117dc59870ed3b3596dbc08993f4a3c9e628e40dbdcd168401df406d473e6",
     "shared/downloads/useDownloadConnection.ts": "cd7adfa0388199962d2330b49d1c334bcc236ae9ce3d5da378e28e37b9380bad",
     "shared/remote-chat/useRetainedChatDevices.ts": "b9dfe82e83d0b5df3b10a7656bf3f5cd1310d54685d50093db1517f6945accaa",
     "shared/remote-chat/ComputerSearchBar.tsx": "b10e8f111c7974063ba49b5b406760aa5c2b98f124d5822a9210d268620e9801",
@@ -279,7 +279,7 @@
     "shared/remote-chat/views/ComposerConversationMenu.tsx": "5652999f87b918bb5a3e3c2f0657c2bdcc590c327ec80a86daae19bb662cae27",
     "shared/remote-chat/views/ComposerFileMenu.tsx": "e9dd8b72eaf61c131f1600d69e3fd947613e1d1c80edf1a2c02424ca10583053",
     "shared/remote-chat/views/ComposerSshMenu.tsx": "93f006cd21a9829c9a0e2da9acc2e69e323d5f816358c8b3f034960db129af00",
-    "shared/remote-chat/views/useComposerState.ts": "d53217474fc50ebbef87e000c7122ecd75af757dc7927e29172b154a82c63a23",
+    "shared/remote-chat/views/useComposerState.ts": "f145b8b5659212e0fbb97bf4f64d482e5fbe6108eb905a50ef5fabb740e54601",
     "shared/remote-chat/views/composerReading.css": "a4731114fa899bfd0a0a62d395ad840b46f6cb62a91d24ff1adcbc40197363cb",
     "shared/remote-chat/views/ChatContextSettings.tsx": "eedcafd55ec1a244490b903b9ffead002a1acaaa969bb0fcbc0c52db2d6c507b",
     "shared/remote-chat/views/ChatUsage.tsx": "e5cf5ae6be12cbc8325913aad64cdfb6d0e2f1fcf3bb496aab65d8927aed4787",
@@ -1897,11 +1897,11 @@
   "sourceOverlays": {
     "shared/remote-chat/client/controller.ts": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
-      "revision": "9f9215431cdc6e2ff361386ff86a8c84b6ef75b8"
+      "revision": "51bae7c24ad78beea25afc6e9ec3776c6cb35151"
     },
     "shared/conversation/types.ts": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
-      "revision": "9f9215431cdc6e2ff361386ff86a8c84b6ef75b8"
+      "revision": "51bae7c24ad78beea25afc6e9ec3776c6cb35151"
     },
     "shared/remote-chat/views/ChatComposer.tsx": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
@@ -1913,11 +1913,11 @@
     },
     "shared/remote-chat/views/composerProps.ts": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
-      "revision": "9f9215431cdc6e2ff361386ff86a8c84b6ef75b8"
+      "revision": "51bae7c24ad78beea25afc6e9ec3776c6cb35151"
     },
     "shared/remote-chat/views/useComposerState.ts": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
-      "revision": "9f9215431cdc6e2ff361386ff86a8c84b6ef75b8"
+      "revision": "51bae7c24ad78beea25afc6e9ec3776c6cb35151"
     },
     "shared/remote-chat/views/ComposerAttachments.tsx": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
@@ -1926,6 +1926,10 @@
     "shared/remote-chat/views/useComposerMenu.ts": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
       "revision": "9f9215431cdc6e2ff361386ff86a8c84b6ef75b8"
+    },
+    "shared/remote-chat/views/ConnectedChat.tsx": {
+      "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
+      "revision": "51bae7c24ad78beea25afc6e9ec3776c6cb35151"
     }
   }
 }

@@ -39,10 +39,14 @@ async function settingsAndContinue({ page, request }: Journey) {
   const input = page.getByRole('textbox', { name: '聊天消息' });
   await click(page.getByRole('button', { name: '暂停生成' }));
   await expect(input).toHaveValue('');
+  const thread = (await state(request)).threads.find(entry => entry.id === 'demo-chat');
+  const interrupted = thread?.turns?.at(-1);
+  expect(interrupted?.status).toBe('interrupted');
+  const before = await operationCount(request, 'send');
   await click(page.getByRole('button', { name: '继续生成' }));
-  await settled(page);
-  expect((await state(request)).operations.filter((entry) => entry.operation === 'send').at(-1))
-    .toMatchObject({ text: '请继续完成刚才中断的任务。', model: 'test-model', effort: 'high', access: 'read-only' });
+  await expect.poll(async () => (await state(request)).operations.findLast(entry =>
+    entry.operation === 'continueInterruptedTask')).toMatchObject({ threadId: thread?.id, turnId: interrupted?.id });
+  expect(await operationCount(request, 'send')).toBe(before);
 }
 
 async function approvals({ page, request, info }: Journey) {
