@@ -99,11 +99,22 @@ test('stops the current turn and continues after the computer interrupts', async
   await emit('turn/completed', { turn: { ...desktopTurn, status: 'interrupted' } });
   await expect(resume).toBeEnabled();
   await screenshot(page, info, 'continue-after-desktop-stop');
+  const before = await state(request);
+  const directAction = { operation: 'continueInterruptedTask', threadId, turnId: desktopTurn.id };
   await activate(resume);
-  const continued = '请继续完成刚才中断的任务。';
-  await expect.poll(async () => (await state(request)).threads.find(thread => thread.id === threadId)?.turns
-    ?.flatMap(turn => turn.items).filter(item => item.type === 'userMessage'
-      && item.content?.some(part => part.type === 'text' && part.text === continued)).length).toBe(1);
-  expect((await state(request)).operations.filter(entry => entry.operation === 'send' && entry.text === continued))
-    .toHaveLength(1);
+  await expect.poll(async () => (await state(request)).operations.slice(before.operations.length))
+    .toEqual(expect.arrayContaining([expect.objectContaining(directAction)]));
+  // The test host publishes the new empty turn, as the desktop owner does after accepting continuation.
+  await emit('turn/started', { turn: { ...desktopTurn, id: '019a0000-0003-7000-8000-000000000004' } });
+  await expect(pause).toBeEnabled();
+  await expect(page.getByText('请继续完成刚才中断的任务。', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.dsh-input-queue')).toHaveCount(0);
+  const after = await state(request);
+  const writes = after.operations.slice(before.operations.length).filter(entry =>
+    ['continueInterruptedTask', 'queueEnqueue', 'send', 'steer'].includes(String(entry.operation)));
+  expect(writes).toEqual([expect.objectContaining(directAction)]);
+  const userItems = (threads: typeof before.threads) => threads.find(thread => thread.id === threadId)?.turns
+    ?.flatMap(turn => turn.items).filter(item => item.type === 'userMessage');
+  expect(userItems(after.threads)).toEqual(userItems(before.threads));
+  await screenshot(page, info, 'continued-without-message');
 });
