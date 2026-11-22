@@ -6,7 +6,7 @@ import { useComposerSuggestion } from '../../../../shared/chat/useComposerSugges
 import { ComposerSuggestion } from '../../../../shared/remote-chat/views/ComposerSuggestion';
 import { ComposerInput } from '../../../../shared/remote-chat/views/ComposerInput';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ArrowUp, ChevronRight, Gauge, ListFilter, ListOrdered, Play, Plus, Square } from 'lucide-react';
 import { COMPOSER_ACTION_LABELS } from '../../../../shared/remote-chat/composerAction';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
@@ -63,7 +63,7 @@ export function DshComposerInput(props: ComposerProps & {
     && (!loaded || reported.turns >= loaded.turns && reported.steps >= loaded.steps) ? reported : undefined);
   const counts = totals ?? loaded;
   const { models, selection, settingsBusy, settingsError, updateSettings, readUsage, tokenUsage, queue,
-    uploadProgress, threadId, active, ready, sending, goal, goalBusy, catalog, cwd, loadFiles, loadCatalog } = props;
+    uploadProgress, threadId, active, ready, sending, goal, goalBusy, catalog, cwd, loadFiles } = props;
   const state = useComposerState(props);
   useComposerAutoFocus({ input: state.menu.input, active, disabled: !ready, scope: threadId });
   const { draft, attachments, menu, busy, action, actionDisabled, goalMode } = state;
@@ -86,7 +86,6 @@ export function DshComposerInput(props: ComposerProps & {
     fill: text => { draft.setText(text); menu.setSelection({ start: text.length, end: text.length });
       menu.input.current?.focus(); } });
   const editing = draft.images.find(image => image.id === editingId);
-  const readCatalog = useCallback(() => loadCatalog(cwd), [loadCatalog, cwd]);
   useEffect(() => { if (!active || busy || !editing) setEditingId(null); }, [active, busy, editing]);
   useEffect(() => { if (!active) { setSettings(false); setAdding(false); setProjectFiles(null); } }, [active]);
   useEffect(() => { setSettings(false); setAdding(false); setProjectFiles(null); }, [threadId]);
@@ -183,10 +182,8 @@ export function DshComposerInput(props: ComposerProps & {
           key={threadId} input={menu.input} query={menu.query} threadId={threadId} ready={ready && !busy}
           load={props.loadConversations} close={menu.close}
           choose={reference => { if (attachments.add(reference)) menu.consumeTrigger(); }} />}
-        {!adding && menu.plugins && <ComposerPluginMenu catalog={catalog} query={menu.query} load={readCatalog}
-          input={menu.input} close={menu.close}
-          chooseSkill={menu.choose}
-          choosePlugin={plugin => { attachments.addPlugin(plugin); menu.consumeTrigger(); }} />}
+        {!adding && menu.plugins && <ComposerPluginMenu catalog={catalog} query={menu.query} load={state.readCatalog}
+          input={menu.input} close={menu.close} chooseSkill={menu.choose} choosePlugin={state.choosePlugin} />}
         {!adding && menu.files && <ComposerFileMenu key={`${threadId}:${cwd}`} input={menu.input}
           query={menu.query} threadId={threadId} cwd={cwd} ready={ready && !busy} load={loadFiles} close={menu.close}
           choose={reference => { if (attachments.add(reference)) menu.consumeTrigger(); }} />}
@@ -195,6 +192,7 @@ export function DshComposerInput(props: ComposerProps & {
           choose={reference => { if (attachments.add(reference)) menu.consumeTrigger(); }} />}
         {!adding && !menu.plugins && !menu.conversations && !menu.files && !menu.ssh && <ChatCommandMenu
             catalog={catalog} query={menu.query} skillsOnly={menu.skillsOnly} input={menu.input}
+            plugins={ready ? { load: state.readCatalog, choose: state.choosePlugin } : undefined}
             compactReason={props.compactReason} choose={menu.choose} compact={() => { void menu.runCompact(); }}
             goal={() => { menu.consumeTrigger(); goalMode.enter(); }} close={menu.close} />}</div>}
       <div className="dsh-input-layout"

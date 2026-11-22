@@ -66,6 +66,8 @@
   cursor:pointer; text-align:left; }
 .dsh-workspace .chat-add-menu button:hover { background:var(--dsh-control); }
 .dsh-workspace .chat-add-menu svg { background:none; width:19px; height:19px; padding:0; }
+.dsh-workspace .chat-command-menu .chat-menu-options > button[aria-current="true"] {
+  background:var(--dsh-control); box-shadow:inset 3px 0 var(--dsh-ink); }
 .dsh-input .chat-error { max-width:400px; margin:4px 8px 8px; font-size:.85em; }
 .dsh-composer-dock > .chat-processing-status { margin:0 auto 4px; min-height:20px; font-size:.8em; color:var(--dsh-muted); }
 .dsh-composer-dock .chat-processing-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
