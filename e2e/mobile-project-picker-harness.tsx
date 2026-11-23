@@ -18,6 +18,7 @@ setThemeMode(dark ? 'dark' : 'light');
 setLanguage((params.get('language') ?? 'zh') as AppLanguage<'native'>);
 saveGlobalFontSize(Number(params.get('font') ?? 14));
 const { controller, fixture } = createMobileProjectPickerFixture();
+controller.snapshot().threads.push({ id: 'history-only', cwd: 'E:/HistoryOnly', preview: '', updatedAt: 1 });
 Object.assign(window, { projectPickerFixture: fixture });
 
 function Harness() {

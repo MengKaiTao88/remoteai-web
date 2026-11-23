@@ -1,5 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 
+test('shows saved folders instead of history-only folders for new chats', async ({ page }) => {
+  await page.goto('e2e/mobile-project-picker-harness.html');
+  await page.getByRole('button', { name: '选择项目', exact: true }).click();
+  const projects = page.locator('.chat-project-choices');
+  await expect(projects.getByText('Projects', { exact: true })).toBeVisible();
+  await expect(projects.getByText('HistoryOnly', { exact: true })).toHaveCount(0);
+  await projects.getByText('Projects', { exact: true }).click();
+  await expect(page.getByTestId('chosen-project')).toHaveText('E:/Workspace/Projects');
+});
+
 async function open(page: Page, parameters = '') {
   await page.goto(`e2e/mobile-project-picker-harness.html${parameters}`);
   await page.getByRole('button', { name: '选择项目', exact: true }).click();

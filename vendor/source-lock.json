@@ -622,7 +622,7 @@
     "apps/desktop/src/pages/settings/ProjectBrowserSettingsCard.tsx": "e08764cc504c0010266928dd21edd1fd2ab4fd4986ee4871f5678ab1da9082f0",
     "apps/desktop/src/pages/codexGui/remote/RemoteUserMessage.tsx": "0ec0e5ed110e9b4a0353707bb97b5886f83a8ccc0ce7950326e928e948ef623a",
     "shared/conversation/editMessage.ts": "0e5977e3af5cdd98e07865b545820e4a673cc3a58df6d366aed186d1f474fd79",
-    "shared/remote-chat/client/useProjectSwitch.ts": "607a2159203e707b83336c190b829af3b761f89c961abf987b8032c875c0475c",
+    "shared/remote-chat/client/useProjectSwitch.ts": "a799d016c5e932dc76832ced917c50a7472118b2d37e6f94c6770ae6a57a3045",
     "shared/remote-chat/views/ChatProjectPicker.tsx": "ba99f649e2c76a4405b4bda10d70c084e41ac2ae5a047ab9efcc4e49e09b62b2",
     "shared/remote-chat/views/projectSwitch.css": "a2387cfcdf68ddbae6dff62bea3f67ea477c7920990a7a1ada11f274fa447132",
     "shared/conversation/remote/RemoteProjectPicker.tsx": "3a244de030aa50da61f4c17c15113c435084cd9bffed3a140a2b7245c9f43698",
@@ -1930,6 +1930,10 @@
     "shared/remote-chat/views/ConnectedChat.tsx": {
       "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
       "revision": "51bae7c24ad78beea25afc6e9ec3776c6cb35151"
+    },
+    "shared/remote-chat/client/useProjectSwitch.ts": {
+      "repository": "https://github.com/MengKaiTao88/remoteai-shared.git",
+      "revision": "8624bfcf019b2c263f720c953db787464e918f36"
     }
   }
 }
