@@ -19,13 +19,13 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
 }) {
   const { state, controller } = chat;
   const cwd = state.selected?.cwd ?? state.draftProject?.cwd ?? '';
-  const catalog = useChatCatalog(controller, cwd, state.ready);
+  const enabled = active && chat.foreground;
+  const catalog = useChatCatalog(controller, cwd, state.ready && enabled, state.selected?.id);
   const runningTurn = currentRunningTurn(state.selected?.turns);
   const selected = state.selected as (Thread & {
     conversationCounts?: { turns: number; steps: number };
     officialSidebar?: object;
   }) | null;
-  const enabled = active && chat.foreground;
   const [planOpen, setPlanOpen] = useState(false);
   const planTurn = state.selected?.turns?.at(-1);
   const plan = planTurn?.plan ?? [];

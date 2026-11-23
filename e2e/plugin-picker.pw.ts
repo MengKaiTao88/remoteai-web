@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { fixtureUrl, login, navigate, openChatList, operationCount, screenshot, settled, state } from './chat-helpers';
 
+test.use({ actionTimeout: 75_000 });
+test.describe.configure({ timeout: 180_000 });
+
 test('selects a plugin by typing slash and sends it with the existing draft', async ({ page, request }, info) => {
   const touch = !!info.project.use.hasTouch;
   await page.addInitScript(({ dark, large }) => {
@@ -67,4 +70,32 @@ test('selects a plugin by typing slash and sends it with the existing draft', as
   expect(sent[0]).toMatchObject({ text: '检查  今天的改动', attachments: [
     { kind: 'plugin', name: 'GitHub', path: 'plugin://github@fixture' },
   ] });
+});
+
+test('reuses the prefetched skill list and sends a selected skill', async ({ page, request }, info) => {
+  await request.post(`${fixtureUrl}/test/reset`);
+  await login(page, 35_000);
+  await navigate(page, 'Agent Hub');
+  const input = page.getByRole('textbox', { name: '聊天消息', exact: true });
+  await expect(input).toBeVisible({ timeout: 35_000 });
+  await expect.poll(() => operationCount(request, 'skills')).toBeGreaterThan(0);
+  const menu = page.locator('.chat-command-menu');
+  const skill = menu.getByRole('menuitem', { name: '使用技能 代码检查', exact: true });
+  await input.fill('/');
+  await expect(skill).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: '使用插件 GitHub' })).toBeAttached();
+  const hydratedReads = await operationCount(request, 'skills');
+  await screenshot(page, info, 'slash-skill-menu');
+  await input.press('Escape');
+  await input.fill('/review');
+  await expect(skill).toBeVisible();
+  const touch = Boolean(info.project.use.hasTouch);
+  if (touch) await skill.tap(); else await input.press('Enter');
+  await expect(input).toHaveValue('$review ');
+  expect(await operationCount(request, 'skills')).toBe(hydratedReads);
+  await screenshot(page, info, 'slash-skill-selected');
+  const send = page.getByRole('button', { name: '发送消息', exact: true });
+  if (touch) await send.tap(); else await send.click();
+  await expect.poll(async () => (await state(request)).operations.find(entry => entry.operation === 'send'))
+    .toMatchObject({ skills: [{ name: 'review', path: 'F:/skills/review/SKILL.md' }] });
 });
