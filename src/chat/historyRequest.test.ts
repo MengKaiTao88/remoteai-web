@@ -7,13 +7,25 @@ import { boundedHistoryRequest } from './historyRequest';
 
 afterEach(() => vi.useRealTimers());
 
-test('a stalled view acknowledgement releases the history loading chain', async () => {
+test('a stalled view acknowledgement cannot block the current history or invalidate the next view', async () => {
   vi.useFakeTimers();
-  const request = vi.fn(() => new Promise(() => {})) as unknown as ChatConnection['request'];
-  const result = boundedHistoryRequest(request)('request', { operation: 'viewThread', threadId: 'old' });
-  const rejected = expect(result).rejects.toThrow('client.projectBrowser.theRequestTimedOutPleaseTryAgain');
-  await vi.advanceTimersByTimeAsync(10_000);
-  await rejected;
+  const current = { thread: { id: 'current', turns: [{ id: 'live-turn', status: 'inProgress' }] } };
+  const request = vi.fn().mockReturnValueOnce(new Promise(() => {}))
+    .mockResolvedValueOnce(current).mockResolvedValueOnce({});
+  const send = boundedHistoryRequest(request as unknown as ChatConnection['request']);
+  const result = send('request', { operation: 'viewThread', threadId: 'current' })
+    .then(() => send('request', { operation: 'read', threadId: 'current' }));
+  await vi.advanceTimersByTimeAsync(2_000);
+  await expect(result).resolves.toEqual(current);
+  await expect(send('request', { operation: 'viewThread', threadId: 'next' })).resolves.toEqual({});
+  expect(request.mock.calls.map(([, body]) => [body.operation, body.threadId]))
+    .toEqual([['viewThread', 'current'], ['read', 'current'], ['viewThread', 'next']]);
+});
+
+test('an explicit view rejection still reaches the chat controller', async () => {
+  const request = vi.fn().mockRejectedValue(new Error('View rejected')) as unknown as ChatConnection['request'];
+  await expect(boundedHistoryRequest(request)('request', { operation: 'viewThread', threadId: 'old' }))
+    .rejects.toThrow('View rejected');
 });
 
 test('a pending history read settles while late responses remain harmless', async () => {

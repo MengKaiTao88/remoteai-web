@@ -4,7 +4,7 @@ import type { HistoryPage, HistoryWindow } from '../../../../shared/remote-chat/
 import type { Thread } from '../../../../shared/remote-chat/client/types';
 
 const HISTORY_TIMEOUT_MS = 40_000;
-const VIEW_TIMEOUT_MS = 10_000;
+const VIEW_TIMEOUT_MS = 2_000;
 const HISTORY_PAGE_ITEMS = 16;
 type Request = ChatConnection['request'];
 type InitialHistory = { threadId: string; known: HistoryVersion; window?: HistoryWindow; deferToolDetails?: boolean };
@@ -36,12 +36,18 @@ async function readFirstPage<T>(request: Request, input: InitialHistory, body: u
 export function boundedHistoryRequest(request: Request, fastFirstPage = false): Request {
   return <T>(method: Parameters<Request>[0], body?: unknown): Promise<T> => {
     const operation = body && typeof body === 'object' && 'operation' in body ? body.operation : undefined;
-    const deadline = operation === 'viewThread' ? VIEW_TIMEOUT_MS
+    const viewing = operation === 'viewThread';
+    const deadline = viewing ? VIEW_TIMEOUT_MS
       : operation === 'syncHistory' || operation === 'read'
         || operation === 'processDetails' || operation === 'toolDetails' ? HISTORY_TIMEOUT_MS : undefined;
     if (!deadline) return request<T>(method, body);
     return new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('client.projectBrowser.theRequestTimedOutPleaseTryAgain')), deadline);
+      const timer = setTimeout(() => {
+        // The host also registers the view when it handles a history read. Its separate
+        // subscription acknowledgement must not keep the current history from loading.
+        if (viewing) resolve({} as T);
+        else reject(new Error('client.projectBrowser.theRequestTimedOutPleaseTryAgain'));
+      }, deadline);
       const first = fastFirstPage && method === 'request' && operation === 'syncHistory' && initialHistory(body as object);
       const paged = fastFirstPage && method === 'request' && operation === 'syncHistory'
         && body && typeof body === 'object'
