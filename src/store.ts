@@ -74,11 +74,14 @@ export const loadAccountSummaries = createAsyncThunk("data/startupAccounts", asy
   return !accountsLoaded && !accountStartupRequest && !refreshing;
 } });
 
-export const bootstrapApp = createAsyncThunk("auth/bootstrap", async () => {
+const personalWeb = import.meta.env.VITE_PERSONAL_WEB === 'true';
+
+export const bootstrapApp = createAsyncThunk("auth/bootstrap", async (_, { dispatch }) => {
   const session = loadStoredSession();
   if (!session) return { session: null, data: null };
   try {
     const data = await fetchDashboardIdentity();
+    if (!personalWeb && getActiveSession()) void dispatch(loadAccountSummaries());
     return { session: getActiveSession(), data };
   } catch (error) {
     if (!getActiveSession()) return { session: null, data: null };
@@ -86,7 +89,7 @@ export const bootstrapApp = createAsyncThunk("auth/bootstrap", async () => {
   }
 }, { condition: (_, { getState }) => {
   const state = getState() as { auth: AuthState; data: DataState };
-    return !state.auth.initialized && !state.data.loading;
+  return !state.auth.initialized && !state.data.loading;
 } });
 
 export const signIn = createAsyncThunk(
@@ -94,7 +97,7 @@ export const signIn = createAsyncThunk(
   async (payload: { baseUrl: string; email: string; password: string }) => {
     await login(payload.baseUrl, payload.email, payload.password);
     // API authorization alone expires a session; loading failures remain retryable.
-    const data = await fetchDashboardIdentity();
+    const data = await (personalWeb ? fetchDashboardIdentity() : fetchDashboardData());
     return { session: getActiveSession(), data };
   },
 );
@@ -297,6 +300,7 @@ const dataSlice = createSlice({
     .addCase(signIn.fulfilled, (state, action) => {
       state.loading = false;
       Object.assign(state, action.payload.data);
+      if ('accounts' in action.payload.data) state.accountsLoaded = true;
       state.lastRefreshAt = usageUpdatedAt(state.accounts);
     })
     .addCase(signIn.rejected, (state, action) => {

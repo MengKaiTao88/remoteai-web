@@ -322,9 +322,15 @@ function AppShell() {
   const quotas = session && quotaChannel?.scope === quotaConnectionScope(session, selectedChatDeviceId) ? quotaChannel : null;
   const quotaSource = useSyncExternalStore(quotas?.subscribe ?? noQuotaSubscription,
     () => quotas?.snapshot().source);
+  const accountDevice = devices.find(device => device.deviceId === selectedChatDeviceId)
+    ?? devices.find(device => device.online);
+  const personalWeb = import.meta.env.VITE_PERSONAL_WEB === 'true';
+  // Older hosts expose account usage independently of their chat connection.
+  const legacyAccounts = quotaSource === 'legacy' || (quotaSource !== 'cockpit'
+    && (!personalWeb || !accountDevice?.online || accountDevice.capabilities?.includes('account-usage') === true));
   useSyncDownloadAccount(session ? downloadOwner(session) : '');
   const desktopLayout = useDesktopLayout();
-  const personalMobile = import.meta.env.VITE_PERSONAL_WEB === 'true' && !desktopLayout;
+  const personalMobile = personalWeb && !desktopLayout;
   const personalManagement = personalMobile && (page === 'accounts' || page === 'discover' || page === 'settings');
   useChatViewport(page === 'lounge' && !desktopLayout);
   const lastRefreshRef = useRef(Date.now());
@@ -368,7 +374,7 @@ function AppShell() {
   }, [dispatch, session]);
 
   useEffect(() => {
-    if (!session || !accountsLoaded || (quotaSource && quotaSource !== 'legacy')) return;
+    if (!session || !accountsLoaded || !legacyAccounts) return;
     let intervalId: number;
     const schedule = () => {
       window.clearInterval(intervalId);
@@ -383,7 +389,7 @@ function AppShell() {
     schedule();
     window.addEventListener(REFRESH_INTERVAL_EVENT, schedule);
     return () => { window.clearInterval(intervalId); window.removeEventListener(REFRESH_INTERVAL_EVENT, schedule); };
-  }, [accountsLoaded, dispatch, session, quotaSource]);
+  }, [accountsLoaded, dispatch, session, legacyAccounts]);
 
   const userMenu: MenuProps["items"] = [
     { key: "settings", label: t("client.app.accountSettings"), icon: <Settings size={16} />, onClick: () => dispatch(pageChanged("settings")) },
@@ -408,7 +414,7 @@ function AppShell() {
       <DownloadManagerPage owner={downloadOwner(session)}
         onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
     accounts: session && <PageContent><AccountsPage session={session} personalMobile={personalMobile}
-      active={page === 'accounts'} channel={quotas} /></PageContent>,
+      active={page === 'accounts'} channel={quotas} deviceName={accountDevice?.name} legacy={legacyAccounts} /></PageContent>,
     devices: <DevicesPage />,
     totp: <PageContent><TotpPage manager={totpManager}
       onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
@@ -483,7 +489,7 @@ function AppShell() {
         <div>{page === 'totp' && <TotpSyncSwitch enabled={totpManager.cloudSyncEnabled}
           loading={totpManager.syncing} onChange={totpManager.setCloudSyncEnabled}
           copy={{ label: t('client.app.sync2faKeys'), on: t('client.settings.on'), off: t('client.settings.off') }} />}
-          {(page !== 'accounts' || quotaSource === 'legacy') && <Tooltip title={t("client.app.refreshAllData")}>
+          {(page !== 'accounts' || legacyAccounts) && <Tooltip title={t("client.app.refreshAllData")}>
           <button className="icon-button" type="button"
           onClick={() => void dispatch(refreshAll())}>
           <RefreshCw size={18} className={refreshing ? "spin" : ""} /></button></Tooltip>}

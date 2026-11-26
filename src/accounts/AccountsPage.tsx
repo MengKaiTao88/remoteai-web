@@ -27,18 +27,18 @@ const REFRESH_TEXT = { get pulling() { return t("client.accounts.pullToRefresh")
 
 interface Props { session: AuthSession; personalMobile?: boolean; active: boolean }
 
-export function AccountsPage({ channel, ...props }: Props & { channel: CockpitQuotaChannel | null }) {
+export function AccountsPage({ channel, deviceName, legacy, ...props }: Props & {
+  channel: CockpitQuotaChannel | null; deviceName?: string; legacy: boolean;
+}) {
   useLanguage();
-  const { devices, selectedChatDeviceId } = useAppSelector(state => state.data);
-  const device = devices.find(row => row.deviceId === selectedChatDeviceId) ?? devices.find(row => row.online);
   const quotas = useCockpitQuotas(channel, props.active);
   if (channel && quotas.source === 'cockpit') return <PullToRefresh onRefresh={channel.refresh}
     renderText={status => REFRESH_TEXT[status]}>
     <div className="page-body accounts-page">
-      <CockpitQuotas deviceName={device?.name} state={quotas} refresh={channel.refresh} />
+      <CockpitQuotas deviceName={deviceName} state={quotas} refresh={channel.refresh} />
     </div>
   </PullToRefresh>;
-  if (device?.online && quotas.source === 'checking') {
+  if (!legacy) {
     return <div className="page-loading" role="status">
       {quotas.failed ? t('client.accounts.usageUnavailable') : <><SpinLoading />{t('client.accounts.loadingAccounts')}</>}
     </div>;
