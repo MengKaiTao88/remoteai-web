@@ -81,7 +81,7 @@ export function CockpitQuotas({ deviceName, state, refresh }: {
     </header>
     {loading && <div className="page-loading" role="status"><SpinLoading />{t('client.accounts.loadingAccounts')}</div>}
     {!state.connected && <p role="status">{t('client.accounts.usageUnavailable')}</p>}
-    {(state.failed || pool?.stale) && <p role="status">{t('client.accounts.couldNotUpdateUsagePleaseTryAgainLater')}</p>}
+    {state.failed && <p role="status">{t('client.accounts.couldNotUpdateUsagePleaseTryAgainLater')}</p>}
     {pool && <dl className="mobile-account-averages">
       <div><dt>{t('client.mobileAccount.fiveHourAverage')}</dt><dd>{percent(pool.hourly)}</dd></div>
       <div><dt>{t('client.mobileAccount.weeklyAverage')}</dt><dd>{percent(pool.weekly)}</dd></div>
