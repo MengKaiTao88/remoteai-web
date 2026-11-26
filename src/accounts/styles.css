@@ -178,6 +178,18 @@ button.account-info-row { cursor: pointer; }
 .claude-accounts-section { margin-top: 24px; padding: 20px; border-radius: 16px;
   background: var(--app-surface); min-width: 0; }
 .account-row-identity > small { color: var(--app-muted); font-weight: normal; }
+.cockpit-quotas { display: grid; gap: 10px; margin-block: 14px; }
+.cockpit-quotas > header, .cockpit-quota-card > footer, .cockpit-quota-window > div {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px;
+}
+.cockpit-quotas > header { color: var(--app-muted); }
+.cockpit-quotas h2 { margin: 0; color: var(--app-ink); font-size: 1.15em; }
+.cockpit-quotas > p { margin: 0; color: var(--app-muted); }
+.cockpit-quota-card { display: grid; gap: 10px; }
+.cockpit-quota-windows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cockpit-quota-window { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.cockpit-quota-window strong { color: var(--quota-color); }
+.cockpit-quota-card small { color: var(--app-muted); }
 .personal-management .accounts-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .mobile-accounts-toolbar, .mobile-accounts-toolbar > div, .mobile-accounts-toolbar > span,
 .mobile-accounts-toolbar button, .mobile-account-credits, .mobile-account-current {

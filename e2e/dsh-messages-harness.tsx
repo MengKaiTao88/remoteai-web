@@ -23,7 +23,7 @@ import '../src/chat/assistantChat.css';
 
 initializeTheme();
 const imageRetry = new URLSearchParams(location.search).has('image-retry');
-const officialCounts = new URLSearchParams(location.search).has('official-counts');
+const cockpitMetrics = new URLSearchParams(location.search).has('cockpit-metrics');
 const imageCanvas = document.createElement('canvas');
 imageCanvas.width = 480; imageCanvas.height = 260;
 const imageContext = imageCanvas.getContext('2d')!;
@@ -62,9 +62,8 @@ const composer = {
   catalog: { skills: [], plugins: [], loading: false, refresh: () => {} },
   connection: {}, updateSettings: async () => {}, refreshModels: async () => {}, interrupt: async () => {},
   send: async () => true, compact: async () => false,
-  readConversationMetrics: officialCounts ? async () => ({
-    totalOutputTokens: 357, totalOutputTimeMs: 10_000, outputRequestCount: 1,
-    conversationCounts: { turns: 1, steps: 3 },
+  readConversationMetrics: cockpitMetrics ? async () => ({
+    source: 'cockpit', tokensPerSecond: 35.7, outputRequestCount: 1, cacheHitRate: 0.977,
   }) : undefined,
 } as unknown as ComposerProps;
 const tools: Item[] = ['one', 'two', 'three'].map(id => ({
@@ -176,11 +175,10 @@ function Harness() {
       imageCache.load(thread, source, original, options?.refresh) }}>
     <ProcessDetailsContext.Provider value={{ active: true, load: async () => { document.body.dataset.processReads = String(Number(document.body.dataset.processReads ?? 0) + 1);
         return { items: deferred ? [{ id: 'deferred-thinking', type: 'reasoning', summary: ['**Inspect source**\nRead real details.\n\n**Verify behavior**\nCheck the result.'] }, ...tools] : tools }; } }}>
-      {stress || officialCounts || pagedProcess ? <div className="dsh-chat-main"><header className="dsh-chat-header">Long conversation fixture</header>
+      {stress || cockpitMetrics || pagedProcess ? <div className="dsh-chat-main"><header className="dsh-chat-header">Long conversation fixture</header>
         <div className="dsh-codex-content">{history}<div className="dsh-composer-dock">
           <p className="chat-processing-status">Streaming task</p>
-          <DshComposerInput {...composer} loadedTurns={officialCounts ? thread.turns : undefined}
-            countsArePartial={officialCounts} />
+          <DshComposerInput {...composer} />
         </div></div></div> : history}
     </ProcessDetailsContext.Provider></ChatImageContext.Provider></ChatPresentation.Provider>
   </div></AntApp></ConfigProvider>;

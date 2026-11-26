@@ -61,7 +61,7 @@ test('personal mobile management shows account quotas and returns to the same ch
   await expect(chatTitle).toHaveText('移动端聊天体验');
   const stats = page.locator('.dsh-mobile-chat-stats');
   await expect(stats).toContainText('tok/s');
-  await expect(stats).toContainText(/轮 .*步/);
+  await expect(stats).toContainText('缓存 —');
   await expect(stats).not.toContainText('|');
   const inputBox = await page.locator('.dsh-input').boundingBox();
   const statsBox = await stats.boundingBox();

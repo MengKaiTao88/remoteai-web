@@ -67,12 +67,12 @@ test('sent and answer images render and an explicit retry fetches fresh pixels a
   await screenshot(page, info, 'sent-and-answer-images');
 });
 
-test('phone statistics use recorded desktop rounds and steps even with more visible activity items', async ({ page }, info) => {
+test('phone statistics display Cockpit output speed and prompt-cache hit rate', async ({ page }, info) => {
   test.skip(!['phone-light', 'iphone-webkit'].includes(info.project.name));
-  await page.goto('e2e/dsh-messages-harness.html?official-counts=1', { waitUntil: 'commit' });
+  await page.goto('e2e/dsh-messages-harness.html?cockpit-metrics=1', { waitUntil: 'commit' });
   const stats = page.locator('.dsh-mobile-chat-stats');
-  await expect(stats.locator('span')).toHaveText(['35.7 tok/s', '1 轮 3 步'], { timeout: 75_000 });
-  await screenshot(page, info, 'desktop-counts');
+  await expect(stats.locator('span')).toHaveText(['35.7 tok/s', '缓存 97.7%'], { timeout: 75_000 });
+  await screenshot(page, info, 'cockpit-metrics');
 });
 
 test('restoring the chat waits for the computer list and leaves account loading in the background', async ({ page, request }, info) => {

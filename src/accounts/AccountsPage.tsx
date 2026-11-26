@@ -18,11 +18,14 @@ import { QuotaConsumptionSheet } from './QuotaConsumptionSheet';
 import { selectUsageDevice, usageDevice } from './remoteUsage';
 import { maskEmail } from './formatters';
 import { MobileAccountAverages, useMobileResetCredits } from './MobileAccountSummary';
+import { CockpitQuotas } from './CockpitQuotas';
 import './styles.css';
 
 const REFRESH_TEXT = { get pulling() { return t("client.accounts.pullToRefresh"); }, get canRelease() { return t("client.accounts.releaseToRefresh"); }, get refreshing() { return t("client.accounts.refreshing"); }, get complete() { return t("client.accounts.refreshed"); } };
 
-export function AccountsPage({ session, personalMobile = false }: { session: AuthSession; personalMobile?: boolean }) {
+export function AccountsPage({ session, personalMobile = false, active }: {
+  session: AuthSession; personalMobile?: boolean; active: boolean;
+}) {
   useLanguage();
   const dispatch = useAppDispatch();
   const { accounts, devices, loading, accountStartupRequest, refreshing, switchingAccountId, lastRefreshAt } =
@@ -38,6 +41,7 @@ export function AccountsPage({ session, personalMobile = false }: { session: Aut
   const [addingClaude, setAddingClaude] = useState(false);
   const [consumeDeviceName, setConsumeDeviceName] = useState<string | null>(null);
   const [creditRevision, setCreditRevision] = useState(0);
+  const [cockpitRevision, setCockpitRevision] = useState(0);
   const mobileCredits = useMobileResetCredits(personalMobile, session, accounts, creditRevision);
   const detail = accounts.find(account => account.id === detailId);
   const target = accounts.find(account => account.id === switchId);
@@ -47,6 +51,7 @@ export function AccountsPage({ session, personalMobile = false }: { session: Aut
   const activeId = currentComputer?.guiProviderId ? null : currentComputer?.guiAccountId
     ?? (currentComputer?.activeProviderId ? null : currentComputer?.activeAccountId);
   const refresh = useCallback(async () => {
+    setCockpitRevision(value => value + 1);
     try {
       await dispatch(refreshAll()).unwrap();
       if (personalMobile) setCreditRevision(value => value + 1);
@@ -75,6 +80,8 @@ export function AccountsPage({ session, personalMobile = false }: { session: Aut
           refreshing={refreshing} consuming={consumingQuota} busy={usageBusy} onConsume={openConsumption}
           updatedAt={lastRefreshAt} onPrivacy={() => setPrivateMode(value => !value)}
           onRefresh={() => void refresh()} onAdd={source => source === 'codex' ? setAdding(true) : setAddingClaude(true)} />
+        <CockpitQuotas session={session} device={currentComputer} active={active}
+          privateMode={privateMode} revision={cockpitRevision} />
         {personalMobile ? <MobileAccountAverages accounts={accounts} />
           : <Button size="small" onClick={() => setPriorityOpen(true)}>{t("client.resetPriority.title")}</Button>}
         {loading || accountStartupRequest ? <div className="page-loading"><SpinLoading /><span>{t("client.accounts.loadingAccounts")}</span></div>

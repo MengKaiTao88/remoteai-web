@@ -13,7 +13,9 @@ export function RemodexUsage({ props, settings }: { props: ComposerProps; settin
   const [open, setOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
-  const percent = contextUsage(props.tokenUsage)?.percent;
+  const usage = contextUsage(props.tokenUsage);
+  const percent = usage?.percent;
+  const estimated = usage && props.tokenUsage?.contextTokens === null;
   useEffect(() => { setOpen(false); setContextOpen(false); }, [props.threadId]);
   useEffect(() => { if (!props.active) { setOpen(false); setContextOpen(false); } }, [props.active]);
   return <>
@@ -28,7 +30,7 @@ export function RemodexUsage({ props, settings }: { props: ComposerProps; settin
     </FocusPreservingButton>
     {open && <RemodexDialog label={t('client.chat.conversationContext')} close={() => setOpen(false)} anchor={trigger.current}
       className="remodex-usage-popover">
-      <h2>{t('client.chat.conversationContext')}</h2>
+      <h2>{t('client.chat.conversationContext')}{estimated && <small> {t('client.chat.estimated')}</small>}</h2>
       <ChatUsage read={props.readUsage} active={props.active} ready={props.ready} tokenUsage={props.tokenUsage}
         card readConversationMetrics={props.readConversationMetrics} threadId={props.threadId}
         onContextSettings={props.threadId ? () => { setOpen(false); setContextOpen(true); } : undefined} />

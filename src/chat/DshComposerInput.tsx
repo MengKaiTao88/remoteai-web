@@ -5,9 +5,9 @@ import { ComposerDictation } from '../../../../shared/chat/dictation/ComposerDic
 import { useComposerSuggestion } from '../../../../shared/chat/useComposerSuggestion';
 import { ComposerSuggestion } from '../../../../shared/remote-chat/views/ComposerSuggestion';
 import { ComposerInput } from '../../../../shared/remote-chat/views/ComposerInput';
-import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { ArrowUp, ChevronRight, Gauge, ListFilter, ListOrdered, Play, Plus, Square } from 'lucide-react';
+import { getLocale, t, useLanguage } from '../../../../shared/localization/browserClient';
+import { useContext, useEffect, useId, useRef, useState } from 'react';
+import { ArrowUp, ChevronRight, Database, Gauge, ListOrdered, Play, Plus, Square } from 'lucide-react';
 import { COMPOSER_ACTION_LABELS } from '../../../../shared/remote-chat/composerAction';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { DshModelPicker } from './DshModelPicker';
@@ -19,7 +19,7 @@ import { ComposerFooter } from '../../../../shared/remote-chat/views/ComposerFoo
 import { ComposerAccess } from '../../../../shared/remote-chat/views/ComposerDesktopControls';
 import { DesktopUsageContext } from '../../../../shared/chat/DesktopUsageContext';
 import { useConversationMetrics } from '../../../../shared/remote-chat/client/useConversationMetrics';
-import { formatConversationTps, type ConversationMetrics } from '../../../../shared/remote-chat/conversationMetrics';
+import { cacheHitRate, outputSpeed } from './cockpitTelemetry';
 import { ComposerGoal } from '../../../../shared/remote-chat/views/ComposerGoal';
 import { ChatAttachmentPreviews } from '../../../../shared/remote-chat/views/ChatAttachments';
 import { pickChatImages } from '../../../../shared/remote-chat/views/pickChatImages';
@@ -39,29 +39,12 @@ import '../../../../shared/remote-chat/views/composer.css';
 import '../../../../shared/remote-chat/views/composerDesktop.css';
 import '../../../../shared/remote-chat/views/composerReading.css';
 
-type ConversationCounts = { turns: number; steps: number };
-
-export function DshComposerInput(props: ComposerProps & {
-  loadedTurns?: readonly import('../../../../shared/conversation/types').Turn[];
-  countsArePartial?: boolean;
-  conversationCounts?: ConversationCounts;
-}) {
+export function DshComposerInput(props: ComposerProps) {
   useLanguage();
   const desktop = useDesktopLayout();
-  const loaded = useMemo(() => props.loadedTurns && {
-    turns: props.loadedTurns.length,
-    steps: props.loadedTurns.reduce((sum, turn) => sum + turn.items.length, 0),
-  }, [props.loadedTurns]);
   const usageSnapshot = useContext(DesktopUsageContext);
   const metrics = useConversationMetrics(props.readConversationMetrics, props.threadId,
-    props.active && props.ready && usageSnapshot.visible) as (ConversationMetrics & {
-      conversationCounts?: ConversationCounts;
-    }) | null;
-  const reported = props.conversationCounts;
-  // Desktop counts recorded model responses; loaded history counts display items.
-  const totals = metrics?.conversationCounts ?? (reported
-    && (!loaded || reported.turns >= loaded.turns && reported.steps >= loaded.steps) ? reported : undefined);
-  const counts = totals ?? loaded;
+    props.active && props.ready && usageSnapshot.visible);
   const { models, selection, settingsBusy, settingsError, updateSettings, readUsage, tokenUsage, queue,
     uploadProgress, threadId, active, ready, sending, goal, goalBusy, catalog, cwd, loadFiles } = props;
   const state = useComposerState(props);
@@ -269,9 +252,8 @@ export function DshComposerInput(props: ComposerProps & {
       readServiceStatus={props.readServiceStatus} statusActive={active} statusConnected={props.serviceStatusConnected}
       usage={usageSnapshot.usage} metrics={metrics} />}
     {!desktop && threadId && <div className="dsh-mobile-chat-stats">
-      <span><Gauge size={13} aria-hidden="true" />{formatConversationTps(metrics)} tok/s</span>
-      {counts && <span><ListFilter size={13} aria-hidden="true" />{t(!totals && (props.countsArePartial || reported)
-        ? 'client.mobileChat.loadedTurnAndStepCount' : 'client.mobileChat.turnAndStepCount', counts)}</span>}
+      <span><Gauge size={13} aria-hidden="true" />{outputSpeed(metrics)} tok/s</span>
+      <span><Database size={13} aria-hidden="true" />{t('client.chat.cached')} {cacheHitRate(metrics, getLocale())}</span>
     </div>}
     {active && !busy && editing && <ChatImageEditor key={editing.id} image={editing}
       save={url => draft.replaceImage(editing, url)} close={() => setEditingId(null)} />}

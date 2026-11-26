@@ -11,8 +11,8 @@ import { compactUnavailableReason } from '../../../../shared/remote-chat/client/
 import { useChatCatalog } from '../../../../shared/remote-chat/views/useChatCatalog';
 import { currentRunningTurn } from '../../../../shared/chat/runningTurn';
 import { t } from '../../../../shared/localization/browserClient';
-import type { Thread } from '../../../../shared/conversation/types';
 import type { DshChatWorkspaceProps } from './DshChatWorkspace';
+import { observedProcessing } from './cockpitTelemetry';
 
 export function DshComposer({ chat, device, active, scope, chooseComputer, cliVersion }: DshChatWorkspaceProps & {
   chooseComputer: () => void;
@@ -22,10 +22,6 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
   const enabled = active && chat.foreground;
   const catalog = useChatCatalog(controller, cwd, state.ready && enabled, state.selected?.id);
   const runningTurn = currentRunningTurn(state.selected?.turns);
-  const selected = state.selected as (Thread & {
-    conversationCounts?: { turns: number; steps: number };
-    officialSidebar?: object;
-  }) | null;
   const [planOpen, setPlanOpen] = useState(false);
   const planTurn = state.selected?.turns?.at(-1);
   const plan = planTurn?.plan ?? [];
@@ -40,7 +36,8 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
     </button>}
     {planOpen && planTurn && enabled && <ChatTurnDetails turn={planTurn} panel="plan" onClose={() => setPlanOpen(false)} />}
     {!state.selected && <div className="remodex-new-context"><ChatProjectSwitch state={state} controller={controller} active={enabled} /></div>}
-    {runningTurn && <ChatProcessing key={runningTurn.id} turn={runningTurn} processing={state.processing}
+    {runningTurn && <ChatProcessing key={runningTurn.id} turn={runningTurn}
+      processing={observedProcessing(runningTurn, state.processing)}
       active={enabled && state.ready} />}
     <ChatAsyncQuestions thread={state.selected} error={state.error} scope={scope} stepByStep
       disabled={!state.ready || state.sending || state.settingsBusy || state.selectedArchived
@@ -63,8 +60,6 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
       uploadProgress={state.upload} threadId={state.selected?.id ?? null} draftScope={state.draftScope}
       models={state.models} selection={state.settings} readUsage={controller.readUsage} tokenUsage={state.selected?.tokenUsage}
       readConversationMetrics={controller.readConversationMetrics}
-      loadedTurns={selected?.turns} countsArePartial={state.historyHasMore || !!selected?.officialSidebar}
-      conversationCounts={selected?.conversationCounts}
       settingsBusy={state.settingsBusy || !!state.workspaceBusy} settingsError={state.settingsError}
       accessUpdate={state.accessUpdate} updateSettings={patch => controller.setSettings(patch)}
       refreshModels={controller.refreshModels} active={enabled} ready={state.ready && !state.selectedArchived}

@@ -397,7 +397,8 @@ function AppShell() {
     downloads: session && <PageContent><WebSyncDownloads session={session} devices={devices} />
       <DownloadManagerPage owner={downloadOwner(session)}
         onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
-    accounts: session && <PageContent><AccountsPage session={session} personalMobile={personalMobile} /></PageContent>,
+    accounts: session && <PageContent><AccountsPage session={session} personalMobile={personalMobile}
+      active={page === 'accounts'} /></PageContent>,
     devices: <DevicesPage />,
     totp: <PageContent><TotpPage manager={totpManager}
       onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
