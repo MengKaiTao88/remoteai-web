@@ -5,9 +5,9 @@ import { ComposerDictation } from '../../../../shared/chat/dictation/ComposerDic
 import { useComposerSuggestion } from '../../../../shared/chat/useComposerSuggestion';
 import { ComposerSuggestion } from '../../../../shared/remote-chat/views/ComposerSuggestion';
 import { ComposerInput } from '../../../../shared/remote-chat/views/ComposerInput';
-import { getLocale, t, useLanguage } from '../../../../shared/localization/browserClient';
+import { t, useLanguage } from '../../../../shared/localization/browserClient';
 import { useContext, useEffect, useId, useRef, useState } from 'react';
-import { ArrowUp, ChevronRight, Database, Gauge, ListOrdered, Play, Plus, Square } from 'lucide-react';
+import { ArrowUp, ChevronRight, ListOrdered, Play, Plus, Square } from 'lucide-react';
 import { COMPOSER_ACTION_LABELS } from '../../../../shared/remote-chat/composerAction';
 import { useDesktopLayout } from '../../../../shared/layout/useDesktopLayout';
 import { DshModelPicker } from './DshModelPicker';
@@ -19,7 +19,8 @@ import { ComposerFooter } from '../../../../shared/remote-chat/views/ComposerFoo
 import { ComposerAccess } from '../../../../shared/remote-chat/views/ComposerDesktopControls';
 import { DesktopUsageContext } from '../../../../shared/chat/DesktopUsageContext';
 import { useConversationMetrics } from '../../../../shared/remote-chat/client/useConversationMetrics';
-import { cacheHitRate, outputSpeed } from './cockpitTelemetry';
+import { isCockpitMetrics } from './cockpitTelemetry';
+import { DshConversationStats } from './DshConversationStats';
 import { ComposerGoal } from '../../../../shared/remote-chat/views/ComposerGoal';
 import { ChatAttachmentPreviews } from '../../../../shared/remote-chat/views/ChatAttachments';
 import { pickChatImages } from '../../../../shared/remote-chat/views/pickChatImages';
@@ -45,6 +46,7 @@ export function DshComposerInput(props: ComposerProps) {
   const usageSnapshot = useContext(DesktopUsageContext);
   const metrics = useConversationMetrics(props.readConversationMetrics, props.threadId,
     props.active && props.ready && usageSnapshot.visible);
+  const cockpit = isCockpitMetrics(metrics);
   const { models, selection, settingsBusy, settingsError, updateSettings, readUsage, tokenUsage, queue,
     uploadProgress, threadId, active, ready, sending, goal, goalBusy, catalog, cwd, loadFiles } = props;
   const state = useComposerState(props);
@@ -230,7 +232,7 @@ export function DshComposerInput(props: ComposerProps) {
             accessUpdate={props.accessUpdate} updateSettings={updateSettings} beforeOpen={closeMenus} />
         </div>
         <div className="dsh-input-trailing">
-            <RemodexUsage props={props} settings={showSettings} />
+            <RemodexUsage props={props} settings={showSettings} metrics={metrics} />
             <DshModelPicker models={models} active={active} ready={ready} refreshModels={props.refreshModels}
               scope={threadId ?? props.draftScope} selection={selection} variant="footer" modelOnly={!desktop}
               updateSettings={updateSettings} settingsBusy={settingsBusy} settingsError={settingsError} beforeOpen={closeMenus} />
@@ -248,13 +250,10 @@ export function DshComposerInput(props: ComposerProps) {
         </div>
       </div>
     </form>
-    {desktop && <ComposerFooter desktop={desktop} cliVersion={props.cliVersion} threadId={props.threadId}
+    {desktop && !cockpit && <ComposerFooter desktop={desktop} cliVersion={props.cliVersion} threadId={props.threadId}
       readServiceStatus={props.readServiceStatus} statusActive={active} statusConnected={props.serviceStatusConnected}
       usage={usageSnapshot.usage} metrics={metrics} />}
-    {!desktop && threadId && <div className="dsh-mobile-chat-stats">
-      <span><Gauge size={13} aria-hidden="true" />{outputSpeed(metrics)} tok/s</span>
-      <span><Database size={13} aria-hidden="true" />{t('client.chat.cached')} {cacheHitRate(metrics, getLocale())}</span>
-    </div>}
+    {(!desktop || cockpit) && threadId && <DshConversationStats metrics={metrics} />}
     {active && !busy && editing && <ChatImageEditor key={editing.id} image={editing}
       save={url => draft.replaceImage(editing, url)} close={() => setEditingId(null)} />}
     {projectFiles && <ComposerProjectFiles imagesOnly={projectFiles === 'photos'} threadId={threadId} cwd={cwd}

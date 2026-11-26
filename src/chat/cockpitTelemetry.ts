@@ -8,8 +8,12 @@ interface CockpitMetrics extends ConversationMetrics {
   cacheHitRate?: number | null;
 }
 
+export function isCockpitMetrics(metrics: CockpitMetrics | null): metrics is CockpitMetrics & { source: 'cockpit' } {
+  return metrics?.source === 'cockpit';
+}
+
 export function outputSpeed(metrics: CockpitMetrics | null) {
-  if (metrics?.source !== 'cockpit') return formatConversationTps(metrics);
+  if (!isCockpitMetrics(metrics)) return formatConversationTps(metrics);
   const speed = metrics.tokensPerSecond;
   return typeof speed === 'number' && Number.isFinite(speed) && speed > 0 && metrics.outputRequestCount > 0
     ? speed.toFixed(1) : '—';

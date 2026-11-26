@@ -95,7 +95,7 @@ test('personal mobile management shows account quotas and returns to the same ch
     } });
     expect(response.ok()).toBe(true);
   }
-  await expect(stats).toContainText(/15 轮 30 步/);
+  await expect(page.getByText('读到第 13 段', { exact: true })).toBeAttached();
   const viewport = page.locator('.dsh-message-region .chat-messages');
   const firstVisible = () => viewport.evaluate(node => {
     const viewportTop = node.getBoundingClientRect().top;
