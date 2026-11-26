@@ -1,5 +1,5 @@
 import type { AuthSession } from '../types';
-import { apiJson, getActiveSession, refreshSession } from '../api';
+import { fetchCurrentProfile, getActiveSession, refreshSession } from '../api';
 import { ChatConnection, type ConnectionEvents } from '../../../../shared/remote-chat/client/connection';
 import { createBrowserPacketCompression } from '../../../../shared/remote-chat/browserPacketCompression';
 import { RtcPeer } from '../../../../shared/remote-chat/rtcPeer';
@@ -19,7 +19,7 @@ export function createWebChatConnection(session: AuthSession, deviceId: string, 
     verifyHostKey: trustedHost(browserTrustStore, trustScope(session.baseUrl, deviceId)),
     randomBytes: length => crypto.getRandomValues(new Uint8Array(length)),
     renewAuthorization: async () => { authorizedSession(); await refreshSession(); },
-    authorize: async () => { await apiJson('/auth/me'); return authorizedSession(); },
+    authorize: async () => { await fetchCurrentProfile(); return authorizedSession(); },
     createPeer: options => new RtcPeer(options, () => new RTCPeerConnection({ iceServers: options.iceServers })),
   });
 }

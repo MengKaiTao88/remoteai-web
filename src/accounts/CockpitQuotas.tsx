@@ -1,16 +1,19 @@
 import { getLocale, t } from '../../../../shared/localization/browserClient';
-import type { AuthSession, RemoteDevice } from '../types';
+import { Clock3, RefreshCw, Ticket } from 'lucide-react';
 import { displayDate, maskEmail, resetLabel, usageTone } from './formatters';
-import { type CockpitAccount, type CockpitQuotaWindow, useCockpitQuotas } from './useCockpitQuotas';
+import type { CockpitAccount, CockpitQuotaChannel, CockpitQuotaWindow } from '../chat/cockpitQuotaChannel';
+import { SpinLoading } from 'antd-mobile';
 
 function percent(value: number | null | undefined) {
   return value == null ? '—' : new Intl.NumberFormat(getLocale(),
     { style: 'percent', maximumFractionDigits: 1 }).format(value / 100);
 }
 
-function updated(value: number | null) {
-  return value ? t('client.mobileAccount.updated', { time: displayDate(new Date(value * 1000).toISOString()) })
-    : t('client.accounts.notRefreshed');
+function QuotaUpdatedAt({ timestamp }: { timestamp: number | null }) {
+  const date = new Date((timestamp ?? 0) * 1000);
+  if (!timestamp || !Number.isFinite(date.getTime())) return <>{t('client.accounts.notRefreshed')}</>;
+  const iso = date.toISOString();
+  return <time dateTime={iso}>{t('client.mobileAccount.updated', { time: displayDate(iso) })}</time>;
 }
 
 function shortWindow(window: CockpitQuotaWindow | null) {
@@ -30,9 +33,10 @@ function QuotaWindow({ window, label }: { window: CockpitQuotaWindow | null; lab
   </div>;
 }
 
-function QuotaCard({ account, privateMode }: { account: CockpitAccount; privateMode: boolean }) {
+function QuotaCard({ account }: { account: CockpitAccount }) {
   const identity = account.email || account.name;
-  const identityLabel = identity ? (privateMode ? maskEmail(identity) : identity) : '—';
+  const identityLabel = identity ? maskEmail(identity) : '—';
+  const credits = account.resetCreditsAvailable;
   return <article className="account-row cockpit-quota-card" data-quota-status={account.status}>
     <header className="account-row-identity">
       <strong title={identityLabel}>{identityLabel}</strong>
@@ -43,31 +47,47 @@ function QuotaCard({ account, privateMode }: { account: CockpitAccount; privateM
       <QuotaWindow window={account.weekly} label={t('client.mobileAccount.weekly', { quota: '' }).trim()} />
     </div>
     <footer>
-      <small>{updated(account.updatedAt)}</small>
+      <small><QuotaUpdatedAt timestamp={account.updatedAt} /></small>
+      <small className="mobile-account-credits"><Ticket size={14} aria-hidden="true" />
+        {t('client.mobileAccount.credits', { count: typeof credits === 'number' && Number.isSafeInteger(credits)
+          && credits >= 0 ? credits : '—' })}
+      </small>
       {['stale', 'failed'].includes(account.status)
         && <small>{t('client.accounts.couldNotUpdateUsagePleaseTryAgainLater')}</small>}
     </footer>
   </article>;
 }
 
-export function CockpitQuotas({ session, device, active, revision, privateMode }: {
-  session: AuthSession; device?: RemoteDevice; active: boolean; revision: number; privateMode: boolean;
+export function CockpitQuotas({ deviceName, state, refresh }: {
+  deviceName?: string; state: ReturnType<CockpitQuotaChannel['snapshot']>; refresh: () => Promise<void>;
 }) {
-  const state = useCockpitQuotas(session, device, active, revision);
-  if (!state) return null;
-  const pool = state.data?.pool;
+  const { accounts, pool } = state.data ?? {};
+  const latest = accounts?.reduce((newest, account) => Math.max(newest, account.updatedAt ?? 0), 0) || null;
+  const loading = state.connected && !state.data && !state.failed;
   return <section className="cockpit-quotas" aria-labelledby="cockpit-quotas-heading">
     <header>
-      <h2 id="cockpit-quotas-heading">Cockpit Tools · {t('client.accounts.remainingQuota')}</h2>
-      <span>{device?.name}</span>
+      <div className="mobile-accounts-toolbar">
+        <span><Clock3 size={14} aria-hidden="true" /><QuotaUpdatedAt timestamp={latest} /></span>
+        <button type="button" disabled={!state.connected || state.refreshing} onClick={() => void refresh()}
+          aria-busy={state.refreshing} aria-label={t('client.accounts.refreshAllUsage')}>
+          <RefreshCw size={15} aria-hidden="true" className={state.refreshing ? 'spin' : undefined} />
+          {t('client.chat.refresh')}
+        </button>
+      </div>
+      <div className="cockpit-quota-heading">
+        <h2 id="cockpit-quotas-heading">Cockpit Tools · {t('client.accounts.remainingQuota')}</h2>
+        <span>{deviceName}</span>
+      </div>
     </header>
+    {loading && <div className="page-loading" role="status"><SpinLoading />{t('client.accounts.loadingAccounts')}</div>}
+    {!state.connected && <p role="status">{t('client.accounts.usageUnavailable')}</p>}
     {(state.failed || pool?.stale) && <p role="status">{t('client.accounts.couldNotUpdateUsagePleaseTryAgainLater')}</p>}
     {pool && <dl className="mobile-account-averages">
       <div><dt>{t('client.mobileAccount.fiveHourAverage')}</dt><dd>{percent(pool.hourly)}</dd></div>
       <div><dt>{t('client.mobileAccount.weeklyAverage')}</dt><dd>{percent(pool.weekly)}</dd></div>
     </dl>}
-    <div className="accounts-grid">{state.data?.accounts.map(account =>
-      <QuotaCard key={account.id} account={account} privateMode={privateMode} />)}</div>
-    {state.data?.accounts.length === 0 && <p>{t('client.accounts.usageUnavailable')}</p>}
+    <div className="accounts-grid">{accounts?.map(account =>
+      <QuotaCard key={account.id} account={account} />)}</div>
+    {accounts?.length === 0 && <p>{t('client.accounts.usageUnavailable')}</p>}
   </section>;
 }

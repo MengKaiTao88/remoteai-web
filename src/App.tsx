@@ -3,14 +3,15 @@ import { displayError } from '../../../shared/localization/browserClient';
 import { getLocale, t, useLanguage } from '../../../shared/localization/browserClient';
 import type { RemoteModelTarget } from '../../../shared/remote-chat/modelTarget';
 import { profileRole } from './i18n/profile';
-import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore,
+  type ReactNode } from "react";
 import { Button, Dialog, Form, Input, PullToRefresh, SafeArea, SpinLoading, TabBar, Toast } from "antd-mobile";
 import { Dropdown, Tooltip, type MenuProps } from "antd";
 import { ChevronRight, CircleGauge, Compass, LayoutDashboard, LogOut, Menu, MonitorCog,
   Download, MessageSquare, PanelLeftClose, PanelLeftOpen, RefreshCw, Server, Settings, ShieldCheck, Sparkles } from "lucide-react";
 import { defaultApiBaseUrl, deviceStatusWebSocketUrl, getActiveSession, parseDeviceStatusMessage } from "./api";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { bootstrapApp, clearAuthError, clearDataError, deviceSocketMessage, pageChanged, refreshAll,
+import { bootstrapApp, clearAuthError, clearDataError, deviceSocketMessage, loadAccountSummaries, pageChanged, refreshAll,
   removeDevice, setDeviceOpenAiAuthAccount, signIn, signOut, switchDeviceAccount,
   switchDeviceProvider, switchDeviceProviderGroup } from "./store";
 import type { AppPage, RemoteDevice } from "./types";
@@ -39,6 +40,7 @@ import { PrimaryPagePager } from './navigation/PrimaryPagePager';
 import type { PrimaryPage } from '../../../shared/navigation/pageSwipe';
 import { useDesktopLayout, usePanelVisibility } from "../../../shared/layout/useDesktopLayout";
 import { useChatViewport } from './chat/useChatViewport';
+import { quotaConnectionScope, type CockpitQuotaChannel } from './chat/cockpitQuotaChannel';
 import { AgreementConsent } from '../../../shared/legal/AgreementConsent';
 import { useAgreementConsent } from '../../../shared/legal/useAgreementConsent';
 
@@ -171,6 +173,7 @@ function DevicesPage() {
   const revokeService = useRevokeDesktopService();
   useLanguage();
   const dispatch = useAppDispatch();
+  useEffect(() => { void dispatch(loadAccountSummaries()); }, [dispatch]);
   const {
     accounts,
     providers,
@@ -305,13 +308,20 @@ const navItems: Array<{ key: AppPage; label: string; icon: typeof LayoutDashboar
   { key: "settings", get label() { return t("client.app.settings"); }, icon: Settings },
 ];
 
+const noQuotaSubscription = () => () => {};
+
 function AppShell() {
   useLanguage();
   const [menuVisible, setMenuVisible] = usePanelVisibility('main-menu');
   const dispatch = useAppDispatch();
   const { session } = useAppSelector((state) => state.auth);
   const lounge = useWebLounge(session);
-  const { page, profile, devices, refreshing, error } = useAppSelector((state) => state.data);
+  const { page, profile, devices, refreshing, error, selectedChatDeviceId, accountsLoaded } =
+    useAppSelector((state) => state.data);
+  const [quotaChannel, setQuotaChannel] = useState<CockpitQuotaChannel | null>(null);
+  const quotas = session && quotaChannel?.scope === quotaConnectionScope(session, selectedChatDeviceId) ? quotaChannel : null;
+  const quotaSource = useSyncExternalStore(quotas?.subscribe ?? noQuotaSubscription,
+    () => quotas?.snapshot().source);
   useSyncDownloadAccount(session ? downloadOwner(session) : '');
   const desktopLayout = useDesktopLayout();
   const personalMobile = import.meta.env.VITE_PERSONAL_WEB === 'true' && !desktopLayout;
@@ -358,7 +368,7 @@ function AppShell() {
   }, [dispatch, session]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session || !accountsLoaded || (quotaSource && quotaSource !== 'legacy')) return;
     let intervalId: number;
     const schedule = () => {
       window.clearInterval(intervalId);
@@ -373,7 +383,7 @@ function AppShell() {
     schedule();
     window.addEventListener(REFRESH_INTERVAL_EVENT, schedule);
     return () => { window.clearInterval(intervalId); window.removeEventListener(REFRESH_INTERVAL_EVENT, schedule); };
-  }, [dispatch, session]);
+  }, [accountsLoaded, dispatch, session, quotaSource]);
 
   const userMenu: MenuProps["items"] = [
     { key: "settings", label: t("client.app.accountSettings"), icon: <Settings size={16} />, onClick: () => dispatch(pageChanged("settings")) },
@@ -398,7 +408,7 @@ function AppShell() {
       <DownloadManagerPage owner={downloadOwner(session)}
         onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
     accounts: session && <PageContent><AccountsPage session={session} personalMobile={personalMobile}
-      active={page === 'accounts'} /></PageContent>,
+      active={page === 'accounts'} channel={quotas} /></PageContent>,
     devices: <DevicesPage />,
     totp: <PageContent><TotpPage manager={totpManager}
       onBack={() => dispatch(pageChanged('discover'))} /></PageContent>,
@@ -473,14 +483,16 @@ function AppShell() {
         <div>{page === 'totp' && <TotpSyncSwitch enabled={totpManager.cloudSyncEnabled}
           loading={totpManager.syncing} onChange={totpManager.setCloudSyncEnabled}
           copy={{ label: t('client.app.sync2faKeys'), on: t('client.settings.on'), off: t('client.settings.off') }} />}
-          <Tooltip title={t("client.app.refreshAllData")}><button className="icon-button" type="button"
+          {(page !== 'accounts' || quotaSource === 'legacy') && <Tooltip title={t("client.app.refreshAllData")}>
+          <button className="icon-button" type="button"
           onClick={() => void dispatch(refreshAll())}>
-          <RefreshCw size={18} className={refreshing ? "spin" : ""} /></button></Tooltip>
+          <RefreshCw size={18} className={refreshing ? "spin" : ""} /></button></Tooltip>}
           <span className="topbar-date">{new Intl.DateTimeFormat(getLocale(),
             { month: "long", day: "numeric", weekday: "short" }).format(new Date())}</span></div></header>}
       <main className="main-content">
         <PrimaryPagePager page={page} onChange={changePrimaryPage} returnToChat={personalManagement} pages={{
           chat: session && <PageContent key={session.baseUrl + session.email}><ChatPage session={session} devices={devices}
+            onQuotaChannel={setQuotaChannel}
             openAccounts={openAccounts} openDiscover={openDiscover} openSettings={openSettings}
             retainLayout={personalManagement}
             active={page === 'chat' || page === 'ssh'} tokenSummary={page === 'token-summary'}

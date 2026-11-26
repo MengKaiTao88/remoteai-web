@@ -37,7 +37,7 @@ export function DshComposer({ chat, device, active, scope, chooseComputer, cliVe
     {planOpen && planTurn && enabled && <ChatTurnDetails turn={planTurn} panel="plan" onClose={() => setPlanOpen(false)} />}
     {!state.selected && <div className="remodex-new-context"><ChatProjectSwitch state={state} controller={controller} active={enabled} /></div>}
     {runningTurn && <ChatProcessing key={runningTurn.id} turn={runningTurn}
-      processing={observedProcessing(runningTurn, state.processing)}
+      processing={observedProcessing(state.selected, runningTurn, state.processing)}
       active={enabled && state.ready} />}
     <ChatAsyncQuestions thread={state.selected} error={state.error} scope={scope} stepByStep
       disabled={!state.ready || state.sending || state.settingsBusy || state.selectedArchived

@@ -75,29 +75,21 @@ test('phone statistics display Cockpit output speed and prompt-cache hit rate', 
   await screenshot(page, info, 'cockpit-metrics');
 });
 
-test('restoring the chat waits for the computer list and leaves account loading in the background', async ({ page, request }, info) => {
+test('restoring the chat starts without a legacy account-summary request', async ({ page, request }, info) => {
   test.skip(!['phone-light', 'iphone-webkit'].includes(info.project.name));
   await request.post(fixtureUrl + '/test/reset');
   await login(page);
-  let finish!: () => void;
-  let started!: () => void;
-  const accountRequest = new Promise<void>(resolve => { started = resolve; });
-  const accountResponse = new Promise<void>(resolve => { finish = resolve; });
+  let accountRequests = 0;
   await page.route('**/sync/accounts/web-summary', async route => {
-    started();
-    await accountResponse;
+    accountRequests++;
     await route.continue();
   });
-  try {
-    await page.reload({ waitUntil: 'commit' });
-    await accountRequest;
-    await page.locator('.dsh-chat-header').getByRole('button', { name: '打开聊天列表', exact: true }).click();
-    await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
-    await expect(page.getByText('你可以直接从手机继续这个任务。', { exact: true })).toBeVisible();
-    await screenshot(page, info, 'chat-before-accounts');
-  } finally {
-    finish();
-  }
+  await page.reload({ waitUntil: 'commit' });
+  await page.locator('.dsh-chat-header').getByRole('button', { name: '打开聊天列表', exact: true }).click();
+  await page.locator('.dsh-sidebar').getByRole('button', { name: '移动端聊天体验', exact: true }).click();
+  await expect(page.getByText('你可以直接从手机继续这个任务。', { exact: true })).toBeVisible();
+  expect(accountRequests).toBe(0);
+  await screenshot(page, info, 'chat-before-accounts');
 });
 
 test('empty composer remains stable after focus and all add-menu items fit a short viewport', async ({ page, request }, info) => {

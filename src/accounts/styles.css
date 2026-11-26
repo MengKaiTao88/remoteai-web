@@ -179,10 +179,11 @@ button.account-info-row { cursor: pointer; }
   background: var(--app-surface); min-width: 0; }
 .account-row-identity > small { color: var(--app-muted); font-weight: normal; }
 .cockpit-quotas { display: grid; gap: 10px; margin-block: 14px; }
-.cockpit-quotas > header, .cockpit-quota-card > footer, .cockpit-quota-window > div {
+.cockpit-quotas > header { display: grid; gap: 12px; }
+.cockpit-quota-heading, .cockpit-quota-card > footer, .cockpit-quota-window > div {
   display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px;
 }
-.cockpit-quotas > header { color: var(--app-muted); }
+.cockpit-quota-heading { color: var(--app-muted); overflow-wrap: anywhere; }
 .cockpit-quotas h2 { margin: 0; color: var(--app-ink); font-size: 1.15em; }
 .cockpit-quotas > p { margin: 0; color: var(--app-muted); }
 .cockpit-quota-card { display: grid; gap: 10px; }
@@ -196,12 +197,12 @@ button.account-info-row { cursor: pointer; }
   display: flex; align-items: center; gap: 5px;
 }
 .mobile-accounts-toolbar { justify-content: space-between; gap: 6px; }
-.mobile-accounts-toolbar > span { color: var(--management-muted); font-size: 12px; min-width: 0; }
+.mobile-accounts-toolbar > span { color: var(--management-muted, var(--app-muted)); font-size: 12px; min-width: 0; }
 .mobile-accounts-toolbar svg { flex-shrink: 0; }
 .mobile-accounts-toolbar button {
   min-height: 38px; padding: 5px 9px; font-size: 12px; font-weight: 650; white-space: nowrap;
-  color: var(--management-ink); border: 1px solid var(--management-line);
-  background: var(--management-surface); border-radius: 10px; cursor: pointer;
+  color: var(--management-ink, var(--app-ink)); border: 1px solid var(--management-line, var(--app-border));
+  background: var(--management-surface, var(--app-surface)); border-radius: 10px; cursor: pointer;
 }
 .mobile-accounts-toolbar button:disabled { opacity: .6; cursor: default; }
 .mobile-accounts-toolbar .mobile-account-add { background: #356554; border-color: #356554; color: #fff; }

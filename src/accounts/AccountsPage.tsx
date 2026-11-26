@@ -3,11 +3,11 @@ import { Button } from 'antd-mobile';
 import type { AuthSession } from '../types';
 import { ClaudeAccounts } from './ClaudeAccounts';
 import { t, useLanguage } from '../../../../shared/localization/browserClient';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Empty, PullToRefresh, SpinLoading, Toast } from 'antd-mobile';
 import { ChevronRight, Laptop } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { refreshAll, switchDeviceAccount } from '../store';
+import { loadAccountSummaries, refreshAll, switchDeviceAccount } from '../store';
 import { AdaptiveSheet } from '../../../../shared/layout/AdaptiveSheet';
 import { AddAccountSheet } from '../components/AddAccountSheet';
 import { useRemoteModelRestartPrompt } from '../devices/useRemoteModelRestartPrompt';
@@ -19,15 +19,37 @@ import { selectUsageDevice, usageDevice } from './remoteUsage';
 import { maskEmail } from './formatters';
 import { MobileAccountAverages, useMobileResetCredits } from './MobileAccountSummary';
 import { CockpitQuotas } from './CockpitQuotas';
+import { useCockpitQuotas } from './useCockpitQuotas';
+import type { CockpitQuotaChannel } from '../chat/cockpitQuotaChannel';
 import './styles.css';
 
 const REFRESH_TEXT = { get pulling() { return t("client.accounts.pullToRefresh"); }, get canRelease() { return t("client.accounts.releaseToRefresh"); }, get refreshing() { return t("client.accounts.refreshing"); }, get complete() { return t("client.accounts.refreshed"); } };
 
-export function AccountsPage({ session, personalMobile = false, active }: {
-  session: AuthSession; personalMobile?: boolean; active: boolean;
-}) {
+interface Props { session: AuthSession; personalMobile?: boolean; active: boolean }
+
+export function AccountsPage({ channel, ...props }: Props & { channel: CockpitQuotaChannel | null }) {
+  useLanguage();
+  const { devices, selectedChatDeviceId } = useAppSelector(state => state.data);
+  const device = devices.find(row => row.deviceId === selectedChatDeviceId) ?? devices.find(row => row.online);
+  const quotas = useCockpitQuotas(channel, props.active);
+  if (channel && quotas.source === 'cockpit') return <PullToRefresh onRefresh={channel.refresh}
+    renderText={status => REFRESH_TEXT[status]}>
+    <div className="page-body accounts-page">
+      <CockpitQuotas deviceName={device?.name} state={quotas} refresh={channel.refresh} />
+    </div>
+  </PullToRefresh>;
+  if (device?.online && quotas.source === 'checking') {
+    return <div className="page-loading" role="status">
+      {quotas.failed ? t('client.accounts.usageUnavailable') : <><SpinLoading />{t('client.accounts.loadingAccounts')}</>}
+    </div>;
+  }
+  return <LegacyAccountsPage {...props} />;
+}
+
+function LegacyAccountsPage({ session, personalMobile = false, active }: Props) {
   useLanguage();
   const dispatch = useAppDispatch();
+  useEffect(() => { if (active) void dispatch(loadAccountSummaries()); }, [active, dispatch]);
   const { accounts, devices, loading, accountStartupRequest, refreshing, switchingAccountId, lastRefreshAt } =
     useAppSelector(s => s.data);
   const { consumingQuota, refreshingAccountId, selectedChatDeviceId } = useAppSelector(s => s.data);
@@ -41,8 +63,7 @@ export function AccountsPage({ session, personalMobile = false, active }: {
   const [addingClaude, setAddingClaude] = useState(false);
   const [consumeDeviceName, setConsumeDeviceName] = useState<string | null>(null);
   const [creditRevision, setCreditRevision] = useState(0);
-  const [cockpitRevision, setCockpitRevision] = useState(0);
-  const mobileCredits = useMobileResetCredits(personalMobile, session, accounts, creditRevision);
+  const mobileCredits = useMobileResetCredits(active && personalMobile, session, accounts, creditRevision);
   const detail = accounts.find(account => account.id === detailId);
   const target = accounts.find(account => account.id === switchId);
   const online = devices.filter(device => device.online);
@@ -51,7 +72,6 @@ export function AccountsPage({ session, personalMobile = false, active }: {
   const activeId = currentComputer?.guiProviderId ? null : currentComputer?.guiAccountId
     ?? (currentComputer?.activeProviderId ? null : currentComputer?.activeAccountId);
   const refresh = useCallback(async () => {
-    setCockpitRevision(value => value + 1);
     try {
       await dispatch(refreshAll()).unwrap();
       if (personalMobile) setCreditRevision(value => value + 1);
@@ -80,8 +100,6 @@ export function AccountsPage({ session, personalMobile = false, active }: {
           refreshing={refreshing} consuming={consumingQuota} busy={usageBusy} onConsume={openConsumption}
           updatedAt={lastRefreshAt} onPrivacy={() => setPrivateMode(value => !value)}
           onRefresh={() => void refresh()} onAdd={source => source === 'codex' ? setAdding(true) : setAddingClaude(true)} />
-        <CockpitQuotas session={session} device={currentComputer} active={active}
-          privateMode={privateMode} revision={cockpitRevision} />
         {personalMobile ? <MobileAccountAverages accounts={accounts} />
           : <Button size="small" onClick={() => setPriorityOpen(true)}>{t("client.resetPriority.title")}</Button>}
         {loading || accountStartupRequest ? <div className="page-loading"><SpinLoading /><span>{t("client.accounts.loadingAccounts")}</span></div>

@@ -1,6 +1,6 @@
 import { formatConversationTps, type ConversationMetrics } from '../../../../shared/remote-chat/conversationMetrics';
 import { restoreProcessing, type ProcessingState } from '../../../../shared/conversation/processing';
-import type { Turn } from '../../../../shared/conversation/types';
+import type { Thread, Turn } from '../../../../shared/conversation/types';
 
 interface CockpitMetrics extends ConversationMetrics {
   source?: 'cockpit';
@@ -25,12 +25,14 @@ export function cacheHitRate(metrics: CockpitMetrics | null, locale: string) {
     ? new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(rate) : '—';
 }
 
-type HandoffTurn = Turn & {
-  processingActivity?: { itemId: string | null; kind: string | null; startedAtMs: number };
-};
+type Activity = { itemId: string | null; kind: string | null; startedAtMs: number };
+type HandoffTurn = Turn & { processingActivity?: Activity };
+type HandoffThread = Thread & { processingActivity?: Activity & { turnId: string } };
 
-export function observedProcessing(turn: HandoffTurn | undefined, fallback: ProcessingState | undefined) {
-  const activity = turn?.processingActivity;
+export function observedProcessing(thread: HandoffThread | null, turn: HandoffTurn | undefined,
+  fallback: ProcessingState | undefined) {
+  const latest = thread?.processingActivity;
+  const activity = latest?.turnId === turn?.id ? latest : turn?.processingActivity;
   if (!turn || !activity || !Number.isSafeInteger(activity.startedAtMs) || activity.startedAtMs <= 0
     || fallback?.phase === 'input' || fallback?.phase === 'approval') return fallback;
   const { kind, itemId, startedAtMs } = activity;

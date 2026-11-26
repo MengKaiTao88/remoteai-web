@@ -22,6 +22,7 @@ import { RemoteGuiTools } from '../../../../shared/conversation/remote/RemoteGui
 import './desktopTools.css';
 import { CodexAppearance } from '../../../../shared/appearance/CodexAppearance';
 import { ConversationSync } from './ConversationSync';
+import type { CockpitQuotaChannel } from './cockpitQuotaChannel';
 
 const ConnectedChat = lazy(() => import('../../../../shared/remote-chat/views/ConnectedChat')
   .then(module => ({ default: module.ConnectedChat })));
@@ -40,10 +41,11 @@ interface Props {
   tokenSummary: boolean; closeTokenSummary: () => void;
   retainLayout?: boolean;
   sshDiscovery?: boolean; closeSshDiscovery?: () => void;
+  onQuotaChannel?: (channel: CockpitQuotaChannel) => void;
 }
 
 export function ChatPage({ session, devices, active, openAccounts, openDiscover, openSettings, retainLayout,
-  tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery }: Props) {
+  tokenSummary, closeTokenSummary, sshDiscovery, closeSshDiscovery, onQuotaChannel }: Props) {
   useLanguage();
   const preview = usePagePreview() === 'chat';
   const dispatch = useAppDispatch();
@@ -72,6 +74,7 @@ export function ChatPage({ session, devices, active, openAccounts, openDiscover,
       return <div className="chat-device-session" hidden={!selected}
         key={JSON.stringify([scope, chatDevice?.deviceId])}>
         <WebChat session={session} device={chatDevice} devices={devices} selected={selected}
+          onQuotaChannel={onQuotaChannel}
           tokenSummary={tokenSummary && selected} closeTokenSummary={closeTokenSummary}
           sshDiscovery={sshDiscovery && selected} closeSshDiscovery={closeSshDiscovery}
           openAccounts={openAccounts} openDiscover={openDiscover} openSettings={openSettings}
@@ -81,11 +84,14 @@ export function ChatPage({ session, devices, active, openAccounts, openDiscover,
   </section>;
 }
 
-function WebChat({ session, device, selected, ...props }: Props & {
+function WebChat({ session, device, selected, onQuotaChannel, ...props }: Props & {
   device?: RemoteDevice; selected: boolean; chooseDevice: (id: string) => void;
   deviceRefresh: ComputerListRefresh;
 }) {
   const chat = useChat(session, device?.deviceId ?? '', props.active && Boolean(device));
+  useEffect(() => {
+    if (selected) onQuotaChannel?.(chat.quotas);
+  }, [selected, onQuotaChannel, chat.quotas]);
   const desktop = useDesktopLayout();
   const [cwd, setWorkspaceCwd] = useState('');
   const terminal = useRemoteTerminalLauncher({ client: chat.controller.guiTools.terminal,

@@ -218,10 +218,25 @@ export async function logout(options: Pick<DeadlineRequestInit, 'signal' | 'time
   }
 }
 
+let pendingProfile: { session: AuthSession; result: Promise<UserProfile> } | undefined;
+
+export function fetchCurrentProfile() {
+  const session = activeSession;
+  if (session && pendingProfile?.session === session) return pendingProfile.result;
+  const result = apiJson<UserProfile>('/auth/me');
+  if (session) {
+    pendingProfile = { session, result };
+    void result.finally(() => {
+      if (pendingProfile?.result === result) pendingProfile = undefined;
+    }).catch(() => undefined);
+  }
+  return result;
+}
+
 export async function fetchDashboardIdentity() {
   const [{ devices }, profile] = await Promise.all([
     apiJson<{ devices: RemoteDevice[] }>("/devices"),
-    apiJson<UserProfile>("/auth/me"),
+    fetchCurrentProfile(),
   ]);
   return { devices: devices.map(normalizeRemoteDevice), profile };
 }

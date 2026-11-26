@@ -42,6 +42,7 @@ interface DataState {
   page: AppPage;
   loading: boolean;
   accountStartupRequest: string | null;
+  accountsLoaded: boolean;
   refreshing: boolean;
   consumingQuota: boolean;
   selectedChatDeviceId: string | null;
@@ -63,19 +64,21 @@ const messageOf = (error: unknown) => {
   return t("client.app.anUnexpectedErrorOccurred");
 };
 
-const loadStartupAccounts = createAsyncThunk("data/startupAccounts", async () => {
+export const loadAccountSummaries = createAsyncThunk("data/startupAccounts", async () => {
   const owner = usageOwner();
   const data = await fetchDashboardAccounts();
   assertUsageOwner(owner);
   return data;
-});
+}, { condition: (_, { getState }) => {
+  const { accountsLoaded, accountStartupRequest, refreshing } = (getState() as { data: DataState }).data;
+  return !accountsLoaded && !accountStartupRequest && !refreshing;
+} });
 
-export const bootstrapApp = createAsyncThunk("auth/bootstrap", async (_, { dispatch }) => {
+export const bootstrapApp = createAsyncThunk("auth/bootstrap", async () => {
   const session = loadStoredSession();
   if (!session) return { session: null, data: null };
   try {
     const data = await fetchDashboardIdentity();
-    if (getActiveSession()) void dispatch(loadStartupAccounts());
     return { session: getActiveSession(), data };
   } catch (error) {
     if (!getActiveSession()) return { session: null, data: null };
@@ -83,7 +86,7 @@ export const bootstrapApp = createAsyncThunk("auth/bootstrap", async (_, { dispa
   }
 }, { condition: (_, { getState }) => {
   const state = getState() as { auth: AuthState; data: DataState };
-  return !state.auth.initialized && !state.data.loading;
+    return !state.auth.initialized && !state.data.loading;
 } });
 
 export const signIn = createAsyncThunk(
@@ -91,7 +94,7 @@ export const signIn = createAsyncThunk(
   async (payload: { baseUrl: string; email: string; password: string }) => {
     await login(payload.baseUrl, payload.email, payload.password);
     // API authorization alone expires a session; loading failures remain retryable.
-    const data = await fetchDashboardData();
+    const data = await fetchDashboardIdentity();
     return { session: getActiveSession(), data };
   },
 );
@@ -233,7 +236,8 @@ const authSlice = createSlice({
 
 const initialDataState: DataState = {
   accounts: [], providers: [], devices: [], profile: null, page: "chat",
-  loading: false, accountStartupRequest: null, refreshing: false, refreshingAccountId: null, deletingDeviceId: null,
+  loading: false, accountStartupRequest: null, accountsLoaded: false, refreshing: false, refreshingAccountId: null,
+  deletingDeviceId: null,
   consumingQuota: false, selectedChatDeviceId: null,
   switchingAccountId: null, switchingProvider: null, switchingOpenAiAuth: null,
   restartingDeviceId: null, lastRefreshAt: null, error: null,
@@ -274,16 +278,17 @@ const dataSlice = createSlice({
       state.loading = false;
       state.error = messageOf(action.error);
     })
-    .addCase(loadStartupAccounts.pending, (state, action) => {
+    .addCase(loadAccountSummaries.pending, (state, action) => {
       state.accountStartupRequest = action.meta.requestId;
     })
-    .addCase(loadStartupAccounts.fulfilled, (state, action) => {
+    .addCase(loadAccountSummaries.fulfilled, (state, action) => {
       if (state.accountStartupRequest !== action.meta.requestId) return;
       state.accountStartupRequest = null;
+      state.accountsLoaded = true;
       Object.assign(state, action.payload);
       state.lastRefreshAt = usageUpdatedAt(state.accounts);
     })
-    .addCase(loadStartupAccounts.rejected, (state, action) => {
+    .addCase(loadAccountSummaries.rejected, (state, action) => {
       if (state.accountStartupRequest !== action.meta.requestId) return;
       state.accountStartupRequest = null;
       state.error = messageOf(action.error);
@@ -306,6 +311,7 @@ const dataSlice = createSlice({
     })
     .addCase(refreshAll.fulfilled, (state, action) => {
       state.refreshing = false;
+      state.accountsLoaded = true;
       Object.assign(state, action.payload);
       state.lastRefreshAt = usageUpdatedAt(state.accounts);
     })
@@ -407,7 +413,13 @@ const dataSlice = createSlice({
 });
 
 export const store = configureStore({ reducer: { auth: authSlice.reducer, data: dataSlice.reducer } });
-subscribeSession((session) => store.dispatch(authSlice.actions.sessionUpdated(session)));
+subscribeSession((session) => {
+  const previous = store.getState().auth.session;
+  if (!session || (previous && (previous.baseUrl !== session.baseUrl || previous.email !== session.email))) {
+    store.dispatch(dataSlice.actions.resetData());
+  }
+  store.dispatch(authSlice.actions.sessionUpdated(session));
+});
 
 export const { pageChanged, chatDeviceSelected, deviceSocketMessage, resetData,
   clearError: clearDataError } = dataSlice.actions;
